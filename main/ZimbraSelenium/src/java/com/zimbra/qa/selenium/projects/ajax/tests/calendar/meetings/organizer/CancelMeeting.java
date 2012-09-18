@@ -27,7 +27,7 @@ public class CancelMeeting extends CalendarWorkWeekTest {
 	
 	
 	
-	@Bugs(ids = "69132")
+	@Bugs(ids = "69132,77548")
 	@Test(description = "Cancel an meeting using Delete toolbar button",
 			groups = { "smoke" })
 	public void CancelMeeting_01() throws HarnessException {

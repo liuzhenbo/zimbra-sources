@@ -2,6 +2,8 @@ package com.zimbra.qa.selenium.projects.ajax.tests.calendar.bugs;
 
 import java.util.Calendar;
 import org.testng.annotations.Test;
+
+import com.zimbra.qa.selenium.framework.core.Bugs;
 import com.zimbra.qa.selenium.framework.items.AppointmentItem;
 import com.zimbra.qa.selenium.framework.items.MailItem;
 import com.zimbra.qa.selenium.framework.ui.Action;
@@ -21,7 +23,7 @@ public class Bug35365 extends CalendarWorkWeekTest {
 		super.startingPage = app.zPageCalendar;
 	}
 
-	
+	@Bugs(ids = "77548")
 	@Test(	
 			description = "Text entered before cancellation message of a cancelled appointment ignored",
 			groups = { "functional" }	
