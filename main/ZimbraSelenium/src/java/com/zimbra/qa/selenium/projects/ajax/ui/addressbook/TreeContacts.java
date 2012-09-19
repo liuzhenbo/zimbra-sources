@@ -223,30 +223,13 @@ public class TreeContacts extends AbsTree {
 			zWaitForBusyOverlay();
 			
 			if (option == Button.B_TREE_NEWFOLDER) {
-				optionLocator="css=tr#POPUP_NEW_ADDRBOOK";
 				
-				if (zIsElementDisabled(optionLocator + ">td.ZLeftIcon>div.ImgNewContactsFolder")) {			    		
-					return null;
-				}			
-				if (!this.zIsBrowserMatch(BrowserMasks.BrowserMaskChrome)) {
-				  zKeyboard.zTypeKeyEvent(KeyEvent.VK_DOWN);
-				  zKeyboard.zTypeKeyEvent(KeyEvent.VK_ENTER);
-				}
-				else {
-				   try {
-					   Robot robot=new Robot();					   
-					   String itemId="zov__main_Contacts" ;
-				       robot.mouseMove(sGetElementPositionLeft("id=" + itemId) + sGetElementWidth(optionLocator)/2,							            
-							           sGetElementPositionTop("id=zb__App__Contacts") + sGetElementHeight("id=zb__App__Contacts") +							           
-							           sGetElementPositionTop("id=" + itemId)  + sGetElementHeight(optionLocator)/2							                  
-							           );
-				       robot.mousePress(InputEvent.BUTTON1_MASK);
-                       robot.mouseRelease(InputEvent.BUTTON1_MASK);
-				   }
-				   catch (Exception e) {logger.info(e.getMessage());}				
-				}
+				optionLocator = "css=div[id^='ZmActionMenu_contacts_ADDRBOOK'] div[id^='NEW_ADDRBOOK'] td[id$='_title']";
+				zClickAt(optionLocator, "");
 				zWaitForBusyOverlay();
-				page = new DialogCreateFolder(MyApplication, ((AppAjaxClient)MyApplication).zPageAddressbook);			    
+				page = new DialogCreateFolder(MyApplication, ((AppAjaxClient)MyApplication).zPageAddressbook);
+				page.zWaitForActive();
+				
 			}			
 			else if (option == Button.B_DELETE) {												
 				//if option is disabled
@@ -456,7 +439,7 @@ public class TreeContacts extends AbsTree {
 		
 		} else if ( button == Button.B_TREE_NEWTAG ) { 			
 			//locator = zNewTagIcon;
-			locator = "css=div#main_Contacts-parent-TAG td[id$=_title][id^=DWT]"; //td#ztih__main_Contacts__TAG_optCell";
+			locator = "css=div[id=main_Contacts-parent-TAG] div[class*=ImgContextMenu]"; //td#ztih__main_Contacts__TAG_optCell";
             subLocator ="css=div#ZmActionMenu_contacts_TAG td#NEW_TAG_title";
 			page = new DialogTag(MyApplication,((AppAjaxClient) MyApplication).zPageAddressbook);
 				
