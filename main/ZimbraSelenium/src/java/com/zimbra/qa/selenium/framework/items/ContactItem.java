@@ -1,6 +1,7 @@
 package com.zimbra.qa.selenium.framework.items;
 
-import java.util.HashMap;
+import java.util.*;
+import java.util.Map.Entry;
 
 import org.apache.log4j.*;
 
@@ -94,6 +95,15 @@ public class ContactItem implements IItem {
 		myId=id;
 	}
 
+	private String myFolderId;
+	public void setFolderId(String id) {
+		this.myFolderId = id;
+	}
+
+	public String getFolderId() {
+		return (this.myFolderId);
+	}
+
 	public String getAttribute(String key, String defaultValue) {
 		if ( !ContactAttributes.containsKey(key) )
 			return (defaultValue);
@@ -116,42 +126,42 @@ public class ContactItem implements IItem {
 		else if ( key.equals("lastName"))
 			lastName = value;
 		else if ( key.equals("homePostalCode"))
-		   homePostalCode = value;
+			homePostalCode = value;
 		else if ( key.equals("nameSuffix"))
-		   nameSuffix = value;
+			nameSuffix = value;
 		else if ( key.equals("birthday"))
-		   birthday = value;
+			birthday = value;
 		else if ( key.equals("homeStreet"))
-		   homeStreet = value;
+			homeStreet = value;
 		else if ( key.equals("nickname"))
-		   nickname = value;
+			nickname = value;
 		else if ( key.equals("department"))
-		   department = value;
+			department = value;
 		else if ( key.equals("homeCountry"))
-		   homeCountry = value;
+			homeCountry = value;
 		else if ( key.equals("homeCity"))
-		   homeCity = value;
+			homeCity = value;
 		else if ( key.equals("company"))
-		   company = value;
+			company = value;
 		else if ( key.equals("homeState"))
-		   homeState = value;
+			homeState = value;
 		else if ( key.equals("notes"))
-		   notes = value;
+			notes = value;
 		else if ( key.equals("jobTitle"))
-		   jobTitle = value;
+			jobTitle = value;
 		else if ( key.equals("imAddress1"))
-		   imAddress1 = value;
+			imAddress1 = value;
 		else if ( key.equals("namePrefix"))
-		   namePrefix = value;
+			namePrefix = value;
 		else if ( key.equals("mobilePhone"))
-		   mobilePhone = value;
+			mobilePhone = value;
 		else if ( key.equals("maidenName"))
-		   maidenName = value;
+			maidenName = value;
 		else if ( key.equals("homeURL"))
-		   homeURL = value;
+			homeURL = value;
 		else {
-		    // add to the map
-		    ContactAttributes.put(key, value);
+			// add to the map
+			ContactAttributes.put(key, value);
 		}
 		return value;
 	}
@@ -191,10 +201,12 @@ public class ContactItem implements IItem {
 	 * @param tagIdArray
 	 * @return
 	 * @throws HarnessException
+	 * @deprecated Use createConctactItem() instead
 	 */
+	@Deprecated
 	public static ContactItem createUsingSOAP(AbsApplication app, String ... tagIdArray ) throws HarnessException {
 
-	   String tagParam ="";
+		String tagParam ="";
 		if (tagIdArray.length == 1) {
 			tagParam = " t='" + tagIdArray[0] + "'";
 		}
@@ -203,19 +215,19 @@ public class ContactItem implements IItem {
 		ContactItem contactItem = ContactItem.generateContactItem(GenerateItemType.Basic);
 
 		app.zGetActiveAccount().soapSend(
-	                "<CreateContactRequest xmlns='urn:zimbraMail'>" +
-	                "<cn " + tagParam + " >" +
-	                "<a n='firstName'>" + contactItem.firstName +"</a>" +
-	                "<a n='lastName'>" + contactItem.lastName +"</a>" +
-	                "<a n='email'>" + contactItem.email + "</a>" +
-	                "<a n='company'>" + contactItem.company + "</a>" +
-	                "</cn>" +
-	                "</CreateContactRequest>");
+				"<CreateContactRequest xmlns='urn:zimbraMail'>" +
+						"<cn " + tagParam + " >" +
+						"<a n='firstName'>" + contactItem.firstName +"</a>" +
+						"<a n='lastName'>" + contactItem.lastName +"</a>" +
+						"<a n='email'>" + contactItem.email + "</a>" +
+						"<a n='company'>" + contactItem.company + "</a>" +
+						"</cn>" +
+				"</CreateContactRequest>");
 
 		contactItem.setId(app.zGetActiveAccount().soapSelectValue("//mail:CreateContactResponse/mail:cn", "id"));
 
 		// Refresh addressbook
-    	((AppAjaxClient)app).zPageMain.zToolbarPressButton(Button.B_REFRESH);
+		((AppAjaxClient)app).zPageMain.zToolbarPressButton(Button.B_REFRESH);
 
 		return contactItem;
 	}
@@ -227,29 +239,31 @@ public class ContactItem implements IItem {
 	 * @param tagIdArray
 	 * @return
 	 * @throws HarnessException
+	 * @deprecated Use createConctactItem() instead
 	 */
+	@Deprecated
 	public static ContactItem createLocalUsingSOAP(AbsApplication app, String accountName, String ... tagIdArray ) throws HarnessException {
-	   String tagParam ="";
-	   if (tagIdArray.length == 1) {
-	      tagParam = " t='" + tagIdArray[0] + "'";
-	   }
-	   
-	   // Create a contact item
-	   ContactItem contactItem = ContactItem.generateContactItem(GenerateItemType.Basic);
-	   
-	   app.zGetActiveAccount().soapSend(
-	         "<CreateContactRequest xmlns='urn:zimbraMail'>" +
-	         "<cn " + tagParam + " >" +
-	         "<a n='firstName'>" + contactItem.firstName +"</a>" +
-	         "<a n='lastName'>" + contactItem.lastName +"</a>" +             
-	         "<a n='email'>" + contactItem.email + "</a>" +
-             "<a n='company'>" + contactItem.company + "</a>" +
-	         "</cn>" +
-	         "</CreateContactRequest>",
-	         SOAP_DESTINATION_HOST_TYPE.CLIENT,
-	         accountName);    
-	   
-	   return contactItem;
+		String tagParam ="";
+		if (tagIdArray.length == 1) {
+			tagParam = " t='" + tagIdArray[0] + "'";
+		}
+
+		// Create a contact item
+		ContactItem contactItem = ContactItem.generateContactItem(GenerateItemType.Basic);
+
+		app.zGetActiveAccount().soapSend(
+				"<CreateContactRequest xmlns='urn:zimbraMail'>" +
+						"<cn " + tagParam + " >" +
+						"<a n='firstName'>" + contactItem.firstName +"</a>" +
+						"<a n='lastName'>" + contactItem.lastName +"</a>" +             
+						"<a n='email'>" + contactItem.email + "</a>" +
+						"<a n='company'>" + contactItem.company + "</a>" +
+						"</cn>" +
+						"</CreateContactRequest>",
+						SOAP_DESTINATION_HOST_TYPE.CLIENT,
+						accountName);    
+
+		return contactItem;
 	}
 
 	public enum GenerateItemType {
@@ -265,12 +279,14 @@ public class ContactItem implements IItem {
 	 * @param type The type of ContactItem to create
 	 * @return the new ContactItem
 	 * @throws HarnessException
+	 * @deprecated Use createConctactItem() instead
 	 */
+	@Deprecated
 	public static ContactItem generateContactItem(GenerateItemType type) throws HarnessException {
 		ContactItem c = new ContactItem();
 		c.firstName = "first" + ZimbraSeleniumProperties.getUniqueString();
 		c.lastName = "last" + ZimbraSeleniumProperties.getUniqueString();
-	    c.email = "email" +  ZimbraSeleniumProperties.getUniqueString() + "@zimbra.com";
+		c.email = "email" +  ZimbraSeleniumProperties.getUniqueString() + "@zimbra.com";
 		//default value for file as is  last , first
 		c.fileAs = c.lastName + ", " + c.firstName;
 		c.company = "company" + ZimbraSeleniumProperties.getUniqueString();
@@ -323,6 +339,42 @@ public class ContactItem implements IItem {
 		// Return empty Item
 		return (new ContactItem());
 	}
+	
+	public static ContactItem createContactItem(ZimbraAccount account, GenerateItemType Type) throws HarnessException {
+		
+		// Create a contact item
+		ContactItem c = ContactItem.generateContactItem(GenerateItemType.Basic);
+
+		StringBuilder attrs = new StringBuilder();
+		for (Map.Entry<String, String> entry : c.ContactAttributes.entrySet()) {
+			// <a n='email'>email@foo.com</a>
+			attrs.append("<a n='").append(entry.getKey()).append("'>").append(entry.getValue()).append("</a>");
+		}
+		
+		if ( c.firstName != null ) {
+			attrs.append("<a n='firstName'>").append(c.firstName).append("</a>");
+		}
+		
+		if ( c.lastName != null ) {
+			attrs.append("<a n='lastName'>").append(c.lastName).append("</a>");
+		}
+		
+		if ( c.email != null ) {
+			attrs.append("<a n='email'>").append(c.email).append("</a>");
+		}
+		
+				
+		account.soapSend(
+				"<CreateContactRequest xmlns='urn:zimbraMail'>" +
+						"<cn >" +
+							attrs.toString() +
+						"</cn>" +
+				"</CreateContactRequest>");
+		String id = account.soapSelectValue("//mail:cn", "id");
+		
+		return (ContactItem.importFromSOAP(account, "item:"+ id));
+
+	}
 
 	public static ContactItem importFromSOAP(Element GetContactsResponse) throws HarnessException {
 		if ( GetContactsResponse == null )
@@ -346,9 +398,11 @@ public class ContactItem implements IItem {
 
 			// Set the ID
 			contact.setId(cn.getAttribute("id", null));
-         contact.fileAs=cn.getAttribute("fileAsStr",null);
+			contact.fileAs=cn.getAttribute("fileAsStr",null);
+			contact.setFolderId(cn.getAttribute("l", null));
 
-            // Iterate the attributes
+
+			// Iterate the attributes
 			Element[] attributes = ZimbraAccount.SoapClient.selectNodes(cn, "//mail:a");
 			for (Element a : attributes) {
 				String key = a.getAttribute("n", "foo");
@@ -369,42 +423,42 @@ public class ContactItem implements IItem {
 	}
 
 	public static ContactItem importFromSOAP(ZimbraAccount account, String query)
-	throws HarnessException {
-	   return importFromSOAP(
-	         account,
-	         query,
-	         SOAP_DESTINATION_HOST_TYPE.SERVER,
-	         null);
+			throws HarnessException {
+		return importFromSOAP(
+				account,
+				query,
+				SOAP_DESTINATION_HOST_TYPE.SERVER,
+				null);
 	}
 
 	public static ContactItem importFromSOAP(ZimbraAccount account,
-	      String query, SOAP_DESTINATION_HOST_TYPE destType, String accountName) throws HarnessException {
+			String query, SOAP_DESTINATION_HOST_TYPE destType, String accountName) throws HarnessException {
 
 		try
 		{
 
 			account.soapSend(
 					"<SearchRequest xmlns='urn:zimbraMail' types='contact'>" +
-						"<query>"+ query +"</query>" +
-					"</SearchRequest>",
-					destType,
-					accountName);
+							"<query>"+ query +"</query>" +
+							"</SearchRequest>",
+							destType,
+							accountName);
 
 			Element[] results = account.soapSelectNodes("//mail:SearchResponse/mail:cn");
 			if (results.length == 0) {
-	        	return null;
+				return null;
 			} else if (results.length != 1) {
-	            throw new HarnessException("Query should return 1 result, not "+ results.length);
+				throw new HarnessException("Query should return 1 result, not "+ results.length);
 			}
 
 			String id = account.soapSelectValue("//mail:SearchResponse/mail:cn", "id");
 
 			account.soapSend(
 					"<GetContactsRequest xmlns='urn:zimbraMail' >" +
-						"<cn id='"+ id +"'/>" +
-					"</GetContactsRequest>",
-					destType,
-					accountName);
+							"<cn id='"+ id +"'/>" +
+							"</GetContactsRequest>",
+							destType,
+							accountName);
 			Element getContactsResponse = account.soapSelectNode("//mail:GetContactsResponse", 1);
 
 			// Using the response, create this item
