@@ -61,7 +61,7 @@ public class AddLocation extends CalendarWorkWeekTest {
                "</CreateAppointmentRequest>");
         app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
         
-        // Remove location and resend the appointment
+        // Add location and resend the appointment
         FormApptNew apptForm = (FormApptNew)app.zPageCalendar.zListItem(Action.A_DOUBLECLICK, apptSubject);
         apptForm.zFillField(Field.Location, apptLocation);
         apptForm.zToolbarPressButton(Button.B_SEND);
