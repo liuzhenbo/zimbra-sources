@@ -22,38 +22,6 @@ endif
 
 MYSQL_VERSION ?= standard-$(MYSQL_VERSION_STRING)-pc-linux-gnu-i686-glibc23
 
-ifeq ($(BUILD_PLATFORM), MACOSXx86_10.6)
-	OS_RELEASE ?= 10
-	OS_PLATFORM ?= $(shell uname -m)
-	PLAT_CFLAGS ?= -fast -arch x86_64 -m64 -fno-common -isysroot /Developer/SDKs/MacOSX10.6.sdk
-	PLAT_CXXFLAGS ?= -fast -arch x86_64 -m64 -fno-common -isysroot /Developer/SDKs/MacOSX10.6.sdk
-	PLAT_LDFLAGS ?= -fast -arch x86_64
-	MAC_TARGET ?= MACOSX_DEPLOYMENT_TARGET=10.6
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_RELEASE)-$(OS_PLATFORM)
-endif
-
-ifeq ($(BUILD_PLATFORM), MACOSXx86_10.7)
-	OS_RELEASE ?= 11
-	OS_PLATFORM ?= $(shell uname -m)
-	PLAT_CFLAGS ?= -fast -arch x86_64 -m64 -fno-common -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
-	PLAT_CXXFLAGS ?= -fast -arch x86_64 -m64 -fno-common -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
-	PLAT_LDFLAGS ?= -fast -arch x86_64
-	MAC_TARGET ?= MACOSX_DEPLOYMENT_TARGET=10.7
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_RELEASE)-$(OS_PLATFORM)
-endif
-
-ifeq (MACOSXx86,$(findstring MACOSXx86,$(BUILD_PLATFORM)))
-	OS_RELEASE ?= 8.2.0
-	OS_PLATFORM ?= i686
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_RELEASE)-$(OS_PLATFORM)
-endif
-
-
-ifeq ($(BUILD_PLATFORM), MACOSX)
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-powerpc
-endif
-
-
 LDFLAGS	:= LDFLAGS="$(PLAT_LDFLAGS) -L$(ZIMBRA_HOME)/mysql-$(MYSQL_VERSION)/lib -R$(ZIMBRA_HOME)/mysql-$(MYSQL_VERSION)/lib -R$(ZIMBRA_HOME)/lib -R$(OPENSSL_LIB_DIR)"
 ifeq ($(BUILD_PLATFORM), UBUNTU12_64)
 	LDFLAGS	:= LDFLAGS="$(PLAT_LDFLAGS) -L$(ZIMBRA_HOME)/mysql-$(MYSQL_VERSION)/lib"

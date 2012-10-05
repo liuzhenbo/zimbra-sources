@@ -29,67 +29,14 @@ PCRE_LIB := -lpcre
 MYSQL_VERSION ?= standard-$(MYSQL_VERSION_STRING)-pc-linux-gnu-i686-glibc23
 MYSQL_CLIENT_VERSION ?= standard-$(MYSQL_VERSION_STRING)-clientlibs
 
-ifeq ($(BUILD_PLATFORM), MACOSX)
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-powerpc
-	MYSQL_CLIENT_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-powerpc
-endif
-
-ifeq (MACOSXx86,$(findstring MACOSXx86,$(BUILD_PLATFORM)))
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-i686
-	MYSQL_CLIENT_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-i686
-endif     
-
-ifeq ($(BUILD_PLATFORM), MACOSXx86_10.6)
-	OS_REL := 10
-	OS_PLAT := $(shell uname -m)
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_REL)-$(OS_PLAT)
-	MYSQL_CLIENT_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_REL)-$(OS_PLAT)
-endif 
-
-ifeq ($(BUILD_PLATFORM), MACOSXx86_10.7)
-	OS_REL := 11
-	OS_PLAT := $(shell uname -m)
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_REL)-$(OS_PLAT)
-	MYSQL_CLIENT_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin$(OS_REL)-$(OS_PLAT)
-endif 
-
 SYSTEM_LIB := /usr/lib
-
-ifeq ($(BUILD_PLATFORM), RHEL4_64)
-	SYSTEM_LIB := /usr/lib64
-endif
-
-ifeq ($(BUILD_PLATFORM), CentOS4_64)
-	SYSTEM_LIB := /usr/lib64
-endif
-
-ifeq ($(BUILD_PLATFORM), MACOSX)
-	MYSQL_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-powerpc
-	MYSQL_CLIENT_VERSION := standard-$(MYSQL_VERSION_STRING)-apple-darwin8.2.0-powerpc
-	PCRE_DEF := -DHAS_PCRE
-	PCRE_INCLUDE := -I/opt/zimbra/include
-	PCRE_LIB := -L/opt/zimbra/lib -lpcre
-	FD_SIZE := -DFD_SETSIZE=32768
-endif
 
 LD_RUN_PATH := /opt/zimbra/lib:/opt/zimbra/mysql-$(MYSQL_VERSION)/lib:/opt/zimbra/openldap-$(LDAP_VERSION)/lib:/opt/zimbra/openssl-$(OPENSSL_VERSION)/lib:/opt/zimbra/cyrus-sasl-$(CYRUS_VERSION)/lib:/opt/zimbra/bdb-$(BDB_VERSION)/lib
 MYSQL_INC := /opt/zimbra/mysql-$(MYSQL_VERSION)/include
 MYSQL_LIB := /opt/zimbra/mysql-$(MYSQL_VERSION)/lib
 
 
-ifeq (MACOSXx86,$(findstring MACOSXx86,$(BUILD_PLATFORM)))
-	EXTRALIBS := -lresolv
-	PCRE_DEF := -DHAS_PCRE
-	PCRE_INCLUDE := -I/opt/zimbra/include
-	PCRE_LIB := -L/opt/zimbra/lib -lpcre
-	FD_SIZE := -DFD_SETSIZE=32768
-	URANDOM := -DPREFERRED_RAND_SOURCE=\"dev:/dev/urandom\"
-endif
-
 INSTALL_PARMS := install_root=/../
-ifeq (MACOSXx86_10, $(findstring MACOSXx86_10, $(BUILD_PLATFORM)))
-	INSTALL_PARMS := install_root=/../ setgid_group=_postdrop mail_owner=_postfix
-endif
 
 files   := $(wildcard src/postfix-$(POSTFIX_RELEASE).tar.gz)
 
@@ -100,16 +47,11 @@ checksrc:
 
 build:
 	tar xzf src/postfix-$(POSTFIX_RELEASE).tar.gz
-ifeq ($(BUILD_PLATFORM), MACOSXx86_10.6)
-	$(SED) -i -e 's/#define RESOLVE_H_NEEDS_NAMESER8_COMPAT_H//' postfix-$(POSTFIX_RELEASE)/src/util/sys_defs.h
-endif
 	(mv postfix-$(POSTFIX_RELEASE) postfix-$(POSTFIX_VERSION); \
 	cd postfix-$(POSTFIX_VERSION); \
 	$(BDB_PATCH) \
 	$(PATCH) \
 	patch -g0 -p1 < ../patches/postfix-main-cf-zimbra.patch; \
-	patch -g0 -p1 < ../patches/0001-Add-locking-to-dict-interface.patch; \
-	patch -g0 -p1 < ../patches/0002-Add-support-for-OpenLDAP-MDB.patch; \
 	$(MAKE) $(MAKEARGS)  makefiles \
 	OPT="-O2" \
 	DEBUG="-g" \
@@ -127,7 +69,7 @@ endif
 	-DDEF_DATA_DIR=\"/opt/zimbra/data/postfix/data\" \
 	-DUSE_SASL_AUTH \
 	-DUSE_CYRUS_SASL \
-	-DHAS_LDAP -DHAS_MDB -DHAS_MYSQL -DUSE_TLS $(DBINC) $(PCRE_DEF) $(PCRE_INCLUDE) $(FD_SIZE) \
+	-DHAS_LDAP -DHAS_MYSQL -DUSE_TLS $(DBINC) $(PCRE_DEF) $(PCRE_INCLUDE) $(FD_SIZE) \
 	$(URANDOM) \
 	-DUSE_LDAP_SASL \
 	-I/opt/zimbra/openldap-$(LDAP_VERSION)/include \
