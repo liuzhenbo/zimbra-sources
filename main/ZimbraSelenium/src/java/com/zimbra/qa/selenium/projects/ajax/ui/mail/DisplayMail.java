@@ -66,6 +66,10 @@ public class DisplayMail extends AbsDisplay {
 		
 		public static final String ProposeNewTimeButton = "css=td[id$='__Inv__PROPOSE_NEW_TIME_title']";
 		public static final String zSubjectField = "css=div[id^=zv__COMPOSE] input[id$=_subject_control]";
+		public static final String zReplyButton ="css=div[id$='__REPLY']";
+		public static final String zReplyAllButton ="css=div[id$='__REPLY_ALL']";
+		public static final String zForwardButton ="css=div[id$='__FORWARD']";
+	
 	}
 
 	/**
@@ -232,6 +236,21 @@ public class DisplayMail extends AbsDisplay {
 			page = new DialogShareDecline(MyApplication, ((AppAjaxClient) MyApplication).zPageMail);
 			doPostfixCheck = true;
 
+		}else if ( button == Button.B_FORWARD) {
+
+			locator = Locators.zForwardButton;
+			page = null;
+			doPostfixCheck = true;
+		}else if ( button == Button.B_REPLY) {
+
+			locator = Locators.zReplyButton;
+			page = null;
+			doPostfixCheck = true;
+		}else if ( button == Button.B_REPLYALL) {
+
+			locator = Locators.zReplyAllButton;
+			page = null;
+			doPostfixCheck = true;
 		} else  {
 			
 			throw new HarnessException("no implementation for button: "+ button);
@@ -670,6 +689,24 @@ public class DisplayMail extends AbsDisplay {
 
 
 	}
+	
+	public String zGetHtmlMailBodyText(Field field ) throws HarnessException {
+		if ( field == Field.Body) {
+
+			try {
+				this.sSelectFrame("css=iframe[id$='_content_ifr']");
+				String bodyhtml = this.sGetHtmlSource();
+				return bodyhtml;				
+			} finally {
+				// Make sure to go back to the original iframe
+				this.sSelectFrame("relative=top");
+			}
+		} else {
+			throw new HarnessException("not implemented for field "+ field);
+		}
+
+	}
+
 	public String zGetMailPropertyAsText(Field field) throws HarnessException {
 
 		//String source = null;
@@ -723,15 +760,39 @@ public class DisplayMail extends AbsDisplay {
 		if (placeOfSignature.equals("AboveIncludedMsg")) {
 			Assert.assertTrue(indexOfSignature <= indexOfOrignalMsg,
 					"The signature body " + signatureBody
-							+ " is  displayed above the Mail body");
+					+ " is  displayed above the Mail body");
 
 		} else if (placeOfSignature.equals("BelowIncludedMsg")) {
 			Assert.assertTrue(indexOfSignature > indexOfOrignalMsg,
 					"The signature body " + signatureBody
-							+ " is  displayed above the Mail body");
+					+ " is  displayed below the Mail body");
 		}
 	}
 
+	public void zVerifySignaturePlaceInHTML(String placeOfSignature,
+			String signatureBody, String mode) throws HarnessException {
+		int indexOfSignature;
+		int indexOfOrignalMsg;
+		mode = mode.toLowerCase();
+		String displayedBody = this.zGetHtmlMailBodyText(Field.Body);// obj.zEditor.zGetInnerText("");
+		indexOfSignature = displayedBody.indexOf(signatureBody);
+		if (mode.equals("forward")) {
+			indexOfOrignalMsg = displayedBody.indexOf("From");
+		} else {
+			indexOfOrignalMsg = displayedBody.indexOf("From");
+		}
+
+		if (placeOfSignature.equals("AboveIncludedMsg")) {
+			Assert.assertTrue(indexOfSignature <= indexOfOrignalMsg,
+					"The signature body " + signatureBody
+					+ " is  displayed above the Mail body");
+
+		} else if (placeOfSignature.equals("BelowIncludedMsg")) {
+			Assert.assertTrue(indexOfSignature > indexOfOrignalMsg,
+					"The signature body " + signatureBody
+					+ " is  displayed below the Mail body");
+		}
+	}
 		
 	/**
 	 * Get the string value of the specified field
