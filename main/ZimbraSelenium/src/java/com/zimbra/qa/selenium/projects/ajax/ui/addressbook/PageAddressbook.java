@@ -899,12 +899,11 @@ public class PageAddressbook extends AbsTab {
 
 			// Log this item to the debug output
 			LogManager.getLogger("projects").info("zListItem: found contact "+ displayAs);
-
-			if ( displayAs != null ) {
-				if ( displayAs.toLowerCase().contains(contact.toLowerCase()) ) {
+			if (displayAs != null) {
+				if (contact.toLowerCase().contains(displayAs.toLowerCase())) {
 					// Found the item!
-				   contactLocator = itemLocator;
-				   break;
+					contactLocator = itemLocator;
+					break;
 				}
 			}
 
@@ -1200,8 +1199,10 @@ public class PageAddressbook extends AbsTab {
 					zWaitForBusyOverlay();
 
 				    // Left Click "Tag"
-					this.sMouseOver(tagContactLocator);
+					this.sMouseOver(tagContactLocator);					
+					SleepUtil.sleepMedium();
 					zClickAt(tagContactLocator, "");
+					SleepUtil.sleepMedium();
 					zWaitForBusyOverlay();
 
 					/*
