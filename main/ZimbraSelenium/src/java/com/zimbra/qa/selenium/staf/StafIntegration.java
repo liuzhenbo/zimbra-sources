@@ -21,8 +21,7 @@ import com.ibm.staf.service.STAFCommandParseResult;
 import com.ibm.staf.service.STAFCommandParser;
 import com.ibm.staf.service.STAFServiceInterfaceLevel30;
 import com.zimbra.qa.selenium.framework.core.ExecuteHarnessMain;
-import com.zimbra.qa.selenium.framework.util.HarnessException;
-import com.zimbra.qa.selenium.framework.util.ZimbraSeleniumProperties;
+import com.zimbra.qa.selenium.framework.util.*;
 import com.zimbra.qa.selenium.framework.util.ZimbraSeleniumProperties.AppType;
 
 
@@ -294,6 +293,9 @@ public class StafIntegration implements STAFServiceInterfaceLevel30 {
 			serviceIsRunning = true;
 			
 					
+			// Reset all static references
+			this.reset();
+			
 	        // Create the execution object
 	        ExecuteHarnessMain harness = new ExecuteHarnessMain();
 	        
@@ -363,7 +365,27 @@ public class StafIntegration implements STAFServiceInterfaceLevel30 {
 	
 
 	private STAFResult handleQuery(RequestInfo info) {
-		return (new STAFResult(STAFResult.JavaError, "handleQuery: Implement me!"));
+
+        mLog.info("STAF: handleExecute ...");
+
+    	// Check whether Trust level is sufficient for this command.
+        if (info.trustLevel < 2)
+        {   
+            
+        	return new STAFResult(STAFResult.AccessDenied, 
+                "Trust level 2 required for "+ Arguments.optionQuery +" request.\n" +
+                "The requesting machine's trust level: " +  info.trustLevel); 
+            
+        }    
+
+        String status = "Not running";
+        
+        if ( ExecuteHarnessMain.currentResultListener != null ) {
+        	status = ExecuteHarnessMain.currentResultListener.getResults();
+        }
+
+        return (new STAFResult(STAFResult.Ok, status));
+        
 	}
 	
 	private STAFResult handleHalt(RequestInfo info) {
@@ -384,6 +406,13 @@ public class StafIntegration implements STAFServiceInterfaceLevel30 {
          "HELP\n\n");
 	}
 
+	/**
+	 * Reset any static refrences between executions
+	 **/
+	protected void reset() {
+		ZimbraAdminAccount.reset();
+		ZimbraAccount.reset();
+	}
 	
 	private void createBundles(String jarfilename) {
 		List<String> names = Arrays.asList("AjxMsg", "I18nMsg", "ZaMsg", "ZbMsg", "ZhMsg", "ZmMsg", "ZsMsg", "ZMsg");
