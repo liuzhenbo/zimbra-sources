@@ -697,27 +697,31 @@ function(callback, result) {
 	var resp = result.getResponse().GetContactsResponse;
 
 	// for now, we just assume only one contact was requested at a time
-	this.attr = resp.cn[0]._attrs;
-	if (resp.cn[0].m) {
-		for (var i=0; i<resp.cn[0].m.length; i++) {
+	var contact = resp.cn[0];
+	this.attr = contact._attrs;
+	if (contact.m) {
+		for (var i = 0; i < contact.m.length; i++) {
 			//cache contacts from contact groups (e.g. GAL contacts, shared contacts have not already been cached)
-			var contact = resp.cn[0].m[i];
+			var member = contact.m[i];
 			var isGal = false;
-			if (contact.type == ZmContact.GROUP_GAL_REF) { 
+			if (member.type == ZmContact.GROUP_GAL_REF) {
 				isGal = true;
 			}
-			if (contact.cn && contact.cn.length > 0) {
-				var loadContact = ZmContact.createFromDom(contact.cn[0], {list : this.list, isGal : isGal}); //pass GAL so fileAS gets set correctly
-				loadContact.isDL = isGal && loadContact.attr[ZmContact.F_type] == "group";
-				appCtxt.cacheSet(contact.value, loadContact);
+			if (member.cn && member.cn.length > 0) {
+				var memberContact = member.cn[0];
+				memberContact.ref = memberContact.ref || (isGal && member.value); //we sometimes don't get "ref" but the "value" for GAL is the ref.
+				var loadMember = ZmContact.createFromDom(memberContact, {list: this.list, isGal: isGal}); //pass GAL so fileAS gets set correctly
+				loadMember.isDL = isGal && loadMember.attr[ZmContact.F_type] == "group";
+				appCtxt.cacheSet(member.value, loadMember);
 			}
 			
 		}
-		this._loadFromDom(resp.cn[0], {list : this.list}); //load group
+		this._loadFromDom(contact); //load group
 	}
 	this.isLoaded = true;
-	if (callback)
-		callback.run(resp.cn[0], this);
+	if (callback) {
+		callback.run(contact, this);
+	}
 };
 
 /**
@@ -2300,13 +2304,14 @@ function(node) {
 	this.folderId = node.l;
 	this.created = node.cd;
 	this.modified = node.md;
-	this.ref = node.ref;
 
 	this.attr = node._attrs || {};
 	if (node.m) {
 		this.attr[ZmContact.F_groups] = node.m;
 	}
-
+	
+	this.ref = node.ref || this.attr.dn; //bug 78425
+	
 	// for shared contacts, we get these fields outside of the attr part
 	if (node.email)		{ this.attr[ZmContact.F_email] = node.email; }
 	if (node.email2)	{ this.attr[ZmContact.F_email2] = node.email2; }

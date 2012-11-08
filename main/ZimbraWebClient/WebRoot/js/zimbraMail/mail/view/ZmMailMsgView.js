@@ -879,7 +879,7 @@ function(origText) {
 	(function() {
 		var infoBarDiv = document.getElementById(self._infoBarId);
 		if (infoBarDiv) {
-			self._highlightObjectsId = ZmId.getViewId(this._viewId, ZmId.MV_HIGHLIGHT_OBJ, self._mode);
+			self._highlightObjectsId = ZmId.getViewId(self._viewId, ZmId.MV_HIGHLIGHT_OBJ, self._mode);
 			var subs = {
 				id: self._highlightObjectsId,
 				text: ZmMsg.objectsNotDisplayed,
@@ -1171,7 +1171,7 @@ function(addr) {
 ZmMailMsgView.prototype._isTrustedSender =
 function(msg) {
     var trustedList = this.getTrustedSendersList();
-    if (trustedList.contains(msg.sentByAddr) || trustedList.contains(msg.sentByDomain)){
+    if (trustedList.contains(msg.sentByAddr.toLowerCase()) || trustedList.contains(msg.sentByDomain.toLowerCase())){
         return true;
     }
     return false;
