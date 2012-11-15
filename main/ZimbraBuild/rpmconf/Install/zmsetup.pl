@@ -4991,6 +4991,12 @@ sub configSetupLdap {
          progress ( "done.\n" );
       }
     }
+    if ($config{FORCEREPLICATION} eq "yes") {
+      my $rc = runAsZimbra ("/opt/zimbra/libexec/zmldapenablereplica");
+      my $file="/opt/zimbra/.enable_replica";
+      open(ER,">>$file");
+      close ER;
+    }
   } elsif (isEnabled("zimbra-ldap")) {
     my $rc = runAsZimbra ("/opt/zimbra/libexec/zmldapapplyldif");
     if (!$newinstall) {
