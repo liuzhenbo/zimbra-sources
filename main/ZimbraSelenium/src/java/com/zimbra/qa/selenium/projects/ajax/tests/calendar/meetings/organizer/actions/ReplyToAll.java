@@ -1,29 +1,29 @@
-package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer;
+package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.actions;
 
 import java.util.Calendar;
-
-import org.testng.annotations.*;
-
-import com.zimbra.qa.selenium.framework.items.AppointmentItem;
-import com.zimbra.qa.selenium.framework.ui.*;
-import com.zimbra.qa.selenium.framework.util.*;
+import org.testng.annotations.Test;
+import com.zimbra.qa.selenium.framework.ui.Action;
+import com.zimbra.qa.selenium.framework.ui.Button;
+import com.zimbra.qa.selenium.framework.util.HarnessException;
+import com.zimbra.qa.selenium.framework.util.ZAssert;
+import com.zimbra.qa.selenium.framework.util.ZDate;
+import com.zimbra.qa.selenium.framework.util.ZTimeZone;
+import com.zimbra.qa.selenium.framework.util.ZimbraAccount;
+import com.zimbra.qa.selenium.framework.util.ZimbraSeleniumProperties;
 import com.zimbra.qa.selenium.projects.ajax.core.CalendarWorkWeekTest;
 import com.zimbra.qa.selenium.projects.ajax.ui.mail.FormMailNew;
 import com.zimbra.qa.selenium.projects.ajax.ui.mail.FormMailNew.Field;
 
-
-public class ReplyMeeting extends CalendarWorkWeekTest {	
+public class ReplyToAll extends CalendarWorkWeekTest {	
 	
-	
-	public ReplyMeeting() {
-		logger.info("New "+ ReplyMeeting.class.getCanonicalName());
+	public ReplyToAll() {
+		logger.info("New "+ ReplyToAll.class.getCanonicalName());
 		
 	}
 	
-	
 	@Test(description = "Check when attendees get the reply when organizer ReplyAll to a meeting",
 			groups = { "functional" })
-	public void ReplyMeeting_01() throws HarnessException {
+	public void ReplyToAll_01() throws HarnessException {
 		
 
 		//-- Data Setup
