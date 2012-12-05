@@ -57,6 +57,7 @@ public class Button {
 	public static final Button O_NEW_DOCUMENT = new Button("O_NEW_DOCUMENT");
 	public static final Button O_NEW_FOLDER = new Button("O_NEW_FOLDER");
 	public static final Button O_NEW_TAG = new Button("O_NEW_TAG");
+	public static final Button O_REMOVE_TAG = new Button("O_REMOVE_TAG");
 	public static final Button O_NEW_ADDRESSBOOK = new Button("O_NEW_ADDRESSBOOK");
 	public static final Button O_NEW_CALENDAR = new Button("O_NEW_CALENDAR");
 	public static final Button O_NEW_TASKFOLDER = new Button("O_NEW_TASKFOLDER");
@@ -451,6 +452,9 @@ public class Button {
 	public static final Button O_VIEW_MONTH_SUB_MENU = new Button("O_VIEW_MONTH_SUB_MENU");
 	public static final Button O_VIEW_LIST_SUB_MENU = new Button("O_VIEW_LIST_SUB_MENU");
 	public static final Button O_VIEW_SCHEDULE_SUB_MENU = new Button("O_VIEW_SCHEDULE_SUB_MENU");
+	public static final Button O_NEEDS_ACTION_MENU = new Button("O_NEEDS_ACTION_MENU");
+	public static final Button O_ACCEPTED_MENU = new Button("O_ACCEPTED_MENU");	
+	public static final Button O_DECLINED_MENU = new Button("O_DECLINED_MENU");
 	
 	public static final Button B_OPEN_THIS_INSTANCE = new Button("B_OPEN_THIS_INSTANCE");
 	public static final Button B_OPEN_THE_SERIES = new Button("B_OPEN_THE_SERIES");
@@ -488,6 +492,13 @@ public class Button {
 	public static final Button C_SATURDAY_WORK_HOUR		= new Button("C_SATURDAY_WORK_HOUR");
 
    //Calendar poups
+	
+	public static final Button B_SAVE_SEND_UPDATES = new Button("B_SAVE_SEND_UPDATES");
+	public static final Button B_DONTSAVE_KEEP_OPEN = new Button("B_DONTSAVE_KEEP_OPEN");
+	public static final Button B_DISCARD_CLOSE = new Button("B_DISCARD_CLOSE");
+    public static final Button B_NEXT_WEEK = new Button("B_NEXT_WEEK ");
+	public static final Button O_TAG_APPT = new Button("O_TAG_APPT");
+	
 
 	public static final Button B_SEARCH_LOCATION = new Button("B_SEARCH_LOCATION");
 	public static final Button B_SELECT_LOCATION = new Button("B_SELECT_LOCATION");
