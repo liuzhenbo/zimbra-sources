@@ -1,4 +1,4 @@
-package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.actions;
+package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.singleday;
 
 import java.util.Calendar;
 import java.util.HashMap;
@@ -74,7 +74,7 @@ public class ShowOriginal extends CalendarWorkWeekTest {
 			SleepUtil.sleepMedium();
 			ZAssert.assertTrue(window.zIsActive(), "Verify the window is active");
 			String attendeeHeader = "ATTENDEE;CN=2;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:";
-			//Verify content in Print view.
+			//Verify content in show original  view.
 			String body = window.sGetBodyText();
 			ZAssert.assertStringContains(body, apptSubject, "Verify subject in Show original view");
 			ZAssert.assertStringContains(body, apptBody, "Verify content in Show original view");
