@@ -216,6 +216,21 @@ function() {
 	return !this._controller.isReadingPaneOnRight();
 };
 
+
+ZmMailListView.prototype._getExtraStyle =
+function(item) {
+	if (!appCtxt.get(ZmSetting.COLOR_MESSAGES)) {
+		return null;
+	}
+	var color = item.getColor && item.getColor();
+	if (!color) {
+		return null;
+	}
+
+	return Dwt.createLinearGradientCss(AjxColor.lighten(color, 0.75), AjxColor.lighten(color, 0.25), "v");
+};
+
+
 ZmMailListView.prototype._getAbridgedContent =
 function(item, colIdx) {
 	// override me
@@ -1001,7 +1016,8 @@ function(ev) {
 		return;
 	}
 
-	if (!this.isMultiColumn() && (ev.event == ZmEvent.E_TAGS || ev.event == ZmEvent.E_REMOVE_ALL)) {
+	if ((!this.isMultiColumn() || appCtxt.get(ZmSetting.COLOR_MESSAGES))
+			&& (ev.event == ZmEvent.E_TAGS || ev.event == ZmEvent.E_REMOVE_ALL)) {
 		DBG.println(AjxDebug.DBG2, "ZmMailListView: TAG");
 		this.redrawItem(item);
 		ev.handled = true;
