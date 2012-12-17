@@ -85,9 +85,11 @@ public class FormApptNew extends AbsForm {
 		public static final String Ok_changes = "css=td[id='CHNG_DLG_ORG_1_button2_title']";
 		public static final String Cancel_changes = "css=td[id='CHNG_DLG_ORG_1_button1_title']";
 		public static final String AddLocation = "css=td[id$='_title']:contains('Location:')";
-		
+		public static final String addEquipment = "css=td[id$='_title']:contains('Equipment:')";
+
 		public static final String AddAttendees = "css=td[id$='_title']:contains('Attendees:')";
-		
+		public static final String EquipmentName= "css=div[class='DwtDialog'] div[id$='_content'] table tr td:nth-child(2) input";
+
 	}
 
 	public static class Field {
@@ -413,7 +415,19 @@ public class FormApptNew extends AbsForm {
 
 			// FALL THROUGH
 
-		} else if (button == Button.B_TO) {
+		} else if (button == Button.B_EQUIPMENT) {
+
+			locator = Locators.addEquipment;
+			this.sClickAt(locator, "");
+
+			this.zWaitForBusyOverlay();
+			page = new DialogFindLocation(this.MyApplication, pageCal);
+			return (page);
+
+			// FALL THROUGH
+
+		} 
+		else if (button == Button.B_TO) {
 
 			locator = Locators.AddAttendees;
 			this.sClickAt(locator, "");
