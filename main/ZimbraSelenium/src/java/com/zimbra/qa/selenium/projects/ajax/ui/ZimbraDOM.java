@@ -1,6 +1,7 @@
 package com.zimbra.qa.selenium.projects.ajax.ui;
 
 import java.util.*;
+import java.util.Map.Entry;
 
 import org.apache.log4j.*;
 import org.json.*;
@@ -43,6 +44,144 @@ public class ZimbraDOM {
 	//
 	////
 	
+	public static class JS_SHOW_IDS {
+	    public static Map<String, EnumMap<KEY,String>> ids;
+	    
+	    private JS_SHOW_IDS(){		
+	    }
+	    
+	    public static enum KEY {
+		app("app"),
+		componentName("componentName"),
+		componentType("componentType"),
+		containingView("containingView"),		
+		skinComponent("skinComponent");	
+		
+		private String key;
+
+		private KEY(final String key) {
+			this.key = key;
+		}
+
+		public String getKEY() {
+			return key;
+		}
+	    }
+	    
+	    public static final String SCRIPT = "var AjxUtil = this.browserbot.getUserWindow().top.AjxUtil; " +
+		"var AjxStringUtil = this.browserbot.getUserWindow().top.AjxStringUtil;" +
+		"var ZmId = this.browserbot.getUserWindow().top.ZmId;" +
+		"var ids = ZmId.lookup()," +
+		"len = ids.length," +
+		"backMap = ZmId._getBackMap()," +
+		"text = \"\\n\\n{\"," +
+		"i; " +
+		"for (i = 0; i < len; i++) " +
+		"{var id = ids[i].id;" +
+		"var params = ZmId._idHash[id];" +
+		"text += \"\\n\" + id + \":\" + params.description + \",\\n\";" +
+		"var paramNames = AjxUtil.keys(params).sort();" +
+		"for (var j = 0; j < paramNames.length; j++) " +
+		"{var paramName = paramNames[j];" +
+		"if (paramName === 'id' || paramName === 'description') {" +
+		"continue;" +
+		"}" +
+		"var value = params[paramName];" +
+		"if (!value) {" +
+		"continue;" +
+		"}" +
+		"value = backMap[value] ? \"ZmId.\" + backMap[value] : value;" +
+		"text += paramName + \":\" + value + \",\\n\";}text + \"}\\n\\n\"}";
+	
+
+	    public static String jsShowIds() throws HarnessException{
+		try {
+		    return ClientSessionFactory.session().selenium().getEval(SCRIPT);
+		} catch (Exception ex) {
+		      throw new HarnessException(ex);				
+		}
+	    }	    
+	
+	    public static Map<String, EnumMap<KEY,String>> getMapFromScript() throws HarnessException{
+	  		final Map<String, EnumMap<KEY,String>> map = new HashMap<String, EnumMap<KEY,String>>(); 
+	  		String resp;
+	  		try {
+	  		    resp = jsShowIds().replaceAll("[\n\\{\\}]","");
+	  		    final List<String> args = Arrays.asList(resp.split(","));
+	  		    EnumMap<KEY,String> emap = null;
+	  		    for(String arg : args){
+	  			final String[] arr = arg.trim().split(":");
+	  		        if(arr[0].startsWith("zcs")){
+	  		            	emap = new EnumMap<KEY,String>(KEY.class); 
+	  		      		map.put(arr[0],emap);
+	  		      		continue;
+	  		        }
+	  		      if(arr[0].contains(KEY.app.getKEY())){
+	  			emap.put(KEY.app, arr[1]);
+	  		      }else if(arr[0].contains(KEY.componentName.getKEY())){
+	  			emap.put(KEY.componentName, arr[1]);
+	  		      }else if(arr[0].contains(KEY.componentType.getKEY())){
+	  			emap.put(KEY.componentType, arr[1]);
+	  		      }else if(arr[0].contains(KEY.containingView.getKEY())){
+	  			emap.put(KEY.containingView, arr[1]);
+	  		      }else if(arr[0].contains(KEY.skinComponent.getKEY())){
+	  			emap.put(KEY.skinComponent, arr[1]);
+	  		      }
+	  		    }
+	  		      
+	  		  } catch (Exception ex) {
+	  		      throw new HarnessException(ex);				
+	  		  }
+	  		ids = map;
+	  		
+	  		return ids;
+	  	    }
+
+	    public static JSONObject getJsonFromScript() throws HarnessException{
+		final JSONObject jso = new JSONObject(); 
+		String resp;
+		try {
+		    resp = jsShowIds().replaceAll("[\n\\{\\}]","");
+		    final List<String> args = Arrays.asList(resp.split(","));
+		    for(String arg : args){
+			final String[] arr = arg.trim().split(":");
+		        jso.accumulate(arr[0], arr[1]);
+		    }		    
+		  } catch (Exception ex) {
+		      throw new HarnessException(ex);				
+		  }
+		return jso;
+	    }
+		        
+	    public static String getId(final String... params) throws HarnessException{
+		if(params == null || !(params.length > 0)){
+		    logger.info("...empty arguments list");
+		}
+		String id = null;
+		if(ids == null || ids.isEmpty()){
+		    ZimbraDOM.JS_SHOW_IDS.getMapFromScript();
+		}
+		
+		final Set<Entry<String, EnumMap<KEY, String>>> set = ids.entrySet();
+		for(Entry <String, EnumMap<KEY, String>> en : set){
+		    final EnumMap<KEY, String> emap = en.getValue();
+		    Collection<String> vals = emap.values();
+		    List<String> pars = Arrays.asList(params);
+		    if(vals.containsAll(pars)){
+			id = en.getKey();
+			logger.info("\n id = " + id + 
+				"\n params provided: " + pars +
+				"\n available values: " + vals);
+			break;
+		    }		    
+		}
+		if(id==null){
+		    logger.info("...id is null ");
+		}
+		return id;
+	    }
+	    
+	}
 	
 	public static class KEYS {
 		
