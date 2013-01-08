@@ -39,6 +39,7 @@ public class PageTasks extends AbsTab {
 		public static final String zNewTagMenuItem= "css=div[id='zb__NEW_MENU_NEW_TAG'] tr[id^='POPUP_'] td[id$='_title']";
 		//public static final String zMarkAsCompleted = "css=div#zb__TKL-main__MARK_AS_COMPLETED";
 		public static final String zMarkAsCompleted = "css=div[id^='ztb__TKL'] tr[id^='ztb__TKL'] td[id$='_title']:contains('Mark as Completed')";
+		public static String zMarkAsCompletedId = null;
 		public static final String zNewTaskMenuItem ="css=div[id='zb__NEW_MENU_NEW_TASK'] td[id$='_title']";
 		public static final String zNewTaskFolderMenuItem ="css=div[id='zb__NEW_MENU_NEW_TASK_FOLDER'] tr[id^='POPUP_'] td[id$='_title']";
 		public static final String zDeleteTaskMenuItem ="css=div[id='zm__Tasks'] tr[id='POPUP_DELETE']";
@@ -48,6 +49,7 @@ public class PageTasks extends AbsTab {
 		public static final String zMoveTaskDropDown="css=td#zcs5_dropdown>div";
 		public static final String zEditTaskMenuItem ="css=div[id='zm__Tasks'] tr[id='POPUP_EDIT']";
 		//public static final String zFilterByTaskDropDown="css=tr[id='ztb__TKL-main_items'] div[id='zb__TKL-main__SORTBY_MENU'] td[id='zb__TKL-main__SORTBY_MENU_dropdown']>div";
+		public static String zFilterByTaskDropDownId = null;
 		public static final String zFilterByTaskDropDown="css=tr[id='ztb__TKL-main_items'] div[id='zb__TKL-main__VIEW_MENU'] td[id='zb__TKL-main__VIEW_MENU_dropdown']>div";
 	//	public static final String zToDoListTaskMenuItem ="css=div[id^='POPUP_DWT'] div[id^='DWT'] tr[id='POPUP_TKVT']";
 		public static final String zToDoListTaskMenuItem ="css=div[id='TKVT'] tr[id='POPUP_TKVT']";
@@ -557,9 +559,17 @@ public class PageTasks extends AbsTab {
 		} else if (button == Button.B_TASK_FILTERBY) {
 			throw new HarnessException("implement me");
 		} else if (button == Button.B_TASK_MARKCOMPLETED) {
-			locator= Locators.zMarkAsCompleted;		
-			page = null;
-			
+		    if(Locators.zMarkAsCompletedId == null){
+			Locators.zMarkAsCompletedId = ZimbraDOM.getIdFromMap(
+		    		ZimbraDOM.APP.APP_TASKS, 
+		    		ZimbraDOM.COMPONENT_NAME.OP_MARK_AS_COMPLETED,
+		    		ZimbraDOM.COMPONENT_TYPE.WIDGET_BUTTON,
+				ZimbraDOM.CONTAINING_VIEW.VIEW_TASKLIST,
+				ZimbraDOM.SKIN_COMPONENT.SKIN_APP_TOP_TOOLBAR);
+		    }
+		    //locator = Locators.zMarkAsCompleted;
+		    locator = "css=div#"+ Locators.zMarkAsCompletedId + " td[id$='_title']";
+			page = null;			
 		} else {
 			throw new HarnessException("no logic defined for button " + button);
 		}
@@ -687,9 +697,18 @@ public class PageTasks extends AbsTab {
 		}else if (pulldown == Button.B_TASK_FILTERBY) {
 			
 			if(option==Button.O_TASK_TODOLIST){
-				
-				pulldownLocator= Locators.zFilterByTaskDropDown;
-				optionLocator=Locators.zToDoListTaskMenuItem;
+			    if(Locators.zFilterByTaskDropDownId == null){
+				Locators.zFilterByTaskDropDownId = ZimbraDOM.getIdFromMap(
+			    		ZimbraDOM.APP.APP_TASKS, 
+			    		ZimbraDOM.COMPONENT_NAME.OP_VIEW_MENU,
+			    		ZimbraDOM.COMPONENT_TYPE.WIDGET_BUTTON,
+					ZimbraDOM.CONTAINING_VIEW.VIEW_TASKLIST,
+					ZimbraDOM.SKIN_COMPONENT.SKIN_APP_TOP_TOOLBAR);
+			    }
+			    //pulldownLocator= Locators.zFilterByTaskDropDown;
+			    pulldownLocator = "css=div#"+ Locators.zFilterByTaskDropDownId + " td[id$='_dropdown']";
+		
+			    optionLocator=Locators.zToDoListTaskMenuItem;
 				
 				page=null;
 			}			

@@ -176,9 +176,7 @@
                     </c:redirect>
         		</c:when>
                 <c:when test="${client eq 'mobile'}">
-                    <jsp:forward page="/t/launch.jsp"/>
-<%--
-                        <c:set var="mobURL" value="/t/launch.jsp"/>
+                        <c:set var="mobURL" value="/m/zmain"/>
                         <c:redirect url="${mobURL}">
                             <c:forEach var="p" items="${paramValues}">
                                 <c:forEach var='value' items='${p.value}'>
@@ -188,8 +186,10 @@
                                 </c:forEach>
                             </c:forEach>
                     </c:redirect>
---%>
                 </c:when>
+	            <c:when test="${client eq 'touch'}">
+		            <jsp:forward page="/t/launch.jsp"/>
+	            </c:when>
                 <c:otherwise>
                    <jsp:forward page="/public/launchZCS.jsp"/>
                 </c:otherwise>
