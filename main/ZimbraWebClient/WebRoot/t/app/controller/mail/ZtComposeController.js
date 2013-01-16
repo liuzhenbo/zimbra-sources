@@ -38,6 +38,7 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 		var panel = this.getComposePanel(),
 			form = panel.down('formpanel'),
 			toFld = form.down('field[name=to]'),
+			subjectFld = form.down('field[name=subject]'),
 			bodyFld = form.down('field[name=body]');
 
 		form.reset();
@@ -47,7 +48,8 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 		});
 
 		toFld.setValue(msg.getReplyAddress().getFullEmail());
-		bodyFld.setValue('\n\n' + msg.get('content'));
+		subjectFld.setValue(this.getSubject(msg, 'Re:'));
+		bodyFld.setValue('\n\n' + '----- Original Message -----\n' + msg.get('content'));
 		var textarea = bodyFld.element.query('textarea')[0];
 		textarea.scrollTop = 0;
 		bodyFld.focus();
@@ -59,6 +61,7 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 			form = panel.down('formpanel'),
 			toFld = form.down('field[name=to]'),
 			ccFld = form.down('field[name=cc]'),
+			subjectFld = form.down('field[name=subject]'),
 			bodyFld = form.down('field[name=body]');
 
 		form.reset();
@@ -87,7 +90,8 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 
 		toFld.setValue(replyAddr.getFullEmail());
 		ccFld.setValue(ccAddrs.join('; '));
-		bodyFld.setValue('\n\n' + msg.get('content'));
+		subjectFld.setValue(this.getSubject(msg, 'Re:'));
+		bodyFld.setValue('\n\n' + '----- Original Message -----\n' + msg.get('content'));
 		bodyFld.focus();
 		var textarea = bodyFld.element.query('textarea')[0];
 		textarea.scrollTop = 0;
@@ -95,6 +99,26 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 
 	forward: function(msg) {
 
+		var panel = this.getComposePanel(),
+			form = panel.down('formpanel'),
+			subjectFld = form.down('field[name=subject]'),
+			bodyFld = form.down('field[name=body]');
+
+		form.reset();
+		panel.show({
+			type: 'slide',
+			direction: 'up'
+		});
+		subjectFld.setValue(this.getSubject(msg, 'Fwd:'));
+		bodyFld.setValue('\n\n' + '----- Forwarded Message -----\n' + msg.get('content'));
+		form.down('field[name=to]').focus();
+	},
+
+	getSubject: function(msg, prefix) {
+		var subject = msg.get('subject'),
+			pre = (subject.indexOf(prefix) === 0) ? '' : prefix + ' ';
+
+		return pre + subject;
 	},
 
 	onCancelCompose: function() {
