@@ -28,7 +28,7 @@ public class ZAttrProvisioning {
 
     ///// BEGIN-AUTO-GEN-REPLACE
 
-    /* build: 9.0.0_BETA1_1111 pburgu 20130117-1151 */
+    /* build: 9.0.0_BETA1_1111 pburgu 20130117-1610 */
 
     public static enum AccountCalendarUserType {
         RESOURCE("RESOURCE"),
@@ -5321,12 +5321,42 @@ public class ZAttrProvisioning {
     public static final String A_zimbraHsmPolicy = "zimbraHsmPolicy";
 
     /**
+     * Maximum Idle time in milli seconds for a connection. This is applied
+     * when waiting for a new request to be received on a connection; when
+     * reading the headers and content of a request; when writing the headers
+     * and content of a response.
+     *
+     * @since ZCS 7.2.3
+     */
+    @ZAttr(id=1428)
+    public static final String A_zimbraHttpConnectorMaxIdleTimeMillis = "zimbraHttpConnectorMaxIdleTimeMillis";
+
+    /**
      * Whether to enable http debug handler on a server
      *
      * @since ZCS 6.0.0_GA
      */
     @ZAttr(id=1043)
     public static final String A_zimbraHttpDebugHandlerEnabled = "zimbraHttpDebugHandlerEnabled";
+
+    /**
+     * Delay imposed on all requests over the rate limit, before they are
+     * considered at all. -1 = Reject request, 0 = No delay, any other value
+     * = Delay in ms
+     *
+     * @since ZCS 8.0.3
+     */
+    @ZAttr(id=1430)
+    public static final String A_zimbraHttpDosFilterDelayMillis = "zimbraHttpDosFilterDelayMillis";
+
+    /**
+     * Maximum number of requests from a connection per second. Requests in
+     * excess of this are throttled.
+     *
+     * @since ZCS 8.0.3
+     */
+    @ZAttr(id=1431)
+    public static final String A_zimbraHttpDosFilterMaxRequestsPerSec = "zimbraHttpDosFilterMaxRequestsPerSec";
 
     /**
      * number of http handler threads
@@ -5347,6 +5377,15 @@ public class ZAttrProvisioning {
      */
     @ZAttr(id=519)
     public static final String A_zimbraHttpSSLNumThreads = "zimbraHttpSSLNumThreads";
+
+    /**
+     * The maximum thread idle time in milli seconds. Threads that are idle
+     * for longer than this period may be stopped.
+     *
+     * @since ZCS 7.2.3
+     */
+    @ZAttr(id=1429)
+    public static final String A_zimbraHttpThreadPoolMaxIdleTimeMillis = "zimbraHttpThreadPoolMaxIdleTimeMillis";
 
     /**
      * IP addresses to ignore when applying Jetty DosFilter.
