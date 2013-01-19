@@ -8,7 +8,7 @@ Ext.define('ZCS.view.mail.ZtMsgListView', {
 		'ZCS.view.mail.ZtMsgView'
 	],
 
-	xtype: 'msglistview',
+	xtype: ZCS.constant.APP_MAIL + 'itemview',
 
 //	layout: 'fit',
 
@@ -18,6 +18,7 @@ Ext.define('ZCS.view.mail.ZtMsgListView', {
 		scrollable: {
 			direction: 'vertical'
 		},
+		store: 'ZtMsgStore',
 		msgList: null
 	},
 
