@@ -5,7 +5,20 @@ Ext.Loader.setPath({
 });
 //</debug>
 
+// Load templates
+Ext.require([
+	'Ext.Ajax',
+	'ZCS.common.ZtTemplate'
+], function() {
+	ZCS.common.ZtTemplate.loadTemplates();
+});
+
+// Placeholder until we get strings support
+window.ZtMsg = {};
+
+// Define and run the app
 Ext.application({
+
     name: 'ZCS',
 
     requires: [
