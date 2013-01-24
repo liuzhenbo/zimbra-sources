@@ -21,20 +21,6 @@ DEST_DIR		:= $(PERL_ROOT)/zimbramon
 DEST_LIB_DIR	:= $(DEST_DIR)/lib
 DEST_BIN_DIR	:= $(DEST_DIR)/bin
 
-MODULE_EXTUTIL_MAKEMAKER	:= \
-	ExtUtils::MakeMaker \
-	CPAN::Meta::YAML \
-	JSON::PP \
-	Parse::CPAN::Meta \
-	Version::Requirements \
-	ExtUtils::Manifest \
-	JSON::PP::Compat5006 \
-	File::Copy::Recursive \
-	version \
-	CPAN::Meta::Requirements \
-	CPAN::Meta \
-	ExtUtils::MakeMaker
-
 LOGFILE ?= ThirdParty-Perllibs.log
 
 PERL_VERSION :=	$(shell /usr/bin/perl -e 'print "$$]"')
@@ -77,23 +63,41 @@ PRE_PERL_LIBS	:= \
 	Test::Requires \
 	Try::Tiny \
 	Test::Fatal \
+	Test::Simple \
+	ExtUtils::MakeMaker \
+	CPAN::Meta::YAML \
+	JSON::PP \
+	Parse::CPAN::Meta \
+	Version::Requirements \
+	ExtUtils::Manifest \
+	JSON::PP::Compat5006 \
+	File::Copy::Recursive \
+	version \
+	CPAN::Meta::Requirements \
+	CPAN::Meta \
+	ExtUtils::MakeMaker \
 	Params::Util \
 	List::MoreUtils \
 	Sub::Install \
 	Package::DeprecationManager \
 	Package::Stash::XS \
-	Test::Simple \
 	Data::OptList \
 	Sub::Exporter \
 	MRO::Compat \
 	Task::Weaken \
-	Class::Load::XS \
 	Eval::Closure \
 	Dist::CheckConflicts \
 	Package::Stash \
 	Module::Runtime \
 	Module::Implementation \
 	Class::Load \
+	Perl::OSType \
+	Module::Metadata \
+	ExtUtils::CBuilder \
+	ExtUtils::ParseXS \
+	Test::Harness \
+	Module::Build \
+	Class::Load::XS \
 	Sub::Name \
 	Carp \
 	Sub::Exporter::Progressive \
@@ -102,6 +106,7 @@ PRE_PERL_LIBS	:= \
 	Test::Tester \
 	Test::NoWarnings \
 	Array::Compare \
+	Test::Pod \
 	Tree::DAG_Node \
 	Sub::Uplevel \
 	Test::Exception \
@@ -114,7 +119,6 @@ PERL_LIBS 	:= \
 	Scalar::Util \
 	IO::Socket::SSL \
 	Socket6 \
-	$(MODULE_EXTUTIL_MAKEMAKER) \
 	DBI \
 	Compress::Raw::Bzip2 \
 	Compress::Raw::Zlib \
@@ -144,28 +148,22 @@ PERL_LIBS 	:= \
 	LWP::UserAgent \
 	LWP::Protocol::https \
 	IO::Stringy \
-	E/ER/ERYQ/MIME-Lite-2.117.tar.gz \
+	Mail::Mailer \
+	MIME::Types \
+	MIME::Lite \
 	Locale::Maketext::Simple \
 	Params::Check \
 	Module::Load \
 	Module::CoreList \
-	Module::Metadata \
 	Module::Load::Conditional \
 	IPC::Cmd \
-	Perl::OSType \
-	ExtUtils::CBuilder \
-	S/SM/SMUELLER/ExtUtils-ParseXS-3.15.tar.gz \
-	Test::Harness \
-	D/DA/DAGOLDEN/Module-Build-0.3607.tar.gz \
 	Date::Parse \
 	Pod::Escapes \
 	Pod::Simple \
-	Test::Pod \
-	Mail::Mailer \
 	Convert::BinHex \
 	Test::Deep \
 	File::Temp \
-	D/DS/DSKOLL/MIME-tools-5.502.tar.gz \
+	MIME::Tools \
 	Class::Inspector \
 	SOAP::Lite \
 	Net::Telnet \
@@ -177,7 +175,8 @@ PERL_LIBS 	:= \
 	Devel::Symdump \
 	Pod::Coverage \
 	Test::Pod::Coverage \
-	S/SB/SBECK/Date-Manip-5.56.tar.gz \
+	Test::Inter \
+	Date::Manip \
 	Time::HiRes \
 	Math::BigInt \
 	Convert::ASN1 \
@@ -201,11 +200,11 @@ PERL_LIBS 	:= \
 	Archive::Zip  \
 	Error \
 	Mail::DKIM \
-	G/GR/GRANTM/XML-SAX-Base-1.08.tar.gz \
+	XML::SAX::Base \
 	XML::NamespaceSupport \
 	XML::SAX \
 	XML::SAX::Expat \
-	G/GR/GRANTM/XML-Simple-2.20.tar.gz \
+	XML::Simple \
 	IO::Socket::INET6 \
 	NetAddr::IP \
 	IO::Socket::IP \
@@ -215,7 +214,7 @@ PERL_LIBS 	:= \
 	DBD::SQLite
 
 NET_SSLeay := \
-	Net-SSLeay-1.49
+	Net-SSLeay-1.52
 
 CRYPT_SSLeay := \
 	Crypt-SSLeay-0.64
