@@ -110,7 +110,8 @@ PRE_PERL_LIBS	:= \
 	Tree::DAG_Node \
 	Sub::Uplevel \
 	Test::Exception \
-	Test::Warn
+	Test::Warn \
+	Socket::Linux
 
 PERL_LIBS 	:= \
 	ExtUtils::Constant \
@@ -250,7 +251,7 @@ NET_SERVER := \
 	Net-Server-2.005
 
 PERL_LDAP := \
-	perl-ldap-0.52
+	perl-ldap-0.53
 
 DBD_PERL_LIBS 	:= \
 	DBD-mysql-4.022
@@ -325,6 +326,7 @@ build:
 		echo -n "Compiling perl lib $$lib ..."; \
 		cp $(PERL_ROOT)/$$lib.tar.gz $(TMPDIR); \
 		(cd $(TMPDIR); tar xfz $$lib.tar.gz; cd $$lib; \
+		patch -g0 -N -p1 < $(PERL_ROOT)/patches/net-ldap-keepalive.patch; \
 		$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR); \
 		$(MAKE); $(MAKE) install;) >>$(LOGFILE) 2>&1; \
 		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
