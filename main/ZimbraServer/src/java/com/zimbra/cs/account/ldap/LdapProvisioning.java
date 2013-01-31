@@ -238,28 +238,15 @@ public class LdapProvisioning extends LdapProv {
     private String[] BASIC_DYNAMIC_GROUP_ATTRS;
     private String[] BASIC_GROUP_ATTRS;
 
-    private static LdapProvisioning instanceWithCache = null;
-    private static LdapProvisioning instanceWithouCache = null;
+    private static LdapProvisioning singleton = null;
 
-    private static void ensureSingleton(LdapProvisioning prov, CacheMode mode) {
-        if (mode == CacheMode.OFF) {
-            synchronized (LdapProvisioning.class) {
-                if (instanceWithouCache != null) {
-                    Zimbra.halt("Only one instance of LdapProvisioning without cache can be created",
-                            ServiceException.FAILURE("failed to instantiate LdapProvisioning", null));
-                }
-                instanceWithouCache = prov;
-            }
-        } else {
-            synchronized (LdapProvisioning.class) {
-                if (instanceWithCache != null) {
-                    // pass an exception to have the stack logged
-                    Zimbra.halt("Only one instance of LdapProvisioning with cache can be created",
-                            ServiceException.FAILURE("failed to instantiate LdapProvisioning", null));
-                }
-                instanceWithCache = prov;
-            }
+    private static synchronized void ensureSingleton(LdapProvisioning prov) {
+        if (singleton != null) {
+            // pass an exception to have the stack logged
+            Zimbra.halt("Only one instance of LdapProvisioning can be created",
+                    ServiceException.FAILURE("failed to instantiate LdapProvisioning", null));
         }
+        singleton = prov;
     }
 
     public LdapProvisioning() {
@@ -267,7 +254,7 @@ public class LdapProvisioning extends LdapProv {
     }
 
     public LdapProvisioning(CacheMode cacheMode) {
-        ensureSingleton(this, cacheMode);
+        ensureSingleton(this);
 
         useCache = true;
         if (cacheMode == CacheMode.OFF) {
@@ -1126,6 +1113,8 @@ public class LdapProvisioning extends LdapProv {
                     ocs.add(additionalObjectClasses[i]);
             }
 
+            boolean skipCountingLicenseQuota = false;
+
             /* bug 48226
              *
              * Check if any of the OCs in the backup is a structural OC that subclasses
@@ -1141,6 +1130,19 @@ public class LdapProvisioning extends LdapProv {
 
                 if (!LdapObjectClass.ZIMBRA_DEFAULT_PERSON_OC.equalsIgnoreCase(mostSpecificOC)) {
                     ocs.add(mostSpecificOC);
+                }
+
+                //calendar resource doesn't count against license quota
+                if (origAttrs.get(A_zimbraCalResType) != null) {
+                    skipCountingLicenseQuota = true;
+                }
+                if (origAttrs.get(A_zimbraIsSystemResource) != null) {
+                    entry.setAttr(A_zimbraIsSystemResource, "TRUE");
+                    skipCountingLicenseQuota = true;
+                }
+                if (origAttrs.get(A_zimbraIsExternalVirtualAccount) != null) {
+                    entry.setAttr(A_zimbraIsExternalVirtualAccount, "TRUE");
+                    skipCountingLicenseQuota = true;
                 }
             }
 
@@ -1255,8 +1257,7 @@ public class LdapProvisioning extends LdapProv {
 
             AttributeManager.getInstance().postModify(acctAttrs, acct, callbackContext);
             removeExternalAddrsFromAllDynamicGroups(acct.getAllAddrsSet(), zlc);
-            validate(ProvisioningValidator.CREATE_ACCOUNT_SUCCEEDED,
-                    emailAddress, acct);
+            validate(ProvisioningValidator.CREATE_ACCOUNT_SUCCEEDED, emailAddress, acct, skipCountingLicenseQuota);
             return acct;
         } catch (LdapEntryAlreadyExistException e) {
             throw AccountServiceException.ACCOUNT_EXISTS(emailAddress, dn, e);
@@ -2986,6 +2987,7 @@ public class LdapProvisioning extends LdapProv {
 
             zlc.deleteChildren(entry.getDN());
             zlc.deleteEntry(entry.getDN());
+            validate(ProvisioningValidator.DELETE_ACCOUNT_SUCCEEDED, zimbraId);
             accountCache.remove(acc);
         } catch (ServiceException e) {
             throw ServiceException.FAILURE("unable to purge account: "+zimbraId, e);
