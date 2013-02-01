@@ -24,13 +24,14 @@ Ext.application({
 	    'ZCS.common.ZtUtil',
 	    'ZCS.common.ZtConstants',
 	    'ZCS.common.ZtTemplate',
+	    'ZCS.common.ZtItemCache',
 	    'ZCS.common.ZtUserSession'
     ],
 
 	logger: {
 		enabled: true,
 		xclass: 'Ext.log.Logger',
-		minPriority: 'info',
+		minPriority: 'verbose',
 		writers: {
 			console: {
 				xclass: 'Ext.log.writer.Console',
@@ -85,8 +86,8 @@ Ext.application({
 
     onUpdated: function() {
         Ext.Msg.confirm(
-            "Application Update",
-            "This application has just successfully been updated to the latest version. Reload now?",
+            ZtMsg.appUpdateTitle,
+	        ZtMsg.appUpdateMsg,
             function(buttonId) {
                 if (buttonId === 'yes') {
                     window.location.reload();
