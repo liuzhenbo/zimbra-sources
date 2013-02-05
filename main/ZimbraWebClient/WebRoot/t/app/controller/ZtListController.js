@@ -22,10 +22,11 @@
  */
 Ext.define('ZCS.controller.ZtListController', {
 
-	extend: 'Ext.app.Controller',
+	extend: 'ZCS.controller.ZtBaseController',
 
 	requires: [
-		'ZCS.common.ZtSearch'
+		'ZCS.common.ZtSearch',
+		'ZCS.common.ZtClientCmdHandler'
 	],
 
 	config: {
@@ -58,18 +59,13 @@ Ext.define('ZCS.controller.ZtListController', {
 			},
 			itemPanel: {
 				showMenu: null
+			},
+			overview: {
+				logout: 'doLogout'
 			}
 		}
 	},
 
-	/**
-	 * Returns the store that holds the data this controller is managing.
-	 *
-	 * @return {Ext.data.Store}     store
-	 */
-	getStore: function() {
-		return Ext.getStore(ZCS.util.getStoreShortName(this));
-	},
 
 	/**
 	 * On launch, populate the list with items
@@ -85,17 +81,6 @@ Ext.define('ZCS.controller.ZtListController', {
 	 * @protected
 	 */
 	getItemController: function() {},
-
-	/**
-	 * Notification handling
-	 */
-	handleDeleteNotification: function(id) {
-		this.getStore().remove(item);
-	},
-	handleCreateNotification: function(create) {},
-	handleModifyNotification: function(item, modify) {
-		item.handleModifyNotification(modify);
-	},
 
 	/**
 	 * Displays the overview, which contains the folder list. Panel widths are adjusted.
@@ -146,6 +131,11 @@ Ext.define('ZCS.controller.ZtListController', {
 	 */
 	doSearch: function(query, isFromOverview) {
 
+		if (query.indexOf('$cmd:') === 0) {
+			ZCS.common.ZtClientCmdHandler.handle(query.substr(5), this.getStore().getProxy());
+			return;
+		}
+
 		this.getItemController().clear();
 		Ext.Logger.info('SearchRequest: ' + query);
 		if (isFromOverview) {
@@ -176,5 +166,12 @@ Ext.define('ZCS.controller.ZtListController', {
 		}
 
 		titlebar.setTitle(title);
+	},
+	
+	/**
+	 * Logs off the application
+	 */
+	doLogout: function() {	
+		window.location.href = "/?loginOp=logout";
 	}
 });
