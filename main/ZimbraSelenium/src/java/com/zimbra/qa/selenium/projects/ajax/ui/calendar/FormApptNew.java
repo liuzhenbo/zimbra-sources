@@ -157,7 +157,8 @@ public class FormApptNew extends AbsForm {
 		}
 
 		this.zWaitForBusyOverlay();
-
+		SleepUtil.sleepMedium();
+		
 		// Wait for the message to be delivered
 		Stafpostqueue sp = new Stafpostqueue();
 		sp.waitForPostqueue();
@@ -1168,6 +1169,23 @@ public class FormApptNew extends AbsForm {
 		   return false;
 		
 		}
+		
+	}
+	
+	public void zRequestResponseOFF()throws HarnessException {
+		// click at toolbar >> request response once to disable it	
+		this.zClickAt(Locators.ToolbarOptions, "");
+		this.zClickAt(Locators.RequestResponse, ""); //Request Response Set to OFF
+		
+	}
+	
+	public void zRequestResponseON()throws HarnessException {
+		// click at toolbar >> click at request response twice to enable it		
+		this.zClickAt(Locators.ToolbarOptions, "");
+		this.zClickAt(Locators.RequestResponse, ""); //Request Response Set to OFF
+		SleepUtil.sleepSmall();
+		this.zClickAt(Locators.ToolbarOptions, "");
+		this.zClickAt(Locators.RequestResponse, ""); //Request Response Set to ON
 		
 	}
 }

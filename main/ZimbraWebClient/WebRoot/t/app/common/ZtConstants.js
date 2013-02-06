@@ -235,6 +235,7 @@ ZCS.constant.SETTING_MARK_READ          = 'zimbraPrefMarkMsgRead';  // -1 = neve
 
 // Names of internal settings
 ZCS.constant.SETTING_CUR_SEARCH         = 'currentSearch';
+ZCS.constant.SETTING_CUR_SEARCH_ID      = 'currentSearchId';
 
 // List of all settings we care about
 ZCS.constant.SETTINGS = [
@@ -248,7 +249,8 @@ ZCS.constant.SETTINGS = [
 	ZCS.constant.SETTING_MARK_READ,
 
 	// internal
-	ZCS.constant.SETTING_CUR_SEARCH
+	ZCS.constant.SETTING_CUR_SEARCH,
+	ZCS.constant.SETTING_CUR_SEARCH_ID
 ];
 
 // Setting type; defaults to string, so just note exceptions
@@ -312,3 +314,4 @@ ZCS.constant.ADDITIONAL_MAIL_HEADERS = [
 // Useful regexes
 ZCS.constant.REGEX_NON_WHITESPACE = /\S+/;
 ZCS.constant.REGEX_SPLIT = /\r\n|\r|\n/;
+ZCS.constant.REGEX_SUBJ_PREFIX = new RegExp('^\\s*(Re|Fw|Fwd|' + ZtMsg.re + '|' + ZtMsg.fwd + '|' + ZtMsg.fw + '):' + '\\s*', 'i');
