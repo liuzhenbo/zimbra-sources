@@ -33,12 +33,11 @@ Ext.define('ZCS.controller.contacts.ZtContactController', {
 			itemPanelToolbar: 'appview #' + ZCS.constant.APP_CONTACTS + 'itempanel titlebar',
 
 			// other
-			menuButton: 'appview #' + ZCS.constant.APP_CONTACTS + 'itempanel titlebar button',
 			contactView: ZCS.constant.APP_CONTACTS + 'itemview'
 		},
 
 		menuData: [
-			{label: 'Delete', action: 'DELETE', listener: 'doDelete'}
+			{label: 'Delete', action: ZCS.constant.OP_DELETE, listener: 'doDelete'}
 		]
 	},
 

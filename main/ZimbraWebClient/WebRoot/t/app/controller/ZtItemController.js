@@ -34,10 +34,7 @@ Ext.define('ZCS.controller.ZtItemController', {
 
 		refs: {
 			// event handlers
-			itemPanelToolbar: '',
-
-			// other
-			menuButton: ''
+			itemPanelToolbar: ''
 		},
 
 		control: {
@@ -47,7 +44,8 @@ Ext.define('ZCS.controller.ZtItemController', {
 		},
 
 		item: null,
-		menu: null
+		menu: null,
+		menuButton: null
 	},
 
 	launch: function () {
@@ -69,10 +67,10 @@ Ext.define('ZCS.controller.ZtItemController', {
 
 	/**
 	 * Displays the action menu after the dropdown button on the toolbar has been tapped.
-	 * @protected
 	 */
-	doShowMenu: function() {
+	doShowMenu: function(menuButton) {
 
+		this.setMenuButton(menuButton);
 		var menu = this.getMenu();
 		if (!menu) {
 			menu = Ext.create('ZCS.common.ZtMenu');
@@ -88,7 +86,10 @@ Ext.define('ZCS.controller.ZtItemController', {
 	 */
 	clear: function() {
 		this.getItemPanelToolbar().setTitle('');
-		this.getMenuButton().hide();
+		var menuButton = this.getMenuButton();
+		if (menuButton) {
+			menuButton.hide();
+		}
 	},
 
 	/**
@@ -99,6 +100,29 @@ Ext.define('ZCS.controller.ZtItemController', {
 	showItem: function(item) {
 		this.clear();
 		this.setItem(item);
-		this.getMenuButton().show();
+		var menuButton = this.getMenuButton();
+		if (menuButton) {
+			menuButton.show();
+		}
+	},
+
+	/**
+	 * Performs a server operation on an item by setting its 'op' field and then saving it.
+	 * The value of 'op' will be used to set the 'op' field in the *ActionRequest SOAP request.
+	 *
+	 * @param {ZtItem}  item    item to act on
+	 * @param {string}  op      op to perform (eg 'trash' or 'spam')
+	 */
+	performOp: function(item, op) {
+		item = item || this.getItem();
+		if (item) {
+			item.set('op', op);
+			item.save({
+				success: function(item, operation) {
+					Ext.Logger.info('item saved successfully');
+					item.set('op', null);
+				}
+			});
+		}
 	}
 });

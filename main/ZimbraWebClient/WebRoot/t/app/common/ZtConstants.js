@@ -169,6 +169,11 @@ ZCS.constant.ID_CHATS     = '14';
 // An ID less than this indicates a system folder
 ZCS.constant.MAX_SYSTEM_ID = 255;
 
+// When showing a conv, don't show messages in these folders
+ZCS.constant.CONV_HIDE = {};
+ZCS.constant.CONV_HIDE[ZCS.constant.ID_TRASH]   = true;
+ZCS.constant.CONV_HIDE[ZCS.constant.ID_JUNK]    = true;
+
 // System folder sort order
 ZCS.constant.FOLDER_SORT_VALUE = {};
 
@@ -264,6 +269,14 @@ ZCS.constant.SETTING_VALUE[ZCS.constant.SETTING_SHOW_SEARCH] = 'false';
 // Default values for settings
 ZCS.constant.SETTING_DEFAULT = {};
 ZCS.constant.SETTING_DEFAULT[ZCS.constant.SETTING_LOCALE] = 'en_US';
+
+// Operations (generally tied to dropdown menu items)
+ZCS.constant.OP_DELETE      = 'DELETE';
+ZCS.constant.OP_FORWARD     = 'FORWARD';
+ZCS.constant.OP_MARK_READ   = 'MARK_READ';
+ZCS.constant.OP_REPLY       = 'REPLY';
+ZCS.constant.OP_REPLY_ALL   = 'REPLY_ALL';
+ZCS.constant.OP_SPAM        = 'SPAM';
 
 // Item flags
 ZCS.constant.FLAG_ATTACH			= 'a';

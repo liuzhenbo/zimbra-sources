@@ -53,7 +53,7 @@ Ext.define('ZCS.view.ZtItemPanel', {
 					iconMask: true,
 					align: 'right',
 					handler: function() {
-						this.up('titlebar').fireEvent('showMenu');
+						this.up('titlebar').fireEvent('showMenu', this);
 					},
 					hidden: true
 				}
@@ -62,7 +62,7 @@ Ext.define('ZCS.view.ZtItemPanel', {
 
 		var itemView = {
 			xtype: app + 'itemview'
-		}
+		};
 
 		this.add([
 			toolbar,

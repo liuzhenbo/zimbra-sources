@@ -36,16 +36,15 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 			itemPanelToolbar: 'appview #' + ZCS.constant.APP_MAIL + 'itempanel titlebar',
 
 			// other
-			menuButton: 'appview #' + ZCS.constant.APP_MAIL + 'itempanel titlebar button',
 			msgListView: ZCS.constant.APP_MAIL + 'itemview'
 		},
 
 		menuData: [
-			{label: ZtMsg.reply, action: 'REPLY', listener: 'doReply'},
-			{label: ZtMsg.replyAll, action: 'REPLY_ALL', listener: 'doReplyAll'},
-			{label: ZtMsg.forward, action: 'FORWARD', listener: 'doForward'},
-			{label: ZtMsg.del, action: 'DELETE', listener: 'doDelete'},
-			{label: ZtMsg.markRead, action: 'MARK_READ', listener: 'doMarkRead'}
+			{label: ZtMsg.reply, action: ZCS.constant.OP_REPLY, listener: 'doReply'},
+			{label: ZtMsg.replyAll, action: ZCS.constant.OP_REPLY_ALL, listener: 'doReplyAll'},
+			{label: ZtMsg.forward, action: ZCS.constant.OP_FORWARD, listener: 'doForward'},
+			{label: ZtMsg.del, action: ZCS.constant.OP_DELETE, listener: 'doDelete'},
+			{label: ZtMsg.markRead, action: ZCS.constant.OP_MARK_READ, listener: 'doMarkRead'}
 		]
 	},
 
@@ -59,7 +58,10 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 		this.callParent(arguments);
 		this.getItemPanelToolbar().setTitle(conv.get('subject'));
 		Ext.getStore(ZCS.util.getStoreShortName(this)).load({
-			convId: conv.getId()
+			convId: conv.getId(),
+			callback: function(records, operation, success) {
+				Ext.Logger.info('Conv load callback');
+			}
 		});
 	},
 
@@ -67,10 +69,11 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 	 * Make sure the action menu shows the appropriate action based on the unread status of this conversation.
 	 * The action will be either Mark Read or Mark Unread.
 	 */
-	doShowMenu: function() {
+	doShowMenu: function(menuButton) {
 
 		var menu = this.getMenu(),
 			label = this.getItem().get('isUnread') ? ZtMsg.markRead : ZtMsg.markUnread;
+
 		if (menu) {
 			var list = menu.down('list'),
 				store = list.getStore(),
@@ -166,7 +169,7 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 			if (store.getById(item.getId())) {
 				// if the msg was moved to Trash or Junk, remove it from the list in the item panel
 				var parsedId = ZCS.util.parseId(modify.l);
-				if (parsedId.localId === ZCS.constant.ID_TRASH || parsedId.localId === ZCS.constant.ID_JUNK) {
+				if (ZCS.constant.CONV_HIDE[parsedId.localId]) {
 					store.remove(item);
 				}
 			}
@@ -198,7 +201,7 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 						(viewingJunk && (folderId.localId === ZCS.constant.ID_JUNK))) {
 						removeConv = false;
 					}
-					else if (folderId !== ZCS.constant.ID_TRASH && folderId !== ZCS.constant.ID_JUNK) {
+					else if (!ZCS.constant.CONV_HIDE[folderId]) {
 						removeConv = false;
 					}
 					return removeConv;
