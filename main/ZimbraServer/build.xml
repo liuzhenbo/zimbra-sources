@@ -189,6 +189,9 @@
       <fileset dir="${common.jars.dir}">
         <include name="**/*.jar"/>
       </fileset>
+      <fileset dir="{common.internal.jars.dir}">
+        <include name="**/*.jar"/>
+      </fileset>
       <fileset dir="${common.dir}/jars-test">
         <include name="**/*.jar"/>
       </fileset>
@@ -1017,7 +1020,6 @@
         <include name="jaxen*.jar"/>
         <include name="jcommon*.jar"/>
         <include name="jfreechart*.jar"/>
-        <include name="junit*.jar"/>
         <include name="jzlib-1.0.7.jar"/>
         <include name="nekohtml-1.9.13.1z.jar"/>
         <include name="tnef*.jar"/>
@@ -1032,6 +1034,9 @@
         <include name="guava*.jar"/>
         <include name="log4j-*.jar"/>
         <include name="apache-log4j-extras-*.jar"/>      	
+      </fileset>
+      <fileset dir="${common.internal.jars.dir}">
+        <include name="junit*.jar"/>
       </fileset>
     </copy>
     <copy todir="${dist.jetty.dir}/common/endorsed" overwrite="true">
