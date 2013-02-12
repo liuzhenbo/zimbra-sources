@@ -33,6 +33,7 @@
 
 	<property name="common.dir" location="../ZimbraCommon" />
 	<property name="common.jars.dir" location="${common.dir}/jars" />
+	<property name="common.internal.jars.dir" location="${common.dir}/jars-internal/jars" />
 	<property name="common.classes.dir" location="../ZimbraCommon/build/classes" />
 
     <property name="soap.dir" location="../ZimbraSoap"/>
@@ -86,6 +87,9 @@
 			<include name="**/*.jar" />
 		</fileset>
 		<fileset dir="${common.jars.dir}">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="${common.internal.jars.dir}">
 			<include name="**/*.jar" />
 		</fileset>
 	</path>

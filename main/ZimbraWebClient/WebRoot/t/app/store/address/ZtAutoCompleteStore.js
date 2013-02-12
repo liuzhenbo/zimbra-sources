@@ -14,21 +14,15 @@
  */
 
 /**
- * A small model to represent an action in an action menu.
+ * This class respresents a store of contacts.
  *
- * @see ZtMenu
  * @author Conrad Damon <cdamon@zimbra.com>
- *
- * TODO: Do we want to have an 'args' field?
  */
-Ext.define('ZCS.model.ZtMenuItem', {
-	extend: 'Ext.data.Model',
+Ext.define('ZCS.store.address.ZtAutoCompleteStore', {
+
+	extend: 'Ext.data.Store',
+
 	config: {
-		fields: [
-			'id',
-			{ name: 'label', type: 'string' },      // user-visible text
-			{ name: 'action', type: 'string' },     // constant for the operation to perform
-			{ name: 'listener', type: 'auto' }      // function to run when the action is invoked
-		]
+		model: 'ZCS.model.address.ZtAutoComplete'
 	}
 });
