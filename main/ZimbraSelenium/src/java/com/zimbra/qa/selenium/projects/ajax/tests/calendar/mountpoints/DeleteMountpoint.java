@@ -1,36 +1,30 @@
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints;
 
-
 import org.testng.annotations.Test;
-
 import com.zimbra.qa.selenium.framework.items.*;
 import com.zimbra.qa.selenium.framework.items.FolderItem.SystemFolder;
 import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.*;
-import com.zimbra.qa.selenium.projects.ajax.core.AjaxCommonTest;
+import com.zimbra.qa.selenium.projects.ajax.core.CalendarWorkWeekTest;
 
-
-public class DeleteMountpoint extends AjaxCommonTest {
+public class DeleteMountpoint extends CalendarWorkWeekTest {
 
 	private ZimbraAccount Owner = null;
-	
 	
 	public DeleteMountpoint() {
 		logger.info("New "+ DeleteMountpoint.class.getCanonicalName());
 		
 		// All tests start at the login page
 		super.startingPage = app.zPageCalendar;
-		super.startingAccountPreferences = null;
 
-		
 		Owner = new ZimbraAccount();
 		Owner.provision();
 		Owner.authenticate();
-		
 	}
 	
 	@Test(	description = "Delete a mountpoint to a shared calendar (right click -> Delete)",
-			groups = { "smoke" })
+			groups = { "functional" })
+			
 	public void DeleteMountpoint_01() throws HarnessException {
 		
 		// Owner creates a folder, shares it with current user
@@ -62,16 +56,11 @@ public class DeleteMountpoint extends AjaxCommonTest {
 		FolderMountpointItem mountpoint = FolderMountpointItem.importFromSOAP(app.zGetActiveAccount(), mountpointFoldername);
 		ZAssert.assertNotNull(mountpoint, "Verify the subfolder is available");
 
-
-		
-		
-		
-		// Click Get Mail button
+		// Click to Refresh button
 		app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
 		
 		// Delete the folder using context menu
 		app.zTreeCalendar.zTreeItem(Action.A_RIGHTCLICK, Button.B_DELETE, mountpoint);
-		
 		
 		// Verify the folder is now in the trash
 		FolderItem trash = FolderItem.importFromSOAP(app.zGetActiveAccount(), SystemFolder.Trash);
@@ -79,11 +68,6 @@ public class DeleteMountpoint extends AjaxCommonTest {
 		ZAssert.assertNotNull(mountpoint, "Verify the subfolder is again available");
 		ZAssert.assertEquals(trash.getId(), mountpoint.getParentId(), "Verify the subfolder's parent is now the trash folder ID");
 		
-	}
-
-	
-	
-
-	
+	}	
 
 }

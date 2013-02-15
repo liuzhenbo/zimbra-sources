@@ -1,4 +1,4 @@
-package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints.viewer.actions;
+package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints.manager.actions;
 
 import java.util.Calendar;
 import org.testng.annotations.Test;
@@ -14,7 +14,7 @@ public class VerifyDisabledUI extends CalendarWorkWeekTest {
 		super.startingPage = app.zPageCalendar;
 	}
 	
-	@Test(description = "Verify Share Calendar, Reinvite Attendees, Forward, Delete, Move & Tag Appointment right click menus are non-functional on mountpoint appointment (read-only share)",
+	@Test(description = "Verify Share Calendar, Reply right click menus are non-functional on mountpoint appointment (manager share)",
 			groups = { "functional" })
 			
 	public void VerifyDisabledUI_01() throws HarnessException {
@@ -75,18 +75,14 @@ public class VerifyDisabledUI extends CalendarWorkWeekTest {
 		app.zTreeCalendar.zDeSelectCalendarFolder("Calendar");
 		app.zTreeCalendar.zSelectMountedFolder(mountpointname);
 		
-		// Verify Forward, Delete, Move & Tag Appointment menus are disabled
+		// Verify Reply menu is disabled
 		app.zPageCalendar.zListItem(Action.A_RIGHTCLICK, apptSubject);
-		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_REINVITE_ATTENDEES_DISABLED), "Verify 'Reinvite Attendees' menu is disabled");
-		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_FORWARD_DISABLED), "Verify 'Forward' menu is disabled");
-		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_DELETE_DISABLED), "Verify 'Delete' menu is disabled");
-		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_MOVE_DISABLED), "Verify 'Move' menu is disabled");
-		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_TAG_APPOINTMENT_DISABLED), "Verify 'Tag Appointment' menu is disabled");
+		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_REPLY_DISABLED), "Verify 'Reply' menu is disabled");
 		
 		// Verify Share Calendar menu is disabled
 		app.zTreeCalendar.zTreeItem(Action.A_RIGHTCLICK, mountpointname);
 		ZAssert.assertTrue(app.zPageCalendar.zVerifyDisabledControl(Button.O_SHARE_CALENDAR_DISABLED), "Verify 'Share Calendar' menu is disabled");
-		
+
 	}
 
 }
