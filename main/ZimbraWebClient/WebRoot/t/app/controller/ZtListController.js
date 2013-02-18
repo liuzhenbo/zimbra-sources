@@ -51,8 +51,7 @@ Ext.define('ZCS.controller.ZtListController', {
 				search: 'doSearch'
 			},
 			listView: {
-				showItem: 'doShowItem',
-				updateTitlebar: 'doUpdateTitlebar'
+				showItem: 'doShowItem'
 			},
 			folderList: {
 				search: 'doSearch'
@@ -73,7 +72,9 @@ Ext.define('ZCS.controller.ZtListController', {
 	launch: function () {
 		Ext.Logger.verbose('STARTUP: list ctlr launch - ' + ZCS.util.getClassName(this));
 		this.callParent();
-		this.getStore().load();
+		this.getStore().load({
+			callback: this.storeLoaded.bind(this, null)
+		});
 	},
 
 	/**
@@ -124,7 +125,8 @@ Ext.define('ZCS.controller.ZtListController', {
 	},
 
 	/**
-	 * Runs a search using the text in the search box as the query.
+	 * This function is the centralized kickoff for searches. It can be triggered by
+	 * typing a query into the search box, or by clicking on something in the overview.
 	 *
 	 * @param {string}      query           query to run
 	 * @param {ZtOrganizer} folder          overview folder that was tapped (optional)
@@ -147,15 +149,40 @@ Ext.define('ZCS.controller.ZtListController', {
 		ZCS.session.setSetting(ZCS.constant.SETTING_CUR_SEARCH_ID, searchId);
 
 		this.getStore().load({
-			query: query
+			query: query,
+			callback: this.storeLoaded.bind(this, query)
 		});
 	},
 
 	/**
-	 * Updates the text on the list panel's titlebar to reflect the current search results
-	 * TODO: handle tag search
+	 * After the search has run, remember it as the one backing the current list,
+	 * and set the title in the top toolbar.
+	 *
+	 * @param {string}      query       search query that produced these results
+	 * @param {array}       records
+	 * @param {Operation}   operation
+	 * @param {boolean}     success
 	 */
-	doUpdateTitlebar: function() {
+	storeLoaded: function(query, records, operation, success) {
+
+		query = query || operation.config.query;
+
+		if (query && success) {
+			var search = Ext.create('ZCS.common.ZtSearch', {
+				query: query
+			});
+			ZCS.session.setSetting(ZCS.constant.SETTING_CUR_SEARCH, search);
+			if (ZCS.session.getSetting(ZCS.constant.SETTING_SHOW_SEARCH)) {
+				ZCS.session.getCurrentSearchField().setValue(query);
+			}
+			this.updateTitlebar();
+		}
+	},
+
+	/**
+	 * Updates the text on the list panel's titlebar to reflect the current search results.
+	 */
+	updateTitlebar: function() {
 
 		var titlebar = this.getTitlebar();  // might not be available during startup
 		if (!titlebar) {
