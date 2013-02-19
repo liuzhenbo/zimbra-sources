@@ -1,6 +1,6 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * Zimbra Collaboration Suite Web Client
+ * Zimbra Collaboration Suite Server
  * Copyright (C) 2013 Zimbra, Inc.
  *
  * The contents of this file are subject to the Zimbra Public License
@@ -12,17 +12,16 @@
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
  */
+package com.zimbra.cs.index;
 
 /**
- * This class respresents a store of conversations.
- *
- * @author Conrad Damon <cdamon@zimbra.com>
+ * Unit test for {@link InMemoryHashTableIndex}.
  */
-Ext.define('ZCS.store.mail.ZtConvStore', {
 
-	extend: 'ZCS.store.ZtStore',
+public final class InMemoryHashTableIndexTest extends AbstractIndexStoreTest {
 
-	config: {
-		model: 'ZCS.model.mail.ZtConv'
-	}
-});
+    @Override
+    protected String getIndexStoreFactory() {
+        return "com.zimbra.cs.index.InMemoryHashTableSearchIndex$Factory";
+    }
+}
