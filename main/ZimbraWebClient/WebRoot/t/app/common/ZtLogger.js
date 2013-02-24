@@ -41,12 +41,16 @@ Ext.define('ZCS.common.ZtLogger', {
 			'force',        // special priority that means "always log this"
 
 			// custom levels
-			'iframe'
+			'iframe',
+			'conv'
 		]
 	},
 
 	log: function(message, priority, callerId) {
 		var custom = ZCS.session.getDebugLevel();
+		if (priority === 'deprecate' || priority === 'warn' || priority === 'error') {
+			message = '[' + priority.toUpperCase() + '] ' + message;
+		}
 		return (!custom || priority === 'force' || priority === custom) ? this.callParent(arguments) : this;
 	}
 
