@@ -410,8 +410,14 @@ ngx_http_upstream_get_zmauth_peer(ngx_peer_connection_t *pc,
         for (i = 0; i < len; ++i) {
             hash = (hash * 113 + zmp->addr[i]) % 6271;
         }
-        hash = (hash * 113 + zmp->porth) % 6271;
-        hash = (hash * 113 + zmp->portl) % 6271;
+
+	/* 
+	 * since client IP PORT can change, client IP PORTS are not
+	 * used to generate HASH
+	 */
+
+        //hash = (hash * 113 + zmp->porth) % 6271;
+        //hash = (hash * 113 + zmp->portl) % 6271;
 
         zmp->hash = hash;
 
