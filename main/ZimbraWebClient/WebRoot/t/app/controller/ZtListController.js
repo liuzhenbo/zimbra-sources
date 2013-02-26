@@ -68,7 +68,7 @@ Ext.define('ZCS.controller.ZtListController', {
 	 */
 	launch: function () {
 
-		var defaultQuery = ZCS.session.getSetting(ZCS.constant.SETTING_INITIAL_SEARCH);
+		var defaultQuery = this.getDefaultQuery();
 
 		Ext.Logger.verbose('STARTUP: list ctlr launch - ' + ZCS.util.getClassName(this));
 		this.callParent();
@@ -79,8 +79,8 @@ Ext.define('ZCS.controller.ZtListController', {
 		});
 
 		this.getStore().load({
-			query: this.getDefaultQuery(),
-			callback: this.storeLoaded.bind(this, null)
+			query: defaultQuery,
+			callback: this.storeLoaded.bind(this, null, null)
 		});
 	},
 
@@ -100,14 +100,17 @@ Ext.define('ZCS.controller.ZtListController', {
 
 	/**
 	 * Displays the overview, which contains the folder list. Panel widths are adjusted.
-	 * @protected
+	 *
+	 * @param {boolean}     show        if true, show the overview
 	 */
-	doShowFolders: function() {
-		Ext.Logger.verbose("Folders event caught");
+	doShowFolders: function(show) {
+
 		var overview = this.getOverview(),
 			itemPanel = this.getItemPanel();
 
-		if (overview.isHidden()) {
+		show = (show === true || show === false) ? show : overview.isHidden();
+
+		if (show) {
 			itemPanel.setWidth('50%');
 			// animation clears space then slides in (not great)
 			overview.show({
@@ -176,7 +179,7 @@ Ext.define('ZCS.controller.ZtListController', {
 
 		this.getStore().load({
 			query: query,
-			callback: this.storeLoaded.bind(this, query)
+			callback: this.storeLoaded.bind(this, query, folder)
 		});
 	},
 
@@ -185,11 +188,12 @@ Ext.define('ZCS.controller.ZtListController', {
 	 * and set the title in the top toolbar.
 	 *
 	 * @param {string}      query       search query that produced these results
+	 * @param {ZtOrganizer} folder      overview folder that was tapped (optional)
 	 * @param {array}       records
 	 * @param {Operation}   operation
 	 * @param {boolean}     success
 	 */
-	storeLoaded: function(query, records, operation, success) {
+	storeLoaded: function(query, folder, records, operation, success) {
 
 		query = query || operation.config.query;
 
@@ -202,6 +206,9 @@ Ext.define('ZCS.controller.ZtListController', {
 				ZCS.session.getCurrentSearchField().setValue(query);
 			}
 			this.updateTitlebar();
+			if (folder && records.length) {
+				this.doShowFolders(false);
+			}
 		}
 	},
 
