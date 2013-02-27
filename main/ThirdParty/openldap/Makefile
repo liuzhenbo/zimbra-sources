@@ -70,6 +70,7 @@ build:
 	--enable-overlays=mod \
 	--enable-debug \
 	--enable-spasswd \
+	--localstatedir=/opt/zimbra/data/ldap/state \
 	--enable-crypt; \
 	LD_RUN_PATH=$(OPENSSL_LIB_DIR):$(CYRUS_LIB_DIR):$(LIBTOOL_LIB_DIR) $(MAKE) depend; \
 	LD_RUN_PATH=$(OPENSSL_LIB_DIR):$(CYRUS_LIB_DIR):$(LIBTOOL_LIB_DIR) $(MAKE) $(MAKEARGS); \
@@ -86,11 +87,12 @@ build:
 	rm -f $(ZIMBRA_HOME)/openldap-$(LDAP_VERSION)/sbin/openldap/noopsrch.a; \
 	chmod 755 $(ZIMBRA_HOME)/openldap-$(LDAP_VERSION)/sbin/openldap/noopsrch.la;)
 	(cd $(ZIMBRA_HOME); ln -s openldap-$(LDAP_VERSION) openldap)
+	rm -rf $(ZIMBRA_HOME)/data; rm -f $(ZIMBRA_HOME)/openldap-$(LDAP_VERSION)/etc/openldap/DB_CONFIG.example
 
 tar:
 	mkdir -p $(P4_ROOT)/ThirdPartyBuilds/$(BUILD_PLATFORM)/openldap
 	(cd $(ZIMBRA_HOME); tar czf $(LDAP_LIB_TGZ_TARGET) openldap-$(LDAP_VERSION)/lib)
-	(cd $(ZIMBRA_HOME); tar czf $(LDAP_TGZ_TARGET) openldap-$(LDAP_VERSION)/bin openldap-$(LDAP_VERSION)/etc openldap-$(LDAP_VERSION)/include openldap-$(LDAP_VERSION)/sbin openldap-$(LDAP_VERSION)/share openldap-$(LDAP_VERSION)/var)
+	(cd $(ZIMBRA_HOME); tar czf $(LDAP_TGZ_TARGET) openldap-$(LDAP_VERSION)/bin openldap-$(LDAP_VERSION)/etc openldap-$(LDAP_VERSION)/include openldap-$(LDAP_VERSION)/sbin openldap-$(LDAP_VERSION)/share)
 
 p4edit: $(LDAP_TGZ_TARGET)
 	p4 add $(LDAP_TGZ_TARGET)
