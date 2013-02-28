@@ -1,11 +1,20 @@
---- mysql-5.5.13/cmake/ssl.cmake.orig	2011-05-11 04:54:11.000000000 -0700
-+++ mysql-5.5.13/cmake/ssl.cmake	2011-06-23 12:48:04.732930639 -0700
-@@ -71,7 +71,7 @@
-     INCLUDE(CheckSymbolExists)
-     CHECK_SYMBOL_EXISTS(SHA512_DIGEST_LENGTH "openssl/sha.h" 
-                         HAVE_SHA512_DIGEST_LENGTH)
--    IF(OPENSSL_FOUND AND CRYPTO_LIBRARY AND HAVE_SHA512_DIGEST_LENGTH)
-+    IF(OPENSSL_FOUND AND CRYPTO_LIBRARY)
-       SET(SSL_SOURCES "")
-       SET(SSL_LIBRARIES ${OPENSSL_LIBRARIES} ${CRYPTO_LIBRARY})
-       SET(SSL_INCLUDE_DIRS ${OPENSSL_INCLUDE_DIR})
+--- mysql-5.6.10/cmake/ssl.cmake.orig	2013-02-28 12:13:32.940437119 -0800
++++ mysql-5.6.10/cmake/ssl.cmake	2013-02-28 12:13:46.080437640 -0800
+@@ -140,7 +140,7 @@
+ 
+     # On mac this list is <.dylib;.so;.a>
+     # We prefer static libraries, so we revert it here.
+-    LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
++    #LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
+     MESSAGE(STATUS "suffixes <${CMAKE_FIND_LIBRARY_SUFFIXES}>")
+     FIND_LIBRARY(OPENSSL_LIBRARIES
+                  NAMES ssl ssleay32 ssleay32MD
+@@ -148,7 +148,7 @@
+     FIND_LIBRARY(CRYPTO_LIBRARY
+                  NAMES crypto libeay32
+                  HINTS ${OPENSSL_ROOT_DIR}/lib)
+-    LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
++    #LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
+ 
+     # Verify version number. Version information looks like:
+     #   #define OPENSSL_VERSION_NUMBER 0x1000103fL
