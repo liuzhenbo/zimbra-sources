@@ -51,7 +51,24 @@ Ext.define('ZCS.controller.ZtMainController', {
 	 * Logs off the application
 	 */
 	doLogout: function() {
-		window.location.href = "/?loginOp=logout";
+        var qs = location.search;
+        var pairs = [];
+        var j = 0;
+        var logoutUrl;
+        if (qs) {
+            var qsArgs = qs.split("&");
+            for (var i = 0; i < qsArgs.length; i++) {
+                var f = qsArgs[i].split("=");
+                if (f[0] != 'loginOp') {
+                    pairs[j++] = [f[0], f[1]].join("=");
+                }
+            }
+            pairs[j] = ["loginOp", "logout"].join("=");
+            logoutUrl = "/" + pairs.join("&");
+        }  else {
+            logoutUrl = "/?loginOp=logout";
+        }
+		window.location.href = logoutUrl;
 	},
 
 	/**

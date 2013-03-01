@@ -33,8 +33,8 @@ public class ZimbraAPI
     // Values
     internal const int INLINE_LIMIT = 4000;     // smaller than this limit, we'll inline; larger, we'll upload
 
-    string[] specialFolders = new string[20];//{};
-    string[] EnspecialFolders = {
+    //string[] specialFolders = new string[20];//{};
+    string[] specialFolders = {
         "", "/MAPIRoot", "/MAPIRoot/Inbox",
         "/MAPIRoot/Deleted Items",
         "/MAPIRoot/Junk E-Mail", "/MAPIRoot/Sent Items",
@@ -44,7 +44,7 @@ public class ZimbraAPI
         "/MAPIRoot/Emailed Contacts", "/MAPIRoot/Chats",
         "/MAPIRoot/Tasks"
     };
-    string[] DespecialFolders = {
+    /*string[] DespecialFolders = {
         "", "/MAPIRoot", "/MAPIRoot/Posteingang",
         "/MAPIRoot/Papierkorb",
         "/MAPIRoot/Spam", "/MAPIRoot/Gesendet",
@@ -53,7 +53,7 @@ public class ZimbraAPI
         "/MAPIRoot/Kalender", "", "/MAPIRoot/Wiki",
         "/MAPIRoot/Mailempf\u00e4nger", "/MAPIRoot/Chats",
         "/MAPIRoot/Aufgaben"
-    };
+    };*/
     char[] specialCharacters = { ':','/','"'};
 
 
@@ -120,7 +120,7 @@ public class ZimbraAPI
         loglevel = level;
         dFolderMap = new Dictionary<string, string>();
         ReplaceSlash = replaceslash;
-        switch (lang)
+       /* switch (lang)
         {
             case 1033:
                 {
@@ -140,7 +140,7 @@ public class ZimbraAPI
                 }
                 break;
 
-        }
+        }*/
         
         
     }
@@ -2997,17 +2997,18 @@ public class ZimbraAPI
                     FileAccess.Write);
             StreamWriter w = new StreamWriter(fs);
             if( request)
-            w.WriteLine("Soap Request -------------------");
+            w.WriteLine(DateTime.Now + "" +"Soap Request -------------------");
             else
-                w.WriteLine("Soap Response -------------------");
+                w.WriteLine(DateTime.Now+ ""+ "Soap Response -------------------");
             w.WriteLine(message);
             w.WriteLine("\n");
             w.Close();
             bReturn = true;
         }
-        catch (Exception)
+        catch (Exception e)
         {
             bReturn = false;
+            Log.err(" ZimbraAPI::Exception is WriteSoapLog ", e.Message);
         }
     }
     return bReturn;
