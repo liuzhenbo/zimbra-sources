@@ -1,0 +1,15 @@
+--- mysql-5.6.10/scripts/mysql_install_db.pl.in.orig	2013-03-01 16:38:31.447101001 -0800
++++ mysql-5.6.10/scripts/mysql_install_db.pl.in	2013-03-01 16:39:20.107109126 -0800
+@@ -428,7 +428,11 @@
+ # This will be the default config file
+ # ----------------------------------------------------------------------
+ 
+-$config_file= "$basedir/my.cnf";
++if ( $opt->{'defaults-file'}) {
++  $config_file= $opt->{'defaults-file'}
++} else {
++  $config_file= "$basedir/my.cnf";
++}
+ 
+ my $cfg_template= find_in_basedir($opt,"file","my-default.cnf",
+ 				  "share","share/mysql","support-files");

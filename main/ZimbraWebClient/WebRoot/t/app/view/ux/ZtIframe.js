@@ -82,6 +82,10 @@ Ext.define('ZCS.view.ux.ZtIframe', {
 			},
 			touchEventListener = function (ev) {
 
+				if (ev.srcElement.nodeName === 'A') {
+					return true;
+				}
+
 				// clone the event for our window / document
 
 				// This function is based on Apple's implementation, it may differ in other touch based browsers.
@@ -124,7 +128,7 @@ Ext.define('ZCS.view.ux.ZtIframe', {
 				return false;
 			};
 
-		html = ZCS.util.html.hideCidImages(html);
+		html = ZCS.htmlutil.hideCidImages(html);
 
 		if (doc) {
 			doc.open();
@@ -165,8 +169,8 @@ Ext.define('ZCS.view.ux.ZtIframe', {
 		}
 
 		var contentHeight = Math.max(docEl.scrollHeight, contentHeight),
-			computedHeight = ZCS.util.html.getHeightFromComputedStyle(body, doc),
-			childrenHeight = ZCS.util.html.getHeightFromChildren(body, doc);
+			computedHeight = ZCS.htmlutil.getHeightFromComputedStyle(body, doc),
+			childrenHeight = ZCS.htmlutil.getHeightFromChildren(body, doc);
 		Ext.Logger.iframe('IFRAME content heights: ' + [contentHeight, docEl.scrollHeight, computedHeight, childrenHeight].join(' / '));
 
 		// Since IFRAMEs are reused, childrenHeight appears to be the most reliable measure of the height

@@ -14,20 +14,17 @@
  */
 
 /**
- * This class represents a setting, which usually maps to a user preference.
- *
- * @author Conrad Damon <cdamon@zimbra.com>
- * @adapts ZmSetting
+ * This class is a special organizer, so that we can create another store
+ * out of the ZtUserSession organizer data.
+
+ * @author Macy Abbey
  */
-Ext.define('ZCS.model.ZtSetting', {
-
+Ext.define('ZCS.model.ZtFolder', {
+	extend: 'ZCS.model.ZtOrganizer',
 	config: {
-		name: '',
-		type: '',
-		value: null
-	},
-
-	constructor: function(config) {
-		this.initConfig(config);
+		/**
+		 * This is a hack to trick ext into allowing us to create two ZtOrganizers with the same 'id' property
+		 */
+		idProperty: 'foo'
 	}
-});
+})
