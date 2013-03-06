@@ -131,6 +131,14 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 	},
 
 	/**
+	 * Disable "Tag" action if user doesn't have any tags.
+	 */
+	enableMenuItems: function() {
+		var tags = ZCS.session.getOrganizerDataByAppAndOrgType(ZCS.constant.APP_MAIL, ZCS.constant.ORG_TAG);
+		this.getMenu().enableItem(ZCS.constant.OP_TAG, tags && tags.length > 0);
+	},
+
+	/**
 	 * Saves the item and tags it.
 	 */
 	saveItemTag: function (tag, item) {
@@ -204,6 +212,7 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 	 * @param {ZtMailItem}   item     mail item
 	 */
 	doDelete: function(item) {
+		this.lastDeletedItem = item;
 
 		item = item || this.getItem();
 
@@ -213,7 +222,13 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 			if (item.get('type') === ZCS.constant.ITEM_CONVERSATION) {
 				ZCS.app.getConvListController().removeConv(item);
 			}
+			//TODO: Where should we get trash from? ZtUserSession in ZtUserOrganizers?
+			ZCS.app.fireEvent('showToast', Ext.String.format(ZtMsg.moveMessage, 'Trash'), this.undoDelete, this);
 		});
+	},
+
+	undoDelete: function () {
+
 	},
 
 	/**

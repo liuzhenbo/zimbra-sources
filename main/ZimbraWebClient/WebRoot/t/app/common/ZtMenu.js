@@ -14,20 +14,79 @@
  */
 
 /**
+ * A small model to represent an action in an action menu.
+ *
+ * TODO: Do we want to have an 'args' field?
+ */
+Ext.define('ZCS.model.ZtMenuItem', {
+	extend: 'Ext.data.Model',
+	config: {
+		fields: [
+			{ name: 'label',    type: 'string' },   // user-visible text
+			{ name: 'action',   type: 'string' },   // constant for the operation to perform
+			{ name: 'listener', type: 'auto' }      // function to run when the action is invoked
+		]
+	}
+});
+
+/**
+ * A menu list component that supports calling a configured listener for each item.
+ */
+Ext.define('ZCS.model.ZtMenuList', {
+
+	extend: 'Ext.dataview.List',
+
+	xtype: 'menulist',
+
+	config: {
+		//Let this have scroll so that it will paint the real height of list items.
+		autoScroll: true,
+		variableHeights: true,
+		// itemHeight: this.getDefaultItemHeight(),
+		store: {
+			model: 'ZCS.model.ZtMenuItem'
+		},
+		listeners: {
+			itemtap: function(list, index, target, record, e) {
+				var action = record.get('action'),
+					menu = this.up('panel');
+				Ext.Logger.verbose('Menu click: ' + action);
+				var listener = record.get('listener');
+				if (listener && !target.getDisabled()) {
+					menu.popdown();
+					listener();
+					e.stopEvent();
+				}
+			}
+		}
+	},
+
+	// The two overrides below are so that absolutely nothing happens when the user taps on a
+	// disabled menu item. Don't show the pressed or the selected background color.
+	onItemTrigger: function(me, index) {
+		if (!me.getItemAt(index).getDisabled()) {
+			this.callParent(arguments);
+		}
+	},
+	doItemTouchStart: function(me, index, target, record) {
+		if (!me.getItemAt(index).getDisabled()) {
+			this.callParent(arguments);
+		}
+	}
+});
+
+/**
  * A simple dropdown menu. It's a panel that contains a list with actions that can be tapped.
  *
  * @see ZtMenuItem
+ * @see ZtMenuList
  * @author Conrad Damon <cdamon@zimbra.com>
- *
- * TODO: See if this can be implemented more simply as a combo box with a hidden text field.
  */
 Ext.define('ZCS.common.ZtMenu', {
 
 	extend: 'Ext.Panel',
 
-	requires: [
-		'ZCS.model.ZtMenuItem'
-	],
+//	xtype: 'menu',
 
 	config: {
 		layout: 'fit',
@@ -38,36 +97,27 @@ Ext.define('ZCS.common.ZtMenu', {
 		defaultItemHeight: 47,
 		menuItemTpl: '{label}',
 		maxHeight: 350,
-		// the reference component is typically the button that triggered display of this menu
-		referenceComponent: null
+
+		/**
+		 * @required
+		 *
+		 * @cfg {Component} referenceComponent
+		 *
+		 * The reference component is used to position the menu as a dropdown menu. It is typically the
+		 * button that triggered display of the menu.
+		 */
+		referenceComponent: null,
+
+		enableItemsFn: null,
+		enableItemsScope: null
 	},
 
 	initialize: function() {
 		var me = this;
 
 		this.add({
-			xtype: 'list',
-			//Let this have scroll so that it will paint the real height of list items.
-			autoScroll: true,
-			variableHeights: true,
-			// itemHeight: this.getDefaultItemHeight(),
-			store: {
-				model: 'ZCS.model.ZtMenuItem'
-			},
-			itemTpl: this.getMenuItemTpl(),
-			listeners: {
-				itemtap: function(list, index, target, record, e) {
-					var action = record.get('action'),
-						menu = this.up('panel');
-					Ext.Logger.verbose('Menu click: ' + action);
-					var listener = record.get('listener');
-					if (listener) {
-						menu.popdown();
-						listener();
-						e.stopEvent();
-					}
-				}
-			}
+			xtype: 'menulist',
+			itemTpl: this.getMenuItemTpl()
 		});
 	},
 
@@ -75,6 +125,7 @@ Ext.define('ZCS.common.ZtMenu', {
 	 *
 	 * Adjusts the menus height to fit all items, or be the max height
 	 * whichever is smaller.
+	 * TODO: adjust width
 	 */
 	adjustHeight: function () {
 		var menu = this,
@@ -122,10 +173,20 @@ Ext.define('ZCS.common.ZtMenu', {
 	 * Displays the menu.
 	 */
 	popup: function(positioning) {
-		var list = this.down('list');
+
+		var list = this.down('list'),
+			enableItemsFn = this.getEnableItemsFn();
+
 		list.deselect(list.getSelection()); // clear the previous selection
 		this.showBy(this.getReferenceComponent(), positioning || 'tr-br?');
 		this.adjustHeight();
+
+		if (enableItemsFn) {
+			// Not happy with this (timeout of 0 does not work, so kinda racy),
+			// but there's no good event fired when entire list has rendered.
+			// May cause flicker first time menu is displayed.
+			Ext.defer(enableItemsFn, 200, this.getEnableItemsScope() || this);
+		}
 	},
 
 	/**
@@ -133,5 +194,17 @@ Ext.define('ZCS.common.ZtMenu', {
 	 */
 	popdown: function() {
 		this.hide();
+	},
+
+	enableItem: function(action, enabled) {
+
+		var list = this.down('list'),
+			store = list.getStore(),
+			item = list.getItemAt(store.find('action', action));
+
+		if (item) {
+			item.setDisabled(!enabled);
+			item.setCls(enabled ? '' : 'zcs-menuitem-disabled');
+		}
 	}
 });

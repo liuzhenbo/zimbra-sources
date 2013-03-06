@@ -51,7 +51,7 @@ Ext.define('ZCS.controller.mail.ZtConvListController', {
 				newItem: 'doCompose'
 			},
 			listView: {
-				itemswipe: 'doDelete'
+				itemswipe: 'showDelete'
 			}
 		},
 
@@ -84,6 +84,72 @@ Ext.define('ZCS.controller.mail.ZtConvListController', {
 		toSelect = conversationStore.getAt(currentIndex);
 		list.select(toSelect, false);
 	},
+
+	showDelete: function (list, index, convItem, record, e, eOpts) {
+		var convEl = convItem.element,
+			convElBox = convEl.getBox(),
+			swipeDiv = Ext.String.format(
+				ZCS.template.ConvListSwipeToDelete,
+				convElBox.width,
+				convElBox.height
+			),
+			swipeElm = Ext.dom.Element.create({
+				html: swipeDiv
+			}),
+			dockItem = convEl.down('.x-dock'),
+			anim = Ext.create('Ext.Anim');
+
+
+
+		dockItem.hide();
+
+
+		convEl.insertFirst(swipeElm);
+
+		swipeElm.on('tap', function (event, node, options, eOpts) {
+			if (event.target.className === 'zcs-swipe-delete') {
+				ZCS.app.fireEvent('deleteMailItem', record);
+				anim.run(swipeElm, {
+					from: {
+						opacity: 1
+					},
+					to: {
+						opacity: 0
+					},
+					duration: 500,
+					after: function () {
+						dockItem.show();
+						swipeElm.destroy();
+					}
+				});
+			}
+
+			if (event.target.className === 'zcs-swipe-spam') {
+				ZCS.app.fireEvent('moveMailItemToSpam', record);
+				anim.run(swipeElm, {
+					from: {
+						opacity: 1
+					},
+					to: {
+						opacity: 0
+					},
+					duration: 500,
+					after: function () {
+						dockItem.show();
+						swipeElm.destroy();
+					}
+				});
+			}
+		});
+
+		swipeElm.on('swipe', function () {
+			dockItem.show();
+			swipeElm.destroy();
+		});
+
+
+	},
+
 
 	/**
 	 * Handle a newly created conv. Add it to view if user is viewing Inbox.
@@ -129,7 +195,7 @@ Ext.define('ZCS.controller.mail.ZtConvListController', {
 
 		// regenerate addresses and senders (the possibly truncated string in the list view)
 		if (modify.e) {
-			modify.addresses = ZCS.model.mail.ZtMailItem.convertAddresses(modify.e);
+			modify.addresses = ZCS.model.mail.ZtMailItem.convertAddressJsonToModel(modify.e);
 			modify.senders = ZCS.mailutil.getSenders(modify.addresses);
 		}
 
