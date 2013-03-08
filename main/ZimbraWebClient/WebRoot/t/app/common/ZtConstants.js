@@ -29,12 +29,36 @@ Ext.define('ZCS.common.ZtConstants', {
 
 	alternateClassName: 'ZCS.constant',
 
+	/**
+	 * Returns a "reversed" map, with the keys and values switched.
+	 *
+	 * @param {Object}  map     hash map
+	 * @return {Object} reversed map
+	 * @private
+	 */
 	getBackMap: function(map) {
 		var backMap = {}, key;
 		for (key in map) {
 			backMap[map[key]] = key;
 		}
 		return backMap;
+	},
+
+	/**
+	 * Creates a list of the constants whose property name starts with the given prefix.
+	 *
+	 * @param {String}  prefix      prefix to look for
+	 * @return {Array}  list of constants
+	 * @private
+	 */
+	makeList: function(prefix) {
+		var list = [];
+		Ext.Object.each(ZCS.constant, function(prop) {
+			if (prop.indexOf(prefix) === 0) {
+				list.push(ZCS.constant[prop]);
+			}
+		});
+		return list;
 	}
 });
 
@@ -282,12 +306,7 @@ ZCS.constant.SETTING_FORWARD_USE_PREFIX         = 'FORWARD_USE_PREFIX';
 ZCS.constant.SETTING_FORWARD_INCLUDE_HEADERS    = 'FORWARD_INCLUDE_HEADERS';
 ZCS.constant.SETTING_REST_URL                   = 'REST_URL';
 
-ZCS.constant.SETTINGS = [];
-Ext.Object.each(ZCS.constant, function(prop) {
-	if (prop.indexOf('SETTING_') === 0) {
-		ZCS.constant.SETTINGS.push(ZCS.constant[prop]);
-	}
-});
+ZCS.constant.SETTINGS = ZCS.constant.makeList('SETTING_');
 
 // Setting type; defaults to string, so just note exceptions
 ZCS.constant.SETTING_TYPE = {};
@@ -355,16 +374,9 @@ ZCS.constant.FLAG_ISDRAFT 			= 'd';
 ZCS.constant.FLAG_ISSENT			= 's';
 ZCS.constant.FLAG_REPLIED			= 'r';
 ZCS.constant.FLAG_UNREAD			= 'u';
+ZCS.constant.FLAG_INVITE			= 'v';
 
-ZCS.constant.ALL_FLAGS = [
-	ZCS.constant.FLAG_FLAGGED,
-	ZCS.constant.FLAG_ATTACH,
-	ZCS.constant.FLAG_UNREAD,
-	ZCS.constant.FLAG_REPLIED,
-	ZCS.constant.FLAG_FORWARDED,
-	ZCS.constant.FLAG_ISSENT,
-	ZCS.constant.FLAG_ISDRAFT
-];
+ZCS.constant.ALL_FLAGS = ZCS.constant.makeList('FLAG_');
 
 // Map flag to item property
 ZCS.constant.FLAG_PROP = {};
@@ -375,6 +387,7 @@ ZCS.constant.FLAG_PROP[ZCS.constant.FLAG_ISDRAFT] 			= 'isDraft';
 ZCS.constant.FLAG_PROP[ZCS.constant.FLAG_ISSENT]			= 'isSent';
 ZCS.constant.FLAG_PROP[ZCS.constant.FLAG_REPLIED]			= 'isReplied';
 ZCS.constant.FLAG_PROP[ZCS.constant.FLAG_UNREAD]			= 'isUnread';
+ZCS.constant.FLAG_PROP[ZCS.constant.FLAG_INVITE]			= 'isInvite';
 
 //ZCS.constant.PROP_FLAG = ZCS.constant.getBackMap(ZCS.constant.FLAG_PROP);
 
@@ -453,6 +466,17 @@ ZCS.constant.INVITE_NOTES_SEPARATOR = '*~*~*~*~*~*~*~*~*~*';
 ZCS.constant.OP_ACCEPT      = 'ACCEPT';
 ZCS.constant.OP_TENTATIVE   = 'TENTATIVE';
 ZCS.constant.OP_DECLINE     = 'DECLINE';
+
+// Participation status (there are others we can add if needed)
+ZCS.constant.PSTATUS_ACCEPTED   = 'AC';
+ZCS.constant.PSTATUS_TENTATIVE  = 'TE';
+ZCS.constant.PSTATUS_DECLINED   = 'DE';
+
+// Text describing participation status
+ZCS.constant.PSTATUS_TEXT = {};
+ZCS.constant.PSTATUS_TEXT[ZCS.constant.PSTATUS_ACCEPTED]    = ZtMsg.inviteAccepted;
+ZCS.constant.PSTATUS_TEXT[ZCS.constant.PSTATUS_TENTATIVE]   = ZtMsg.inviteAcceptedTentatively;
+ZCS.constant.PSTATUS_TEXT[ZCS.constant.PSTATUS_DECLINED]    = ZtMsg.inviteDeclined;
 
 // Canned invite reply text based on response action
 ZCS.constant.INVITE_REPLY_TEXT = {};

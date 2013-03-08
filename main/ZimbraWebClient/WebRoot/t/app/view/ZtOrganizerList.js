@@ -28,7 +28,9 @@ Ext.define('ZCS.view.ZtOrganizerList', {
 
 	config: {
 
-		 // Show the folder's child list.
+		cls: 'zcs-folder-list',
+
+		// Show the folder's child list.
 		onItemDisclosure: function(record, item, index, e) {
 
 			// This event is scoped to the sub-list that caught it, so we need to get the top-level nested
