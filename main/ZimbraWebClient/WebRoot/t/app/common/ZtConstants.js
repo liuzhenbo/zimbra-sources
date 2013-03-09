@@ -84,8 +84,13 @@ ZCS.constant.APPS = [
 ];
 
 // Turn features on/off
+ZCS.constant.ADD_ATTACHMENT = "add_attachment";
+
 ZCS.constant.IS_ENABLED = {};
-ZCS.constant.IS_ENABLED[ZCS.constant.APP_CONTACTS]  = true;
+ZCS.constant.IS_ENABLED[ZCS.constant.APP_CONTACTS]  = false;
+ZCS.constant.IS_ENABLED[ZCS.constant.ADD_ATTACHMENT] = false;
+
+
 
 // Text for tab bar
 ZCS.constant.TAB_TITLE = {};
@@ -416,9 +421,11 @@ ZCS.constant.REGEX_SIG = /^(- ?-+)|(__+)\r?$/;
 ZCS.constant.REGEX_HDR = /^\s*\w+:/;
 ZCS.constant.REGEX_COLON = /\S+:$/;
 ZCS.constant.REGEX_IMG_SRC_CID = /<img([^>]*)\ssrc=["']cid:/gi;
+ZCS.constant.REGEX_URL = /((telnet:)|((https?|ftp|gopher|news|file):\/\/)|(www\.[\w\.\_\-]+))[^\s\xA0\(\)\<\>\[\]\{\}\'\"]*/i;
 
 // URL paths
 ZCS.constant.PATH_MSG_FETCH = '/service/home/~/';
+ZCS.constant.IMAGE_URL_BASE = '/img/zimbra/Img';
 
 // Default height of IFRAME element
 ZCS.constant.DEFAULT_IFRAME_HEIGHT = 150;

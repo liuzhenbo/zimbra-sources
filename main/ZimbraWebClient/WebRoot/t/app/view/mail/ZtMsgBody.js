@@ -88,6 +88,7 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 		var me = this,
 			html = msg.getContentAsHtml(this.getId()),
 			isInvite = msg.get('isInvite'),
+			container = this.htmlContainer,
 			iframe = this.iframe;
 
 		if (!isLast && !isInvite) {
@@ -99,8 +100,21 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 		this.setMsg(msg);
 		this.setUsingIframe(msg.hasHtmlPart() && !isInvite);
 
+		// Sencha Touch reuses list items, so hide any extra components
+		if (this.attachmentsArea) {
+			this.attachmentsArea.hide();
+		}
+		if (this.infoBar) {
+			this.infoBar.hide();
+			this.hiddenImages = null;
+		}
+
 		if (this.getUsingIframe()) {
 			Ext.Logger.conv('Use IFRAME for [' + msg.get('fragment') + ']');
+			if (container) {
+				container.setHtml('');
+				container.hide();
+			}
 			if (!iframe) {
 				iframe = this.iframe = new ZCS.view.ux.ZtIframe({
 					name: 'ZCSIframe-' + this.up('msgview').getId()
@@ -112,12 +126,8 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 
 				this.add(iframe);
 			}
-			this.setHtml('');
 			iframe.setContent(html);
 
-			if (this.infoBar) {
-				this.infoBar.hide();
-			}
 			// We hide external images if user wants us to, or this is Spam, and the user hasn't
 			// already pressed the button to display them.
 			var parsedId = ZCS.util.parseId(msg.get('folderId')),
@@ -128,9 +138,6 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 				hideExternalImages = (!showExternalImages || isSpam) && !isTrusted && !imagesShown;
 
 			this.hiddenImages = this.fixImages(msg, iframe.getBody(), hideExternalImages);
-			if (this.hiddenImages.length > 0) {
-				this.showInfoBar();
-			}
 
 			iframe.show();
 		}
@@ -139,7 +146,23 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 			if (iframe) {
 				iframe.hide();
 			}
-			this.setHtml(html);
+			if (!container) {
+				container = this.htmlContainer = Ext.create('Ext.Component', {
+					cls: 'zcs-html-container'
+				});
+				this.add(this.htmlContainer);
+			}
+			container.setHtml(html);
+			container.show();
+		}
+
+		var attInfo = msg.getAttachmentInfo();
+		if (attInfo.length > 0) {
+			this.showAttachments(attInfo);
+		}
+
+		if (this.hiddenImages && this.hiddenImages.length > 0) {
+			this.showInfoBar(this.attachmentsArea ? 1 : 0);
 		}
 	},
 
@@ -153,7 +176,7 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 	 * @param {Element}         containerEl             top-level element of DOM
 	 * @param {boolean}         hideExternalImages      if true, hide external images
 	 *
-	 * @return {Boolean}    true if any external images were hidden
+	 * @return {Array}    list of hidden images
 	 */
 	fixImages: function(msg, containerEl, hideExternalImages) {
 
@@ -232,7 +255,7 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 			if (value.indexOf('cid:') === 0) {
 				// image came as a related part keyed by Content-ID
 				var cid = '<' + decodeURIComponent(value.substr(4)) + '>';
-				value = msg.getPartUrl('contentId', cid);
+				value = msg.getPartUrlByField('contentId', cid, 'foundInMsgBody');
 				if (value) {
 					el.setAttribute(attr, value);
 					imgChanged = true;
@@ -248,7 +271,7 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 			}
 			else if (pnValue) {
 				// image came as a related part keyed by Content-Location
-				value = msg.getPartUrl('contentLocation', value);
+				value = msg.getPartUrlByField('contentLocation', value, 'foundInMsgBody');
 				if (value) {
 					el.setAttribute(attr, value);
 					imgChanged = true;
@@ -281,8 +304,11 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 	/**
 	 * Shows a section below the msg header that allows the user to press a button to load
 	 * external images.
+	 *
+	 * @param {int}     index       index at which to insert component if creating it
+	 * @private
 	 */
-	showInfoBar: function() {
+	showInfoBar: function(index) {
 
 		if (!this.infoBar) {
 			this.infoBar = Ext.create('Ext.Container', {
@@ -309,7 +335,7 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 					}
 				]
 			});
-			this.insert(0, this.infoBar);
+			this.insert(index || 0, this.infoBar);
 		}
 		else {
 			this.infoBar.show();
@@ -351,5 +377,35 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 		var msgId = this.getMsg().getId();
 		ZCS.view.mail.ZtMsgBody.externalImagesShown[msgId] = true;
 		this.infoBar.hide();
+	},
+
+	/**
+	 * Shows a section below the msg header with a bubble for each attachment.
+	 */
+	showAttachments: function(attInfo) {
+
+		var area = this.attachmentsArea;
+		if (!area) {
+			area = this.attachmentsArea = Ext.create('Ext.Component', {
+				cls: 'zcs-attachments'
+			});
+			this.insert(0, this.attachmentsArea);
+		}
+		else {
+			area.show();
+		}
+
+		var html = [],
+			idx = 0,
+			ln = attInfo.length, i;
+
+		for (i = 0; i < ln; i++) {
+			html[idx++] = ZCS.view.mail.ZtMsgBody.attachmentTpl.apply(attInfo[i]);
+		}
+		area.setHtml(html.join(''));
 	}
-});
+},
+	function (thisClass) {
+		thisClass.attachmentTpl = Ext.create('Ext.XTemplate', ZCS.template.Attachment);
+	}
+);
