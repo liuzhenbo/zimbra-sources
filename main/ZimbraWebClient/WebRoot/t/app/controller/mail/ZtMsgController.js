@@ -31,22 +31,16 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 		refs: {
 			msgHeader: 'msgheader',
 			msgBody: 'msgbody',
-			msgFooter: 'msgfooter',
 			msgView: 'msgview'
 		},
 
 		control: {
 			msgHeader: {
-				toggleView: 'doToggleView'
+				toggleView: 'doToggleView',
+				menuTap: 'doShowMenu'
 			},
 			msgBody: {
 				inviteReply: 'doInviteReply'
-			},
-			msgFooter: {
-				reply: 'doReply',
-				replyAll: 'doReplyAll',
-				delete: 'doDelete',
-				showMenu: 'doShowMenu'
 			}
 		},
 
@@ -56,6 +50,7 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 			{label: ZtMsg.markRead, action: ZCS.constant.OP_MARK_READ, listener: 'doMarkRead'},
 			{label: ZtMsg.move, action: ZCS.constant.OP_MOVE, listener: 'doMove'},
 			{label: ZtMsg.markSpam, action: ZCS.constant.OP_SPAM, listener: 'doSpam'},
+			{label: ZtMsg.flag, action: ZCS.constant.OP_FLAG, listener: 'doFlag'},
 			{label: ZtMsg.tag, action: ZCS.constant.OP_TAG, listener: 'doTag'}
 		]
 	},
