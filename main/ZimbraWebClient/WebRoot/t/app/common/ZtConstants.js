@@ -84,13 +84,11 @@ ZCS.constant.APPS = [
 ];
 
 // Turn features on/off
-ZCS.constant.ADD_ATTACHMENT = "add_attachment";
+ZCS.constant.ADD_ATTACHMENT = 'add_attachment';
 
 ZCS.constant.IS_ENABLED = {};
 ZCS.constant.IS_ENABLED[ZCS.constant.APP_CONTACTS]  = false;
 ZCS.constant.IS_ENABLED[ZCS.constant.ADD_ATTACHMENT] = false;
-
-
 
 // Text for tab bar
 ZCS.constant.TAB_TITLE = {};
@@ -106,6 +104,24 @@ ZCS.constant.OVERVIEW_TITLE[ZCS.constant.APP_CONTACTS]   = ZtMsg.addrbooks;
 ZCS.constant.NEW_ITEM_ICON = {};
 ZCS.constant.NEW_ITEM_ICON[ZCS.constant.APP_MAIL]       = 'compose';
 ZCS.constant.NEW_ITEM_ICON[ZCS.constant.APP_CONTACTS]   = 'plus';
+
+// Buttons in toolbar at top of item panel
+ZCS.constant.ITEM_BUTTONS = {};
+ZCS.constant.ITEM_BUTTONS[ZCS.constant.APP_MAIL]        = [
+	{ icon: 'reply',        event: 'reply' },
+	{ icon: 'replytoall',   event: 'replyAll' },
+	{ icon: 'trash',        event: 'delete' },
+	{ icon: 'arrow_down',   event: 'showMenu' }
+];
+ZCS.constant.ITEM_BUTTONS[ZCS.constant.APP_CONTACTS]    = [
+	{ icon: 'trash',        event: 'delete' },
+	{ icon: 'arrow_down',   event: 'showMenu' }
+];
+
+// Display states for a message view header
+ZCS.constant.HDR_COLLAPSED  = 'collapsed';
+ZCS.constant.HDR_EXPANDED   = 'expanded';
+ZCS.constant.HDR_DETAILED   = 'detailed';
 
 // Item types as known by server
 ZCS.constant.ITEM_CONVERSATION      = 'conversation';
