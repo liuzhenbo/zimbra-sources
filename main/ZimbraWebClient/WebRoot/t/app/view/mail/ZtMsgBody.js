@@ -87,7 +87,8 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 
 		var me = this,
 			isInvite = msg.get('isInvite'),
-			html = msg.getContentAsHtml(this.getId(), !isLast && !isInvite),
+			trimQuotedText = !isLast && !isInvite,
+			html = msg.getContentAsHtml(this.getId(), trimQuotedText),
 			container = this.htmlContainer,
 			iframe = this.iframe;
 
@@ -104,6 +105,8 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 			this.infoBar.hide();
 			this.hiddenImages = null;
 		}
+
+		html = ZCS.htmlutil.trimAndWrapContent(html);
 
 		if (this.getUsingIframe()) {
 			Ext.Logger.conv('Use IFRAME for [' + msg.get('fragment') + ']');
@@ -122,6 +125,10 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 
 				this.add(iframe);
 			}
+			else {
+				this.remove(iframe);
+			}
+
 			iframe.setContent(html);
 
 			// We hide external images if user wants us to, or this is Spam, and the user hasn't
@@ -309,15 +316,14 @@ Ext.define('ZCS.view.mail.ZtMsgBody', {
 		if (!this.infoBar) {
 			this.infoBar = Ext.create('Ext.Container', {
 				layout: {
-					type: 'vbox',
+					type: 'hbox',
 					align: 'center',
 					pack: 'center'
 				},
-				height: 80,
 				cls: 'zcs-info-bar',
 				items: [
 					{
-						flex: 1,
+						flex: 2,
 						html: ZtMsg.imagesNotLoaded
 					},
 					{
