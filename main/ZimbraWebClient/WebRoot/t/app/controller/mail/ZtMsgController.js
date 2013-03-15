@@ -41,8 +41,9 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 				tagTap:     'doShowMenu'
 			},
 			msgBody: {
-				inviteReply:    'doInviteReply',
-				attachmentTap:  'doShowAttachment'
+				inviteReply:        'doInviteReply',
+				attachmentTap:      'doShowAttachment',
+				toggleQuotedText:   'doToggleQuotedText'
 			}
 		},
 
@@ -167,8 +168,8 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 		var replyBody = invite.getSummary(true) + ZCS.constant.INVITE_REPLY_TEXT[action] + '<br><br>';
 
 		msg.createMime(replyBody, true);
-		msg.isInviteReply = true;
 		msg.save({
+			isInviteReply: true,
 			success: function () {
 				ZCS.app.fireEvent('showToast', ZtMsg.invReplySent);
 			}
@@ -190,5 +191,12 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 		if (msg && tagId) {
 			this.tagItem(msg, tagId, true);
 		}
+	},
+
+	doToggleQuotedText: function(msgBody) {
+		var msgView = this.getMsgView(),
+			msg = msgView.getMsg();
+
+		msgView.renderBody(null, !msgBody.showingQuotedText);
 	}
 });

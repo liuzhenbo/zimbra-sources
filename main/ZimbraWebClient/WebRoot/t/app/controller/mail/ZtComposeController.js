@@ -79,7 +79,13 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 		menu.popup();
 	},
 
+	/**
+	 * Compose a new message, or edit a draft message.
+	 *
+	 * @param {ZtMailMsg}   msg     (optional) draft message
+	 */
 	compose: function(msg) {
+
 		var ccAddresses = null,
 			bccAddresses = null,
 			toAddresses = null,
@@ -158,22 +164,27 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 
 	/**
 	 * Show the compose form, prepopulating any parameterized fields
+	 *
+	 * @param {Array}       toFieldAddresses    addresses for To: field
+	 * @param {Array}       ccFieldAddresses    addresses for Cc: field
+	 * @param {String}      subject             message subject
+	 * @param {String}      body                message body
+	 * @param {ZtMailMsg}   msg                 (optional) draft message
 	 */
-	showComposeForm: function (toFieldAddresses, ccFieldAddresses, subject, body, existingMsg) {
+	showComposeForm: function (toFieldAddresses, ccFieldAddresses, subject, body, msg) {
 
 		var panel = this.getComposePanel(),
 			form = panel.down('formpanel'),
 			toFld = form.down('contactfield[name=to]'),
 			ccFld = form.down('contactfield[name=cc]'),
 			subjectFld = form.down('field[name=subject]'),
-			bodyFld = form.down('#body'),
-			editor = bodyFld.element.query('.zcs-editable')[0];
+			editor = this.getEditor();
 
-		panel.setMsg(existingMsg);
+		panel.setMsg(msg);
 
 		panel.resetForm();
 
-		if (ccFieldAddresses) {
+		if (ccFieldAddresses && ccFieldAddresses.length) {
 			panel.showCc();
 		}
 
@@ -186,11 +197,11 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 			}
 		});
 
-		if (toFieldAddresses) {
+		if (toFieldAddresses && toFieldAddresses.length) {
 			toFld.addBubbles(toFieldAddresses);
 		}
 
-		if (ccFieldAddresses) {
+		if (ccFieldAddresses && ccFieldAddresses.length) {
 			ccFld.addBubbles(ccFieldAddresses);
 		}
 
@@ -200,7 +211,7 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 
 		editor.innerHTML = body || '';
 
-		if (!toFieldAddresses) {
+		if (!(toFieldAddresses && toFieldAddresses.length)) {
 			toFld.focusInput();
 		} else if (!subject) {
 			subjectFld.focus();
@@ -210,8 +221,6 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 		}
 
 		ZCS.htmlutil.resetWindowScroll();
-
-
 	},
 
 	/**
@@ -227,15 +236,56 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 	/**
 	 * @private
 	 */
-	doCancel: function() {
+	getEditor: function() {
 		var panel = this.getComposePanel(),
 			form = panel.down('formpanel'),
 			bodyFld = form.down('#body'),
 			editor = bodyFld.element.query('.zcs-editable')[0];
 
-		//Remove this style so it doesn't interfere with the next layout
-		Ext.fly(editor).removeCls('zcs-fully-editable');
+		return editor;
+	},
 
+	/**
+	 * @private
+	 */
+	doCancel: function() {
+
+		var editor = this.getEditor(),
+			me = this;
+
+		if (editor.innerHTML) {
+			Ext.Msg.show({
+				title: ZtMsg.warning,
+				message: ZtMsg.saveDraftWarning,
+				buttons: [
+					{ text: ZtMsg.yes,      itemId: 'yes',  ui: 'action' },
+					{ text: ZtMsg.no,       itemId: 'no' },
+					{ text: ZtMsg.cancel,   itemId: 'cancel' }
+				],
+				fn: function(buttonId) {
+					Ext.Logger.info('Compose cancel shield button: ' + buttonId);
+					if (buttonId === 'yes') {
+						me.doSaveDraft();
+						me.endComposeSession();
+					}
+					else if (buttonId === 'no') {
+						me.endComposeSession();
+					}
+				}
+			});
+		}
+		else {
+			this.endComposeSession();
+		}
+	},
+
+	/**
+	 * @private
+	 */
+	endComposeSession: function() {
+		var editor = this.getEditor();
+		// Remove this style so it doesn't interfere with the next layout
+		Ext.fly(editor).removeCls('zcs-fully-editable');
 		this.getComposePanel().hide();
 	},
 
@@ -244,16 +294,15 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 	 */
 	doSend: function() {
 		var msg = this.getMessageModel();
-		msg.isDraft = false;
 		msg.save();
 		this.getComposePanel().hide();
 	},
 
 	doSaveDraft: function () {
 		var msg = this.getMessageModel();
-		msg.isDraft = true;
 		this.getComposePanel().setMsg(msg);
 		msg.save({
+			isDraft: true,
 			success: function () {
 				ZCS.app.fireEvent('showToast', ZtMsg.draftSaved);
 			}
@@ -264,7 +313,7 @@ Ext.define('ZCS.controller.mail.ZtComposeController', {
 
 		var	existingMsg = this.getComposePanel().getMsg(),
 			values = this.getComposeForm().getValues(),
-			editor = this.getComposePanel().down('#body').element.query('.zcs-editable')[0],
+			editor = this.getEditor(),
 			action = this.getAction(),
 			isNewCompose = (action === ZCS.constant.OP_COMPOSE),
 			origMsg = !isNewCompose && this.getOrigMsg();

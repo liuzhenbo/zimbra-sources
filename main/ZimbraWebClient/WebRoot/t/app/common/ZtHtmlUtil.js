@@ -108,13 +108,30 @@ Ext.define('ZCS.common.ZtHtmlUtil', {
 	 * @param {Element}     el          an element
 	 * @param {Document}    doc         its owning document
 	 *
-	 * @return {int}    the height of the element
+	 * @return {Number}    the height of the element
 	 */
 	getHeightFromComputedStyle: function(el, doc) {
+		return this.getComputedStyle(el, doc, "height");
+	},
+
+	/**
+	 * Calculates an element's height based on its computed style.
+	 *
+	 * @param {Element}     el          an element
+	 * @param {Document}    doc         its owning document
+	 *
+	 * @return {Number}    the width of the element
+	 */
+	getWidthFromComputedStyle: function(el, doc) {
+		return this.getComputedStyle(el, doc, "width");
+	},
+
+	getComputedStyle: function (el, doc, attr) {
 		doc = doc || window.document;
 		var styleObj = doc.defaultView.getComputedStyle(el);
-		return parseInt(styleObj.height);
+		return parseInt(styleObj[attr]);
 	},
+
 
 	/**
 	 * Calculates an element's height by summing the heights of its child nodes.
@@ -224,17 +241,16 @@ Ext.define('ZCS.common.ZtHtmlUtil', {
 	 * @param {String}  html        HTML as a string
 	 * @return {String}     trimmed and wrapped HTML
 	 */
-	trimAndWrapContent: function(html, trailingHtml) {
+	trimAndWrapContent: function(html) {
 
 		html = ZCS.htmlutil.trimHtml(html);
-		trailingHtml = trailingHtml || '';
 
 		if (/<body/i.test(html)) {
 			html = html.replace(/(<body[^>]*>)/, '$1<div>')
-					   .replace('<\/body>', '</body>' + trailingHtml + '</div>');
+					   .replace('<\/body>', '</body></div>');
 		}
 		else {
-			html = '<div>' + html + trailingHtml + '</div>';
+			html = '<div>' + html + '</div>';
 		}
 
 		return html;

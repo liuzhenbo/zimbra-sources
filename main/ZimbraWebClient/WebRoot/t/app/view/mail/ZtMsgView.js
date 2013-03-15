@@ -87,14 +87,14 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 		this.down('msgheader').render(this.getMsg());
 	},
 
-	renderBody: function(isLast) {
+	renderBody: function(isLast, showQuotedText) {
 		this.down('msgbody').on('msgContentResize', function () {
 			this.updateHeight();
 		}, this, {
 			single: true
 		});
 
-		this.down('msgbody').render(this.getMsg(), isLast);
+		this.down('msgbody').render(this.getMsg(), isLast, showQuotedText);
 	},
 
 	/**
@@ -116,13 +116,13 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 	updateExpansion: function() {
 		if (this.getExpanded()) {
 			this.down('msgbody').show();
-		}
-		else {
+		} else {
 			this.down('msgbody').hide();
 		}
 	},
 
 	setReadOnly: function(isReadOnly) {
+		this.readOnly = isReadOnly;
 		if (!isReadOnly) {
 			this.updateExpansion();
 		}

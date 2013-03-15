@@ -39,7 +39,7 @@
 <template id='CollapsedMsgHeader'>
 	<tpl>
 		<div class='zcs-mail-msgHdr collapsed'>
-			<div class='zcs-msgHdr-person'></div>
+		 	<div class='zcs-msgHdr-person' style='{imageStyle}'></div>
 			<tpl if='addrs.FROM'>
 			<div class='zcs-msgHdr-fromBubble'>
 				<tpl for='addrs.FROM'>
@@ -58,7 +58,7 @@
 <template id='ExpandedMsgHeader'>
 	<tpl>
 		<div class='zcs-mail-msgHdr expanded'>
-			<div class='zcs-msgHdr-person'></div>
+		 	<div class='zcs-msgHdr-person' style='{imageStyle}'></div>
 			<tpl if='addrs.FROM'>
 				<div class='zcs-msgHdr-fromBubble'>
 					<tpl for='addrs.FROM'>
@@ -82,7 +82,7 @@
 <template id='DetailedMsgHeader'>
 	<tpl>
 		<div class='zcs-mail-msgHdr detailed'>
-			<div class='zcs-msgHdr-person'></div>
+		 	<div class='zcs-msgHdr-person' style='{imageStyle}'></div>
 			<tpl if='addrs.FROM'>
 				<div class='zcs-msgHdr-fromBubble'>
 					<tpl for='addrs.FROM'>
@@ -234,5 +234,11 @@
 </template>
 
 <template id='QuotedLink'>
-<div class='zcs-quoted-link' id='{id}'>{[ZtMsg.showQuotedText]}</div>
+	<div class='zcs-quoted-link'>
+	<tpl if='show'>
+		{[ZtMsg.showQuotedText]}
+	<tpl else>
+		{[ZtMsg.hideQuotedText]}
+	</tpl>
+	</div>
 </template>
