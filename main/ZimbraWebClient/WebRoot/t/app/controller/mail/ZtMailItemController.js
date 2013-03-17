@@ -103,7 +103,7 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 	 * Make sure the action menu shows the appropriate action based on the unread status of this conversation.
 	 * The action will be either Mark Read or Mark Unread.
 	 */
-	doShowMenu: function(menuButton) {
+	doShowMenu: function(menuButton, params) {
 
 		var itemPanel = menuButton.up('.itempanel');
 		if (!itemPanel) {
@@ -112,37 +112,49 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 		}
 		this.setActiveMailComponent(itemPanel);
 
-		var menuName = menuButton.menuName,
-			menu = this.getMenu(menuName),
-			item = this.getItem(),
-			unreadLabel = item.get('isUnread') ? ZtMsg.markRead : ZtMsg.markUnread,
-			flagLabel = item.get('isFlagged') ? ZtMsg.unflag : ZtMsg.flag;
+		var menuName = params.menuName;
 
-		if (menu) {
-			var list = menu.down('list'),
-				store = list.getStore(),
-				unreadAction = list.getItemAt(store.find('action', 'MARK_READ')),
-				flagAction = list.getItemAt(store.find('action', 'FLAG'));
+		if (menuName === ZCS.constant.MENU_CONV || menuName === ZCS.constant.MENU_MSG) {
+			var	menu = this.getMenu(menuName),
+				item = this.getItem(),
+				unreadLabel = item.get('isUnread') ? ZtMsg.markRead : ZtMsg.markUnread,
+				flagLabel = item.get('isFlagged') ? ZtMsg.unflag : ZtMsg.flag,
+				spamLabel = (item.get('folderId') === ZCS.constant.ID_JUNK) ? ZtMsg.markNotSpam : ZtMsg.markSpam;
 
-			if (unreadAction) {
-				unreadAction.getRecord().set('label', unreadLabel);
+			if (menu) {
+				var list = menu.down('list'),
+					store = list.getStore(),
+					unreadAction = list.getItemAt(store.find('action', ZCS.constant.OP_MARK_READ)),
+					flagAction = list.getItemAt(store.find('action', ZCS.constant.OP_FLAG)),
+					spamAction = list.getItemAt(store.find('action', ZCS.constant.OP_SPAM));
+;
+				if (unreadAction) {
+					unreadAction.getRecord().set('label', unreadLabel);
+				}
+				if (flagAction) {
+					flagAction.getRecord().set('label', flagLabel);
+				}
+				if (spamAction) {
+					spamAction.getRecord().set('label', spamLabel);
+				}
 			}
-			if (flagAction) {
-				flagAction.getRecord().set('label', flagLabel);
+			else {
+				// first time showing menu, change data since menu not ready yet
+				var menuData = this.getMenuConfig(menuName);
+				Ext.each(menuData, function(menuItem) {
+					if (menuItem.action === ZCS.constant.OP_MARK_READ) {
+						menuItem.label = unreadLabel;
+					}
+					if (menuItem.action === ZCS.constant.OP_FLAG) {
+						menuItem.label = flagLabel;
+					}
+					if (menuItem.action === ZCS.constant.OP_SPAM) {
+						menuItem.label = spamLabel;
+					}
+				}, this);
 			}
 		}
-		else {
-			// first time showing menu, change data since menu not ready yet
-			var menuData = this.getMenuConfig(menuName);
-			Ext.each(menuData, function(menuItem) {
-				if (menuItem.action === 'MARK_READ') {
-					menuItem.label = unreadLabel;
-				}
-				if (menuItem.action === 'FLAG') {
-					menuItem.label = flagLabel;
-				}
-			}, this);
-		}
+
 		this.callParent(arguments);
 	},
 
@@ -176,27 +188,16 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 	 */
 	saveItemMove: function (folder, item) {
 
-		var data = {
-			op: 'move',
-			l:  folder.get('id')
-		};
+		var folderId = folder.get('id'),
+			me = this,
+			data = {
+				op: 'move',
+				l:  folderId
+			};
 
-		this.performOp(item, data, function(item, operation) {
-			var isConversation = item instanceof ZCS.model.mail.ZtConv,
-				isMessage = item instanceof ZCS.model.mail.ZtMailMsg,
-				conv;
-
-			if (isMessage) {
-				conv = ZCS.cache.get(item.get('convId'));
-			} else {
-				conv = item;
-			}
-
-			if (!isMessage || conv.get('numMsgs') === 1) {
-				ZCS.app.getConvListController().removeConv(conv);
-			}
+		this.performOp(item, data, function() {
+			me.processMove(item, folderId);
 		});
-
 	},
 
 	/**
@@ -227,23 +228,35 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 	 * @param {ZtMailItem}   item     mail item
 	 */
 	doDelete: function(item) {
+
 		this.lastDeletedItem = item;
 
 		item = item || this.getItem();
 
-		this.performOp(item, 'trash', function (item) {
-			//Because a conversation trash can occur when messages are not present in the UI,
-			//our standard notificaiton logic won't work, so manually force a removal.
-			if (item.get('type') === ZCS.constant.ITEM_CONVERSATION) {
-				ZCS.app.getConvListController().removeConv(item);
-			}
-			//TODO: Where should we get trash from? ZtUserSession in ZtUserOrganizers?
-			ZCS.app.fireEvent('showToast', Ext.String.format(ZtMsg.moveMessage, 'Trash'), this.undoDelete, this);
+		var me = this;
+
+		this.performOp(item, 'trash', function() {
+			me.processMove(item, ZCS.constant.ID_TRASH);
 		});
 	},
 
-	undoDelete: function () {
+	/**
+	 * If we moved a conv, we can't rely on notifications to figure out that it moved since
+	 * we may not have loaded its messages (the only move notifications that come are for
+	 * messages). So we do it manually if the request succeeded.
+	 *
+	 * @private
+	 */
+	processMove: function(item, folderId) {
 
+		var isConv = (item.get('type') === ZCS.constant.ITEM_CONVERSATION),
+			toastMsg = isConv ? ZtMsg.moveConversation : ZtMsg.moveMessage,
+			folderName = ZCS.cache.get(folderId).get('name');
+
+		if (isConv) {
+			ZCS.app.getConvListController().removeConv(item);
+		}
+		ZCS.app.fireEvent('showToast', Ext.String.format(toastMsg, folderName));
 	},
 
 	/**
@@ -252,7 +265,15 @@ Ext.define('ZCS.controller.mail.ZtMailItemController', {
 	 * @param {ZtMailItem}   item     mail item
 	 */
 	doSpam: function(item) {
-		this.performOp(item, 'spam');
+
+		item = item || this.getItem();
+
+		var op = (item.get('folderId') === ZCS.constant.ID_JUNK) ? '!spam' : 'spam',
+			me = this;
+
+		this.performOp(item, op, function() {
+			me.processMove(item, ZCS.constant.ID_JUNK);
+		});
 	},
 
 	/**

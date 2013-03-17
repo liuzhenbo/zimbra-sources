@@ -59,16 +59,11 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 						if (isSingleExpand && !loaded) {
 							return;
 						}
-						// Note: partial update on msg load results in double-render, so do whole thing
 						this.setMsg(msg);
+						this.setExpanded(isSingleExpand ? true : loaded);
+						this.setState(this.getExpanded() ? ZCS.constant.HDR_EXPANDED : ZCS.constant.HDR_COLLAPSED);
 
-						if (!isSingleExpand) {
-							this.setExpanded(loaded);
-						} else {
-							this.setExpanded(true);
-						}
-
-						msgView.renderHeader();
+						msgView.renderHeader(this.getState());
 						if (loaded) {
 							msgView.renderBody(msg.get('isLast'));
 						}
@@ -83,8 +78,19 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 		}
 	},
 
-	renderHeader: function() {
-		this.down('msgheader').render(this.getMsg());
+	/**
+	 * Returns the width of the msg header, as that is the only child guarenteed to be
+	 * rendered.  Other children, like the body, may need to know this information before
+	 * they lay themselves out.
+	 *
+	 * @return {Number} The width of a child in the message view.
+	 */
+	getChildWidth: function () {
+		return this.down('msgheader').element.getWidth();
+	},
+
+	renderHeader: function(state) {
+		this.down('msgheader').render(this.getMsg(), state);
 	},
 
 	renderBody: function(isLast, showQuotedText) {
@@ -114,10 +120,11 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 	 * @private
 	 */
 	updateExpansion: function() {
+		var msgBody = this.down('msgbody');
 		if (this.getExpanded()) {
-			this.down('msgbody').show();
+			msgBody.show();
 		} else {
-			this.down('msgbody').hide();
+			msgBody.hide();
 		}
 	},
 
@@ -162,6 +169,12 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
         if (!isNaN(y) && typeof y == 'number') {
             this.y = y;
         }
+
+		// Sencha hides a list item by scrolling it up 10000. That doesn't work for a very large
+		// message, so move it left as well to make sure it's offscreen.
+		if (this.y === -10000) {
+			this.x = this.y;
+		}
 
         if (this.element.forceAbsolutePositioning) {
             //In case the element was not forced before.
