@@ -10,6 +10,7 @@ import com.zimbra.qa.selenium.framework.util.staf.Stafpostqueue;
 import com.zimbra.qa.selenium.projects.ajax.ui.*;
 import com.zimbra.qa.selenium.projects.ajax.ui.mail.DialogCreateFolder;
 import com.zimbra.qa.selenium.projects.ajax.ui.mail.FormMailNew;
+import com.zimbra.qa.selenium.projects.ajax.ui.DialogWarning;
 
 public class PageCalendar extends AbsTab {
 
@@ -19,6 +20,7 @@ public class PageCalendar extends AbsTab {
 		public static final String NewButton = "css=td#zb__CLWW__NEW_MENU_title";
 		public static final String SendButton = "css=div[id^='ztb__APPT-'] td[id$='_SEND_INVITE_title']";
 		public static final String SaveButton = "css=div[id^='ztb__APPTRO'] td[id$='__SAVE_title']";
+		public static final String OrganizerSaveButton = "css=div[id$='zb__APPT-1__SAVE'] ";
 		public static final String CloseButton = "css=td[id$='__CANCEL_title']:contains('Close')";
 		public static final String ViewButton = "id=zb__CLD__VIEW_MENU_dropdown";
 		public static final String CalendarFolder = "id=zti__main_Calendar__10_textCell";
@@ -1567,7 +1569,35 @@ public class PageCalendar extends AbsTab {
 			// No dialog
 			return (null);
 			
-		} else if (button == Button.O_LISTVIEW_TAG) {
+		} else if (button == Button.B_SEND_WITH_CONFLICT) {
+			locator = Locators.SendButton;
+			this.zClickAt(locator, "");
+			SleepUtil.sleepMedium();
+			page = new DialogWarningConflictingResources(MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
+
+			if ( page.zIsActive() ) {
+				SleepUtil.sleepMedium();
+				return (page);
+			}else{
+				return null;
+			}
+			
+		
+		}else if (button == Button.B_SAVE_WITH_CONFLICT) {
+			locator = Locators.OrganizerSaveButton;
+			this.zClickAt(locator, "");
+			SleepUtil.sleepMedium();
+			page = new DialogWarningConflictingResources(MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
+
+			if ( page.zIsActive() ) {
+				SleepUtil.sleepMedium();
+				return (page);
+			}else{
+				return null;
+			}
+			
+		
+		}else if (button == Button.O_LISTVIEW_TAG) {
 
 			locator = "css=[id=zb__CLD__TAG_MENU_dropdown]";
 			page = null;
