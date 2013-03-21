@@ -243,16 +243,18 @@
 </template>
 
 <template id='ConvListSwipeToDelete'>
-	<div class="zcs-swipe-conv-view" style="width:{0}px;height:{1}px;">
-		<div class="zcs-swipe-delete">Delete</div>
-	</div>
+	<tpl>
+		<div class='zcs-swipe-conv-view' style='width:{width}px;height:{height}px;'>
+			<div class='zcs-swipe-delete x-button x-button-delete'>{[ZtMsg.del]}</div>
+		</div>
+	</tpl>
 </template>
 
 <template id='Toast'>
 	<div class="zcs-toast-contents">
 		<div class="zcs-toast-status-icon"></div>
-		<div class="zcs-toast-message-text">{0}</div>
-		<div class="zcs-toast-undo-action">Undo</div>
+		<div class="zcs-toast-message-text">{text}</div>
+		<div class="zcs-toast-undo-action">{[ZtMsg.undo]}</div>
 	</div>
 </template>
 
