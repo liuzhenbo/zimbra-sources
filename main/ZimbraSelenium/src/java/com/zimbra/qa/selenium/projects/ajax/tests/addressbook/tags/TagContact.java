@@ -17,23 +17,37 @@
 package com.zimbra.qa.selenium.projects.ajax.tests.addressbook.tags;
 
 
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import com.zimbra.qa.selenium.framework.items.*;
 import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.*;
-import com.zimbra.qa.selenium.projects.ajax.core.AjaxCommonTest;
+import com.zimbra.qa.selenium.projects.ajax.core.ContactsPrefShowSelectionCheckbox;
 import com.zimbra.qa.selenium.projects.ajax.ui.DialogTag;
 
-public class TagContact extends AjaxCommonTest  {
+public class TagContact extends  ContactsPrefShowSelectionCheckbox  {
 	public TagContact() {
 		logger.info("New "+ TagContact.class.getCanonicalName());
 		
 		// All tests start at the Address page
 		super.startingPage = app.zPageAddressbook;
 
-		super.startingAccountPreferences = null;		
+		super.startingAccountPreferences.put("zimbraPrefShowSelectionCheckbox", "FALSE");		
 		
+	}
+	
+	/**
+	 * @throws HarnessException
+	 */
+	@BeforeClass( groups = { "always" } )
+	public void TagContactBeforeClass() throws HarnessException {
+		logger.info("TagContactBeforeClass: start");
+		
+		// Rest the ZWC user
+		ZimbraAccount.ResetAccountZWC();
+		
+		logger.info("TagContactBeforeClass: finish");
 	}
 	
 	@Test(	description = "Tag a contact, click pulldown menu Tag->New Tag",
