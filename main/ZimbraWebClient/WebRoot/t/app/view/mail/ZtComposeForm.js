@@ -58,6 +58,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 					{
 						xtype: 'button',
 						text: ZtMsg.cancel,
+						ui: 'neutral',
 						handler: function() {
 							this.up('composepanel').fireEvent('cancel');
 						}
@@ -65,6 +66,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 						xtype: 'button',
 						text: ZtMsg.saveDraft,
 						align: 'right',
+						ui: 'neutral',
 						handler: function() {
 							this.up('composepanel').fireEvent('saveDraft');
 						}
@@ -72,6 +74,8 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 						xtype: 'button',
 						text: ZtMsg.send,
 						align: 'right',
+						ui: 'green',
+						padding: '0 2em',
 						handler: function() {
 							this.up('composepanel').fireEvent('send');
 						}
@@ -95,7 +99,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 					},
 					items: [{
 						xtype: 'contactfield',
-						name: 'to',
+						name: ZCS.constant.TO,
 						labelWidth: '4.5em',
 						flex: 1,
 						label: ZtMsg.toHdr,
@@ -117,7 +121,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 					}]
 				}, {
 					xtype: 'contactfield',
-					name: 'cc',
+					name: ZCS.constant.CC,
 					height: '2.5em',
 					labelWidth: '4.5em',
 					hidden: true,
@@ -126,7 +130,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 					addressType: ZCS.constant.CC
 				}, {
 					xtype: 'contactfield',
-					name: 'bcc',
+					name: ZCS.constant.BCC,
 					itemId: 'bcc',
 					height: '2.5em',
 					labelWidth: '4.5em',
@@ -210,7 +214,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 				}]
 			};
 
-		if (ZCS.constant.IS_ENABLED[ZCS.constant.ADD_ATTACHMENT]) {
+		if (ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_ADD_ATTACHMENT]) {
 			form.items[3].items.push({
 				width: 80,
 				height: '2.5em',

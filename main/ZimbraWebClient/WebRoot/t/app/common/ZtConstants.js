@@ -87,11 +87,13 @@ ZCS.constant.APPS = [
 ];
 
 // Turn features on/off
-ZCS.constant.ADD_ATTACHMENT = 'add_attachment';
+ZCS.constant.FEATURE_ADD_ATTACHMENT = 'add_attachment';
+ZCS.constant.FEATURE_QUICK_REPLY    = 'quick_reply';
 
 ZCS.constant.IS_ENABLED = {};
-ZCS.constant.IS_ENABLED[ZCS.constant.APP_CONTACTS]  = false;
-ZCS.constant.IS_ENABLED[ZCS.constant.ADD_ATTACHMENT] = false;
+ZCS.constant.IS_ENABLED[ZCS.constant.APP_CONTACTS]              = false;
+ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_ADD_ATTACHMENT]    = false;
+ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_QUICK_REPLY]       = true;
 
 // Text for tab bar
 ZCS.constant.TAB_TITLE = {};
@@ -364,9 +366,6 @@ ZCS.constant.SETTING_TYPE[ZCS.constant.SETTING_TRUSTED_SENDERS]   = ZCS.constant
 // Forced setting values, which override user setting
 ZCS.constant.SETTING_VALUE = {};
 ZCS.constant.SETTING_VALUE[ZCS.constant.SETTING_SHOW_SEARCH] = 'false';
-// For 8.x only, remove this in Zimbra.Next
-ZCS.constant.SETTING_VALUE[ZCS.constant.SETTING_JSLOGGING_ENABLED] = 'true';
-ZCS.constant.SETTING_VALUE[ZCS.constant.SETTING_JSLOGGING_KEY] = '346cfe6ba7c94b78abbd3bf1796e1641';
 
 // Default values for settings
 ZCS.constant.SETTING_DEFAULT = {};
@@ -463,7 +462,7 @@ ZCS.constant.ADDITIONAL_MAIL_HEADERS = [
 // Useful regexes
 ZCS.constant.REGEX_NON_WHITESPACE = /\S+/;
 ZCS.constant.REGEX_SPLIT = /\r\n|\r|\n/;
-ZCS.constant.REGEX_SUBJ_PREFIX = new RegExp('^\\s*(Re|Fw|Fwd|' + ZtMsg.re + '|' + ZtMsg.fwd + '|' + ZtMsg.fw + '):' + '\\s*', 'i');
+ZCS.constant.REGEX_SUBJ_PREFIX = new RegExp('^\\s*(Re|Fw|Fwd|' + ZtMsg.rePrefix + '|' + ZtMsg.fwdPrefix + '|' + ZtMsg.fwPrefix + ')' + '\\s*', 'i');
 ZCS.constant.REGEX_SPACE_WORD = new RegExp('\\s*\\S+', 'g');
 ZCS.constant.REGEX_MSG_SEP = new RegExp('^\\s*--+\\s*(' + ZtMsg.originalMessage + '|' + ZtMsg.forwardedMessage + ')\\s*--+', 'i');
 ZCS.constant.REGEX_SIG = /^(- ?-+)|(__+)\r?$/;
@@ -558,3 +557,7 @@ ZCS.constant.IDTYPE_INVITE_ACTION   = 'INVITE_ACTION';
 ZCS.constant.IDTYPE_QUOTED_LINK     = 'QUOTED_TEXT';
 ZCS.constant.IDTYPE_ATTACHMENT      = 'ATTACHMENT';
 ZCS.constant.IDTYPE_TAG             = 'TAG';
+
+// Quick reply textarea - height in pixels
+ZCS.constant.QUICK_REPLY_SMALL  = 20;
+ZCS.constant.QUICK_REPLY_LARGE  = 80;
