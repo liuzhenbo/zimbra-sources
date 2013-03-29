@@ -258,7 +258,9 @@ Ext.define('ZCS.common.ZtUserSession', {
 				organizer.leaf = true;
 			}
 
+            //<debug>
 			Ext.Logger.verbose('adding folder ' + organizer.path);
+            //</debug>
 			organizers.push(organizer);
 		}
 
@@ -310,7 +312,7 @@ Ext.define('ZCS.common.ZtUserSession', {
 				}
 			}
 			else if (setting.getType() === ZCS.constant.TYPE_BOOLEAN) {
-				value = !!(value.toLowerCase() === 'true');
+				value = !!(value && value.toLowerCase() === 'true') || 'false';
 			}
 
 			setting.setValue(value);

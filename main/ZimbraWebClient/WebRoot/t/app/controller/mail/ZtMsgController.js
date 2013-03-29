@@ -98,8 +98,9 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 		newExpanded = (newState !== ZCS.constant.HDR_COLLAPSED);
 		msgView.setExpanded(newExpanded);
 		msgView.setState(newState);
-		Ext.Logger.info("Header state: " + newState + " (" + newExpanded + ")");
-
+		//<debug>
+        Ext.Logger.info("Header state: " + newState + " (" + newExpanded + ")");
+        //</debug>
 		if (newExpanded && msg && !msg.get('isLoaded')) {
 			msg.isExpand = true;
 			// ZtMsgView updated via 'updatedata' event
@@ -237,10 +238,11 @@ Ext.define('ZCS.controller.mail.ZtMsgController', {
 	},
 
 	doToggleQuotedText: function(msgBody) {
-		var msgView = this.getMsgView(),
+		var msgView = msgBody.up('msgview'),
 			msg = msgView.getMsg();
 
 		msgView.renderBody(!msgBody.showingQuotedText);
+		msgView.updateHeight();
 	},
 
 	/**

@@ -87,13 +87,15 @@ ZCS.constant.APPS = [
 ];
 
 // Turn features on/off
-ZCS.constant.FEATURE_ADD_ATTACHMENT = 'add_attachment';
-ZCS.constant.FEATURE_QUICK_REPLY    = 'quick_reply';
+ZCS.constant.FEATURE_ADD_ATTACHMENT = 'add_attachment'; // attach file when composing
+ZCS.constant.FEATURE_QUICK_REPLY    = 'quick_reply';    // quick reply area for conv panel
+ZCS.constant.FEATURE_FIND_OBJECTS   = 'find_objects';   // look for URLs and email addrs in msg body, make them actionable
 
 ZCS.constant.IS_ENABLED = {};
 ZCS.constant.IS_ENABLED[ZCS.constant.APP_CONTACTS]              = false;
 ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_ADD_ATTACHMENT]    = false;
 ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_QUICK_REPLY]       = true;
+ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_FIND_OBJECTS]      = true;
 
 // Text for tab bar
 ZCS.constant.TAB_TITLE = {};
@@ -256,6 +258,14 @@ ZCS.constant.CONV_REPLY_OMIT = [
 	ZCS.constant.ID_TRASH,
 	ZCS.constant.ID_JUNK
 ];
+
+// Folder constraint identifiers, used to manage which messages are moved
+// when a conversation is moved.
+ZCS.constant.TCON = {};
+ZCS.constant.TCON[ZCS.constant.ID_TRASH]    = 't';
+ZCS.constant.TCON[ZCS.constant.ID_JUNK]     = 'j';
+ZCS.constant.TCON[ZCS.constant.ID_SENT]     = 's';
+ZCS.constant.TCON[ZCS.constant.ID_DRAFTS]   = 'd';
 
 // System folder sort order
 ZCS.constant.FOLDER_SORT_VALUE = {};
@@ -462,14 +472,16 @@ ZCS.constant.ADDITIONAL_MAIL_HEADERS = [
 // Useful regexes
 ZCS.constant.REGEX_NON_WHITESPACE = /\S+/;
 ZCS.constant.REGEX_SPLIT = /\r\n|\r|\n/;
-ZCS.constant.REGEX_SUBJ_PREFIX = new RegExp('^\\s*(Re|Fw|Fwd|' + ZtMsg.rePrefix + '|' + ZtMsg.fwdPrefix + '|' + ZtMsg.fwPrefix + ')' + '\\s*', 'i');
+ZCS.constant.REGEX_SUBJ_PREFIX = new RegExp('^\\s*(Re:|Fw:|Fwd:|' + ZtMsg.rePrefix + '|' + ZtMsg.fwdPrefix + '|' + ZtMsg.fwPrefix + ')' + '\\s*', 'i');
 ZCS.constant.REGEX_SPACE_WORD = new RegExp('\\s*\\S+', 'g');
 ZCS.constant.REGEX_MSG_SEP = new RegExp('^\\s*--+\\s*(' + ZtMsg.originalMessage + '|' + ZtMsg.forwardedMessage + ')\\s*--+', 'i');
 ZCS.constant.REGEX_SIG = /^(- ?-+)|(__+)\r?$/;
 ZCS.constant.REGEX_HDR = /^\s*\w+:/;
 ZCS.constant.REGEX_COLON = /\S+:$/;
 ZCS.constant.REGEX_IMG_SRC_CID = /<img([^>]*)\ssrc=["']cid:/gi;
-ZCS.constant.REGEX_URL = /(((https?):\/\/)|(www\.[\w\.\_\-]+))[^\s\xA0\(\)\<\>\[\]\{\}\'\"]*/i;
+ZCS.constant.REGEX_URL = /(((https?):\/\/)|(www\.[\w\.\_\-]+))[^\s\xA0\(\)\<\>\[\]\{\}\'\"]*/gi;
+// simple email regex - see ZtEmailAddress for fancier ones
+ZCS.constant.REGEX_EMAIL = /((mailto:)?\b[A-Z0-9\._%+-]+@[A-Z0-9\.-]+\.[A-Z]{2,5})\b/gi;
 
 // URL paths
 ZCS.constant.PATH_MSG_FETCH = '/service/home/~/';

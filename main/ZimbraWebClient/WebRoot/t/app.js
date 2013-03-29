@@ -1,33 +1,30 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
+ *
  * Zimbra Collaboration Suite Web Client
  * Copyright (C) 2012, 2013 VMware, Inc.
- * 
+ *
  * The contents of this file are subject to the Zimbra Public License
  * Version 1.3 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
+ *
  * ***** END LICENSE BLOCK *****
  */
 //<debug>
 Ext.Loader.setPath({
-    'Ext': 't/touch/src',
-    'ZCS': 't/app'
+    'Ext': 'touch/src',
+    'ZCS': 'app'
 });
 //</debug>
 
 // Load templates
 Ext.require([
-	'Ext.Ajax',
 	'ZCS.common.ZtTemplate'
-], function() {
-	ZCS.common.ZtTemplate.loadTemplates();
-});
+]);
 
 
 //<feature logger>
@@ -101,15 +98,16 @@ Ext.application({
         // Destroy the #appLoadingIndicator element
         Ext.fly('appLoadingIndicator').destroy();
 
-		//<feature logger>
+		//<debug>
 	    Ext.Logger.getWriters().console.getFormatter().setMessageFormat('{message}');
-	    //</feature>
+	    //</debug>
 
 	    // Process the inline data (GetInfoResponse and SearchResponse)
 	    ZCS.common.ZtUserSession.initSession(window.inlineData);
 
+        //<debug>
 	    Ext.Logger.info('STARTUP: app launch');
-
+        //</debug>
 	    // Note: initial view created by ZtMainController
     },
 

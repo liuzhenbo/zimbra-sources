@@ -2,12 +2,12 @@
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
  * Copyright (C) 2013 VMware, Inc.
- * 
+ *
  * The contents of this file are subject to the Zimbra Public License
  * Version 1.3 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -69,8 +69,9 @@ Ext.define('ZCS.controller.ZtListController', {
 	launch: function () {
 
 		var defaultQuery = this.getDefaultQuery();
-
-		Ext.Logger.verbose('STARTUP: list ctlr launch - ' + ZCS.util.getClassName(this));
+        //<debug>
+		Ext.Logger.verbose('STARTUP: list ctlr launch - ' + ZCS.util.getClassName(this))
+        //</debug>
 		this.callParent();
 
 		//Set the proxies params so this parameter persists between paging requests.
@@ -159,7 +160,9 @@ Ext.define('ZCS.controller.ZtListController', {
 		}
 
 		this.getItemController().clear();
+        //<debug>
 		Ext.Logger.info('SearchRequest: ' + query);
+        //</debug>
 		if (folder) {
 			this.getSearchBox().setValue('');
 		}
@@ -208,6 +211,8 @@ Ext.define('ZCS.controller.ZtListController', {
 			this.updateTitlebar();
 			if (folder && records.length) {
 				this.doShowFolders(false);
+				//make sure this element doesn't get focus due to an errant touch
+				this.getSearchBox().blur();
 			}
 		}
 	},
