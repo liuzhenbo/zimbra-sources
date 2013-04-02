@@ -14,11 +14,24 @@ ZIMBRA_HOME ?= /opt/zimbra
 
 ifdef BETA
 	include $(MYSQL_ROOT)/../beta_versions.def
-	PATCH   := patch -g0 -N -p1 < ../patches/openssl.patch; patch -g0 -N -p1 < ../patches/mysql_install_db.patch;
-else
-	include $(MYSQL_ROOT)/../versions.def
+ifndef MARIADB
 	PATCH   := patch -g0 -N -p1 < ../patches/openssl.patch; patch -g0 -N -p1 < ../patches/mysql_install_db.patch;
 endif
+else
+	include $(MYSQL_ROOT)/../versions.def
+ifndef MARIADB
+	PATCH   := patch -g0 -N -p1 < ../patches/openssl.patch; patch -g0 -N -p1 < ../patches/mysql_install_db.patch;
+endif
+endif
+
+ifdef MARIADB
+	SSL_FLAG	:= yes
+	MSRC		:= mariadb
+else
+	SSL_FLAG	:= /opt/zimbra/openssl-$(OPENSSL_VERSION)
+	MSRC		:= mysql
+endif
+
 
 MYSQL_VERSION ?= standard-$(MYSQL_VERSION_STRING)-pc-linux-gnu-i686-glibc23
 
@@ -33,7 +46,7 @@ MYSQL_TGZ_TARGET := \
 MYSQL_LIB_TGZ_TARGET := \
 	$(P4_ROOT)/ThirdPartyBuilds/$(BUILD_PLATFORM)/mysql/mysql-libs-$(MYSQL_VERSION).tgz
 
-files   := $(wildcard src/mysql-$(MYSQL_VERSION_STRING).tar.gz)
+files   := $(wildcard src/$(MSRC)-$(MYSQL_VERSION_STRING).tar.gz)
 
 all: checksrc allclean build tar
 
@@ -41,19 +54,19 @@ checksrc:
 	$(if $(files), @echo "", exit 1)
 
 clean:
-	rm -rf mysql-$(MYSQL_VERSION_STRING)
+	rm -rf $(MSRC)-$(MYSQL_VERSION_STRING)
 
 build:
 	echo $(OS_RELEASE) $(OS_PLATFORM)
 	mkdir -p $(ZIMBRA_HOME)
-	rm -rf mysql-$(MYSQL_VERSION_STRING)
-	tar xzf src/mysql-$(MYSQL_VERSION_STRING).tar.gz
-	(cd mysql-$(MYSQL_VERSION_STRING); \
+	rm -rf $(MSRC)-$(MYSQL_VERSION_STRING)
+	tar xzf src/$(MSRC)-$(MYSQL_VERSION_STRING).tar.gz
+	(cd $(MSRC)-$(MYSQL_VERSION_STRING); \
 	$(PATCH) \
 	CFLAGS="-g -O3" CXXFLAGS="-g -O3 -felide-constructors -fno-exceptions -fno-rtti" \
 	$(LDFLAGS) \
 	CPPFLAGS="-I/opt/zimbra/openssl-$(OPENSSL_VERSION)/include" \
-	/usr/bin/cmake . -DCMAKE_SKIP_BUILD_RPATH=FALSE -DCMAKE_BUILD_WITH_INSTALL_RPATH=FALSE -DCMAKE_INSTALL_RPATH="/opt/zimbra/openssl-$(OPENSSL_VERSION)/lib" -DCMAKE_PREFIX_PATH=/opt/zimbra/openssl-$(OPENSSL_VERSION) -DWITH_SSL=/opt/zimbra/openssl-$(OPENSSL_VERSION) -DCMAKE_INSTALL_PREFIX=/opt/zimbra/mysql-$(MYSQL_VERSION) -DENABLED_PROFILING=on -DWITH_READLINE=TRUE; \
+	/usr/bin/cmake . -DCMAKE_SKIP_BUILD_RPATH=FALSE -DCMAKE_BUILD_WITH_INSTALL_RPATH=FALSE -DCMAKE_INSTALL_RPATH="/opt/zimbra/openssl-$(OPENSSL_VERSION)/lib" -DCMAKE_PREFIX_PATH=/opt/zimbra/openssl-$(OPENSSL_VERSION) -DWITH_SSL=$(SSL_FLAG) -DCMAKE_INSTALL_PREFIX=/opt/zimbra/mysql-$(MYSQL_VERSION) -DENABLED_PROFILING=on -DWITH_READLINE=TRUE; \
 	LD_RUN_PATH=$(OPENSSL_LIB_DIR) $(MAKE) $(MAKEARGS); \
 	$(MAKE) install)
 	(cd $(ZIMBRA_HOME); rm -f mysql; ln -s mysql-$(MYSQL_VERSION) mysql)
