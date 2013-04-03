@@ -14,12 +14,16 @@ ZIMBRA_HOME ?= /opt/zimbra
 
 ifdef BETA
 	include $(MYSQL_ROOT)/../beta_versions.def
-ifndef MARIADB
+ifdef MARIADB
+	PATCH   :=
+else
 	PATCH   := patch -g0 -N -p1 < ../patches/openssl.patch; patch -g0 -N -p1 < ../patches/mysql_install_db.patch;
 endif
 else
 	include $(MYSQL_ROOT)/../versions.def
-ifndef MARIADB
+ifdef MARIADB
+	PATCH   :=
+else
 	PATCH   := patch -g0 -N -p1 < ../patches/openssl.patch; patch -g0 -N -p1 < ../patches/mysql_install_db.patch;
 endif
 endif
