@@ -1,21 +1,22 @@
 === modified file 'sql/mysqld.cc'
---- a/sql/mysqld.cc	2013-02-15 12:18:09 +0000
-+++ b/sql/mysqld.cc	2013-04-03 21:42:41 +0000
-@@ -2276,8 +2276,28 @@
+--- a/sql/mysqld.cc	2013-03-06 08:32:13 +0000
++++ b/sql/mysqld.cc	2013-04-03 20:05:44 +0000
+@@ -2164,8 +2164,28 @@ static my_socket activate_tcp_port(uint 
+   for (a= ai; a != NULL; a= a->ai_next)
    {
-     ip_sock= mysql_socket_socket(key_socket_tcpip, a->ai_family,
-                                  a->ai_socktype, a->ai_protocol);
--    if (mysql_socket_getfd(ip_sock) != INVALID_SOCKET)
-+
+     ip_sock= socket(a->ai_family, a->ai_socktype, a->ai_protocol);
+-    if (ip_sock != INVALID_SOCKET)
+-      break;
++      
 +    char ip_addr[INET6_ADDRSTRLEN];
-+ 
++
 +    if (vio_get_normalized_ip_string(a->ai_addr, a->ai_addrlen,
-+                                    ip_addr, sizeof (ip_addr)))
++                                     ip_addr, sizeof (ip_addr)))
 +    {
 +      ip_addr[0]= 0;
 +    }
-+ 
-+    if (mysql_socket_getfd(ip_sock) == INVALID_SOCKET)
++
++    if (ip_sock == INVALID_SOCKET)
 +    {
 +      sql_print_error("Failed to create a socket for %s '%s': errno: %d.",
 +                      (a->ai_family == AF_INET) ? "IPv4" : "IPv6",
@@ -26,12 +27,12 @@
 +    {
 +      sql_print_information("Server socket created on IP: '%s'.",
 +                          (const char *) ip_addr);
-       break;
++      break;
 +    }
    }
  
-   if (mysql_socket_getfd(ip_sock) == INVALID_SOCKET)
-@@ -8084,28 +8104,6 @@
+   if (ip_sock == INVALID_SOCKET)
+@@ -7657,28 +7677,6 @@ mysqld_get_one_option(int optid,
    case (int) OPT_WANT_CORE:
      test_flags |= TEST_CORE_ON_SIGNAL;
      break;
@@ -59,5 +60,4 @@
 -    break;
    case OPT_CONSOLE:
      if (opt_console)
-       opt_error_log= 0;			// Force logs to stdout
-
+       opt_error_log= 0;                 // Force logs to stdout
