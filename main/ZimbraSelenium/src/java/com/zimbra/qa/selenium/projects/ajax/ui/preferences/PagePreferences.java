@@ -309,6 +309,11 @@ public class PagePreferences extends AbsTab {
 			locator = "css=div[id='zb__FRV__ADD_FILTER_RULE'] td[id$='_title']";
 			page = new DialogEditFilter(MyApplication,((AppAjaxClient) MyApplication).zPagePreferences);
 	
+		} else if ( button == Button.B_ACTIVITY_STREAM_SETTINGS ) {
+
+			locator = "css=div[id$='_ACTIVITY_STREAM_BUTTON'] td[id$='_title']";
+			page = new DialogActivityStream(MyApplication,((AppAjaxClient) MyApplication).zPagePreferences);
+
 		} else if ( button == Button.B_NEW_QUICK_COMMAND ) {
 			
 			locator = "css=div[id='zb__QCV__ADD_QUICK_COMMAND'] td[id$='_title']";
@@ -434,33 +439,6 @@ public class PagePreferences extends AbsTab {
 		}
 
 		return (page);
-	}
-	
-	/**
-	 * Check/Uncheck a checkbox (just returns if checkbox already checked)
-	 * @param locator The locator for the checkbox
-	 * @param status The desired status of the checkbox (true=checked, false=unchecked)
-	 * @throws HarnessException 
-	 */
-	public void zCheckboxSet(String locator, boolean status) throws HarnessException {
-		
-		if ( !this.sIsElementPresent(locator) ) {
-			throw new HarnessException(locator + " no present!");
-		}
-		
-		if ( this.sIsChecked(locator) == status ) {
-			logger.debug("checkbox status matched.  not doing anything");
-			return;
-		}
-		
-		if ( status == true ) {
-			this.sCheck(locator);
-		} else {
-			this.sUncheck(locator);
-		}
-		
-		this.zWaitForBusyOverlay();
-		
 	}
 	
 	public void zCheckboxSet(Button checkbox, boolean status) throws HarnessException {
