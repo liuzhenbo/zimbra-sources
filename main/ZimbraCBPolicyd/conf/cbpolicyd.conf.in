@@ -87,7 +87,7 @@ log_file=@@cbpolicyd_log_file@@
 #
 # Example: Solaris 
 #log_mail=local0@syslog:stream,/dev/log
-log_mail=local0@syslog:unix
+log_mail=@@cbpolicyd_log_mail@@
 
 # Things to log in extreme detail
 # modules 	- Log detailed module running information
@@ -115,9 +115,9 @@ port=@@cbpolicyd_bind_port@@
 
 # Timeout in communication with clients
 # Idle timeout in postfix defaults to 1015s (active connection)
-timeout_idle=@@cbpolicyd_timeout@@
+timeout_idle=@@cbpolicyd_timeout_idle@@
 # Busy sockets in postfix defaults to 100s
-#timeout_busy=115
+timeout_busy=@@cbpolicyd_timeout_busy@@
 
 # cidr_allow/cidr_deny
 # Comma, whitespace or semi-colon separated. Contains a CIDR block to 
