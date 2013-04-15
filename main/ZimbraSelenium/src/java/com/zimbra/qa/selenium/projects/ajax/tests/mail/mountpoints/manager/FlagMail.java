@@ -76,7 +76,6 @@ public class FlagMail extends PrefGroupMailByMessageTest {
             	+		"</m>"
 				+	"</AddMsgRequest>");
 		
-		MailItem mail = MailItem.importFromSOAP(ZimbraAccount.AccountA(), "subject:("+ subject +")");
 
 		
 		// Mount it
@@ -90,17 +89,26 @@ public class FlagMail extends PrefGroupMailByMessageTest {
 		// Click Get Mail button
 		app.zPageMail.zToolbarPressButton(Button.B_GETMAIL);
 				
-		// Click on the mountpoint
-		app.zTreeMail.zTreeItem(Action.A_LEFTCLICK, mountpoint);
+		try {
 
-		// Select the item
-		app.zPageMail.zListItem(Action.A_LEFTCLICK, mail.dSubject);
-		
-		// Flag the item
-		app.zPageMail.zListItem(Action.A_MAIL_FLAG, mail.dSubject);
+			// Click on the mountpoint
+			app.zTreeMail.zTreeItem(Action.A_LEFTCLICK, mountpoint);
+	
+			// Select the item
+			app.zPageMail.zListItem(Action.A_LEFTCLICK, subject);
+			
+			// Flag the item
+			app.zPageMail.zListItem(Action.A_MAIL_FLAG, subject);
+
+		} finally {
+			
+			// Select the inbox
+			app.zTreeMail.zTreeItem(Action.A_LEFTCLICK, FolderItem.importFromSOAP(app.zGetActiveAccount(), FolderItem.SystemFolder.Inbox));
+
+		}
 
 		// Verify the message is flagged
-		mail = MailItem.importFromSOAP(ZimbraAccount.AccountA(), "subject:("+ subject +")");
+		MailItem mail = MailItem.importFromSOAP(ZimbraAccount.AccountA(), "subject:("+ subject +")");
 		ZAssert.assertStringContains(mail.getFlags(), "f", "Verify the message is  flagged in the server");
 		
 	}
@@ -147,7 +155,6 @@ public class FlagMail extends PrefGroupMailByMessageTest {
             	+		"</m>"
 				+	"</AddMsgRequest>");
 		
-		MailItem mail = MailItem.importFromSOAP(ZimbraAccount.AccountA(), "subject:("+ subject +")");
 
 		// Mount it
 		app.zGetActiveAccount().soapSend(
@@ -160,17 +167,26 @@ public class FlagMail extends PrefGroupMailByMessageTest {
 		// Click Get Mail button
 		app.zPageMail.zToolbarPressButton(Button.B_GETMAIL);
 				
-		// Click on the mountpoint
-		app.zTreeMail.zTreeItem(Action.A_LEFTCLICK, mountpoint);
+		try {
 
-		// Select the item
-		app.zPageMail.zListItem(Action.A_LEFTCLICK, mail.dSubject);
+			// Click on the mountpoint
+			app.zTreeMail.zTreeItem(Action.A_LEFTCLICK, mountpoint);
+	
+			// Select the item
+			app.zPageMail.zListItem(Action.A_LEFTCLICK, subject);
+			
+			// Flag the item
+			app.zPageMail.zKeyboardShortcut(Shortcut.S_MAIL_MARKFLAG);
 		
-		// Flag the item
-		app.zPageMail.zKeyboardShortcut(Shortcut.S_MAIL_MARKFLAG);
-		
+		} finally {
+			
+			// Select the inbox
+			app.zTreeMail.zTreeItem(Action.A_LEFTCLICK, FolderItem.importFromSOAP(app.zGetActiveAccount(), FolderItem.SystemFolder.Inbox));
+
+		}
+
 		// Verify the message is flagged
-		mail = MailItem.importFromSOAP(ZimbraAccount.AccountA(), "subject:("+ subject +")");
+		MailItem mail = MailItem.importFromSOAP(ZimbraAccount.AccountA(), "subject:("+ subject +")");
 		ZAssert.assertStringContains(mail.getFlags(), "f", "Verify the message is  flagged in the server");
 		
 	}
