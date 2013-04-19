@@ -3365,7 +3365,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
 </attr>
 
 <attr id="640" name="zimbraReverseProxySSLCiphers" type="string" cardinality="single" optionalIn="globalConfig" requiresRestart="nginxproxy" since="5.0.5">
-  <globalConfigValue>!SSLv2:!MD5:HIGH</globalConfigValue>
+  <globalConfigValue>RC4:HIGH:!aNULL:!MD5:!kEDH:!AD:!SSLv2</globalConfigValue>
   <desc>permitted ciphers for reverse proxy. Ciphers are in the formats supported by OpenSSL 
         e.g. ALL:!ADH:!EXPORT56:RC4+RSA:+HIGH:+MEDIUM:+LOW:+SSLv2:+EXP;
         if not set, default ciphers permitted by nginx will apply
@@ -7174,5 +7174,12 @@ TODO: delete them permanently from here
 
 <attr id="1439" name="zimbraMobileSyncKeyFormatConvertedFolders" type="string" cardinality="multi" optionalIn="account,cos" flags="accountInfo,accountInherited,domainAdminModifiable"  since="8.0.4">
   <desc>folders whose sync key are already converted, each device has a list of folders. e.g. ApplDN6GJSQJDFHW:0,2,10 meaning device ApplDN6GJSQJDFHW's folders, inbox and calendar folder sync key format are converted, use 0 for FolderSync</desc>
+</attr>
+
+<attr id="1440" name="zimbraReverseProxyUpstreamConnectTimeout" type="duration" min="0" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.0.4">
+  <globalConfigValue>25s</globalConfigValue>
+  <desc>
+     The connect timeout is the time interval after which NGINX will disconnect while establishing an upstream HTTP connection
+  </desc>
 </attr>
 </attrs>
