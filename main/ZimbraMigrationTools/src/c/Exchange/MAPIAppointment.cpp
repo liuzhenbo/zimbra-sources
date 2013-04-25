@@ -91,7 +91,11 @@ MAPIAppointment::MAPIAppointment(Zimbra::MAPI::MAPISession &session, Zimbra::MAP
 	{
 		m_pAddrBook=NULL;
 	}
-	SetMAPIAppointmentValues();
+	hr = SetMAPIAppointmentValues();
+	if(FAILED(hr))
+	{
+		dlogw("MapiAppt::SetMAPIAppointmentValues failed");
+	}
 }
 
 MAPIAppointment::~MAPIAppointment()
@@ -220,7 +224,14 @@ HRESULT MAPIAppointment::SetMAPIAppointmentValues()
  	Zimbra::Mapi::Appt appt(m_pMessage, m_mapiStore->GetInternalMAPIStore());
 
     // save off the default timezone info for this appointment
-    hr = appt.GetTimezone(_olkTz, &_pTzString);
+	try
+	{
+		hr = appt.GetTimezone(_olkTz, &_pTzString);
+	}
+	catch(...)
+	{
+		hr=E_FAIL;
+	}
 	if (SUCCEEDED(hr))
     {
 		// get the timezone info for this appt
@@ -308,7 +319,11 @@ HRESULT MAPIAppointment::SetMAPIAppointmentValues()
         }
     }
 
-    SetOrganizerAndAttendees();
+    hr = SetOrganizerAndAttendees();
+	if(FAILED(hr))
+	{
+		 dlogw(L"SetOrganizerAndAttendees failed");
+	}
 
     if ((m_bIsRecurring) && (m_iExceptionType != CANCEL_EXCEPTION))
     {
@@ -1017,7 +1032,15 @@ HRESULT MAPIAppointment::SetOrganizerAndAttendees()
 									.bin.lpb;
 							}
 							std::wstring wstrEmailAddress;
+							try
+							{
+
 							Zimbra::MAPI::Util::GetSMTPFromAD(*m_session, tempRecip,L"" , L"",wstrEmailAddress);
+							}
+							catch(...)
+							{
+								dlogw("mapiappointment::exception from MAPi::util::GetSMTPFromAD ");
+							}
 							pAttendee->addr = wstrEmailAddress;
 							dlogi("Email address(AD):",wstrEmailAddress);
 							dlogi("AD update end.");
@@ -1068,7 +1091,14 @@ HRESULT MAPIAppointment::SetOrganizerAndAttendees()
 								.bin.lpb;
 						}
 						std::wstring wstrEmailAddress;
+						try
+						{
 						Zimbra::MAPI::Util::GetSMTPFromAD(*m_session, tempRecip,L"" , L"",wstrEmailAddress);
+						}
+						catch(...)
+						{
+							dlogw(" Mapiappoinemtn::Exception in MAPI::Util::GetSMTPFromAD");
+						}
 						pAttendee->addr = wstrEmailAddress;
 						dlogi("Email address(AD):",wstrEmailAddress);
 						dlogi("AD update end.");
