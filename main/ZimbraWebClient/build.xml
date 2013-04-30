@@ -156,7 +156,6 @@
 	<fileset id='customer.webinf.fileset' dir='${build.dir}' excludes='**'/>
     <fileset id='customer.package.fileset' dir='${build.dir}' excludes='**' />
     <fileset id='customer.jsp.fileset' dir='${build.dir}' excludes='**' />
-    <fileset id='homescreen.fileset' dir="${build.dir}" excludes="**"/>
 
     <!-- Targets -->
 
@@ -228,21 +227,12 @@
         <property name='build.web.excludes' value='${common.build.web.excludes}'/>
         <property name='webinf.includes' value='${common.webinf.includes}'/>
         <property name='webinf.excludes' value='${common.webinf.excludes}'/>
-        <property name='touch.includes' value='app/**,app.json,app.js,resources/**,touch/**,launchTouch'/>
+        <property name='touch.includes' value='app/**,app.json,app.js,resources/**,touch/**,launchTouch.jsp'/>
         <property name='touch.excludes' value='compass/**,lib/**,install.txt,*.xml,build/**,archive/**'/>
 
         <fileset id='help.fileset'
                  dir='${help.dir}' includes='${help.includes}' excludes='${help.excludes}'
                 />
-        <if>
-            <not>
-                <isset property="build.admin"/>
-            </not>
-            <then>
-                <fileset id='homescreen.fileset' dir="${touch.dir}/resources/icons/" includes="apple-touch-icon*"/>
-            </then>
-        </if>
-
     </target>
 
     <target name='admin' depends='common'>
@@ -337,8 +327,6 @@
 
             <zipfileset refid='help.fileset' prefix='help' />
 			      <zipfileset refid='network.help.fileset' prefix='help' />
-
-            <fileset refid="homescreen.fileset"/>
         </war>
     </target>
 
@@ -1324,6 +1312,7 @@ if (ext == null) ext = "";
         <ant dir="${taglib.dir}" target="clean" inheritAll="false"/>
         <delete dir='${build.dir}'/>
         <delete dir='${customer.build.dir}' />
+        <delete dir="${touch.prod.dir}"/>
     </target>
 
 	<!-- JavaScript API Documentation Tasks -->
