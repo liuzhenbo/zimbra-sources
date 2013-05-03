@@ -95,11 +95,12 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 	/**
 	 * Clears messages from the store, so they're removed from the view as well.
 	 */
-	clear: function() {
-
-		this.callParent();
+	clear: function(noItemsFound) {
 
 		this.getStore().removeAll();
+
+		this.callParent(arguments);
+
 		var quickReply = this.getQuickReply();
 		if (quickReply) {
 			quickReply.hide();
@@ -123,9 +124,7 @@ Ext.define('ZCS.controller.mail.ZtConvController', {
 
 		this.callParent(arguments);
 
-		var toolbar = this.getItemPanelToolbar(),
-			itemPanel = this.getItemPanel(),
-			isDraft = (curFolderId === ZCS.constant.ID_DRAFTS),
+		var	isDraft = (curFolderId === ZCS.constant.ID_DRAFTS),
 			convQueryTerms = [ 'underid:1' ],
 			title = Ext.String.htmlEncode(conv.get('subject') || ZtMsg.noSubject);
 
