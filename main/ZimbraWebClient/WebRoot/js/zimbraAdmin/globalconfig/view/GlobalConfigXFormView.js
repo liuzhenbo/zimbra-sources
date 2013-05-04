@@ -772,29 +772,94 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
 								ZaGlobalConfig.A_zimbraMtaRejectUnknownSenderDomain
 						],
 						  items: [
-						  	{ ref: ZaGlobalConfig.A_zimbraMtaRejectUnknownClient, type: _CHECKBOX_,
-						  	  label: ZaMsg.NAD_MTA_reject_unknown_client
-						  	},
-						  	{ ref: ZaGlobalConfig.A_zimbraMtaRejectUnknownHostname, type: _CHECKBOX_,
-						  	  label: ZaMsg.NAD_MTA_reject_unknown_hostname
-						  	},
-						  	{ ref: ZaGlobalConfig.A_zimbraMtaRejectUnknownSenderDomain, type: _CHECKBOX_,
-						  	  label: ZaMsg.NAD_MTA_reject_unknown_sender_domain
-						  	},
-                            { ref: ZaGlobalConfig.A_zimbraMtaRejectRblClient, type: _REPEAT_,
-						  	  label: ZaMsg.NAD_MTA_reject_rbl_client,
-							  labelLocation:_LEFT_,
-							  align:_LEFT_,
-							  repeatInstance:"",
-							  showAddButton:true,
-							  showRemoveButton:true,
-							  showAddOnNextRow:true,
-							  items: [
-								{ref:".", type:_TEXTFIELD_, label:null}
-							  ]/*,
-							  onRemove:GlobalConfigXFormView.onRepeatRemove*/
-						  	}
-						]},/*
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectUnknownClient,
+                                  type: _CHECKBOX_,
+                                  label: ZaMsg.NAD_MTA_reject_unknown_client
+                              },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectUnknownHostname,
+                                  type: _CHECKBOX_,
+                                  label: ZaMsg.NAD_MTA_reject_unknown_hostname
+                              },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectUnknownSenderDomain,
+                                  type: _CHECKBOX_,
+                                  label: ZaMsg.NAD_MTA_reject_unknown_sender_domain
+                              },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectRblClient,
+                                  type: _REPEAT_,
+                                  label: ZaMsg.NAD_MTA_reject_rbl_client,
+                                  labelLocation: _LEFT_,
+                                  align: _LEFT_,
+                                  repeatInstance: "",
+                                  showAddButton: true,
+                                  showRemoveButton: true,
+                                  showAddOnNextRow: true,
+                                  items: [
+                                      {
+                                          ref: ".",
+                                          type: _TEXTFIELD_,
+                                          label: null
+                                      }
+                                  ]
+                              },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectRHSblClient,
+                                  type: _REPEAT_,
+                                  label: ZaMsg.NAD_MTA_reject_rhsbl_client,
+                                  labelLocation: _LEFT_,
+                                  align: _LEFT_,
+                                  repeatInstance: "",
+                                  showAddButton: true,
+                                  showRemoveButton: true,
+                                  showAddOnNextRow: true,
+                                  items: [
+                                      {
+                                          ref: ".",
+                                          type: _TEXTFIELD_,
+                                          label: null
+                                      }
+                                  ]
+                              },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectRHSblReverseClient,
+                                  type: _REPEAT_,
+                                  label: ZaMsg.NAD_MTA_reject_rhsbl_reverse_client,
+                                  labelLocation: _LEFT_,
+                                  align: _LEFT_,
+                                  repeatInstance: "",
+                                  showAddButton: true,
+                                  showRemoveButton: true,
+                                  showAddOnNextRow: true,
+                                  items: [
+                                      {
+                                          ref: ".",
+                                          type: _TEXTFIELD_,
+                                          label: null
+                                      }
+                                  ]
+                              },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraMtaRejectRHSblSender,
+                                  type: _REPEAT_,
+                                  label: ZaMsg.NAD_MTA_reject_rhsbl_sender,
+                                  labelLocation: _LEFT_,
+                                  align: _LEFT_,
+                                  repeatInstance: "",
+                                  showAddButton: true,
+                                  showRemoveButton: true,
+                                  showAddOnNextRow: true,
+                                  items: [
+                                      {
+                                          ref: ".",
+                                          type: _TEXTFIELD_,
+                                          label: null
+                                      }
+                                  ]
+                              }
+                          ]},/*
                         { type:_ZA_TOP_GROUPER_, label:ZaMsg.NAD_AutoProvision_Setting, colSizes:["275px","100%"],
                             visibilityChecks:[[ZATopGrouper_XFormItem.isGroupVisible,
 								[ZaGlobalConfig.A_zimbraAutoProvBatchSize,
@@ -959,14 +1024,12 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
 						},
 						{type:_ZA_TOP_GROUPER_, label:ZaMsg.NAD_AV_Settings,
 						  items: [
-					  	    {ref: ZaGlobalConfig.A_zimbraVirusDefinitionsUpdateFrequency, type: _INPUT_,
-					  	     label: ZaMsg.NAD_Virus_DefUpdateFreq, width: "3em",
-					  	     getDisplayValue: function(value) { return parseInt(value); },
-					  	     elementChanged: function(elementValue, instanceValue, event) {
-						     instanceValue = elementValue+"h";
-							   	this.getForm().itemChanged(this, instanceValue, event);
-							 }
-					  	    },
+                              {
+                                  ref: ZaGlobalConfig.A_zimbraVirusDefinitionsUpdateFrequency,
+                                  type: _INPUT_,
+                                  label: ZaMsg.NAD_Virus_DefUpdateFreq,
+                                  width: "5em"
+                              },
 				  	    	{ ref: ZaGlobalConfig.A_zimbraVirusBlockEncryptedArchive, type: _CHECKBOX_,
 					   	      label: ZaMsg.NAD_Virus_BlockEncrypted,
 							  trueValue:"TRUE", falseValue:"FALSE"
