@@ -348,7 +348,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
 
         me.fireEvent('bubbleAdded', bubbleModel);
         if (me.inputField) {
-            me.inputField.validate();
+//            me.inputField.validate();
         }
     },
 
@@ -421,7 +421,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
 
         me.fireEvent('bubbleRemoved', bubble.bubbleModel);
         if (me.inputField) {
-            me.inputField.validate();
+//            me.inputField.validate();
         }
     },
 
@@ -469,15 +469,21 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
                                     width: parentBox.width,
                                     left: parentBox.left
                                 },
+                                inputValue = this.dom.value,
+                                isSpace = e.browserEvent.keyCode === 32,
+                                isSemiColon = e.browserEvent.keyCode === 186,
                                 isDelete = e.browserEvent.keyCode === 8,
                                 isEnter = e.browserEvent.keyCode === 13,
                                 isTab = e.browserEvent.keyCode === 9,
                                 isHide = e.browserEvent.keyCode === 10;
 
-                            if (isEnter || isHide) {
+                            if (isEnter || isHide || isSpace || isSemiColon) {
                                 if (me.shouldAutoBubble()) {
                                     if (this.dom.value) {
-                                        me.considerBubblingInput(this.dom.value);
+                                        if (isSemiColon) {
+                                            inputValue = inputValue.substring(0, inputValue.length - 1);
+                                        }
+                                        me.considerBubblingInput(inputValue);
                                     }
                                 }
                             } else {
