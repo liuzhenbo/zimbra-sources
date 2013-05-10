@@ -28,7 +28,7 @@ public class ZAttrProvisioning {
 
     ///// BEGIN-AUTO-GEN-REPLACE
 
-    /* build: 9.0.0_BETA1_1111 smadiraju 20130429-1435 */
+    /* build: 9.0.0_BETA1_1111 rgadipuuri 20130510-1145 */
 
     public static enum AccountCalendarUserType {
         RESOURCE("RESOURCE"),
@@ -9620,6 +9620,15 @@ public class ZAttrProvisioning {
     public static final String A_zimbraPrefWarnOnExit = "zimbraPrefWarnOnExit";
 
     /**
+     * user preference to enable/disable access to his mailbox data in the
+     * web client when offline
+     *
+     * @since ZCS 9.0.0
+     */
+    @ZAttr(id=1443)
+    public static final String A_zimbraPrefWebClientOfflineAccessEnabled = "zimbraPrefWebClientOfflineAccessEnabled";
+
+    /**
      * if replying/forwarding a message in this folder, use this identity
      * (deprecatedSince 5.0 in account)
      */
@@ -10370,11 +10379,8 @@ public class ZAttrProvisioning {
 
     /**
      * The connect timeout is the time interval after which NGINX will
-     * disconnect while establishing an upstream HTTP connection . Must be in
-     * valid duration format: {digits}{time-unit}. digits: 0-9, time-unit:
-     * [hmsd]|ms. h - hours, m - minutes, s - seconds, d - days, ms -
-     * milliseconds. If time unit is not specified, the default is
-     * s(seconds).
+     * disconnect while establishing an upstream HTTP connection. Measured in
+     * seconds, should not be more than 75 seconds.
      *
      * @since ZCS 8.0.4
      */

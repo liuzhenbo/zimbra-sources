@@ -41,7 +41,7 @@ public abstract class ZAttrCos extends NamedEntry {
 
     ///// BEGIN-AUTO-GEN-REPLACE
 
-    /* build: 9.0.0_BETA1_1111 smadiraju 20130429-1435 */
+    /* build: 9.0.0_BETA1_1111 rgadipuuri 20130510-1145 */
 
     /**
      * RFC2256: common name(s) for which the entity is known by
@@ -36447,6 +36447,83 @@ public abstract class ZAttrCos extends NamedEntry {
     public Map<String,Object> unsetPrefWarnOnExit(Map<String,Object> attrs) {
         if (attrs == null) attrs = new HashMap<String,Object>();
         attrs.put(Provisioning.A_zimbraPrefWarnOnExit, "");
+        return attrs;
+    }
+
+    /**
+     * user preference to enable/disable access to his mailbox data in the
+     * web client when offline
+     *
+     * @return zimbraPrefWebClientOfflineAccessEnabled, or false if unset
+     *
+     * @since ZCS 9.0.0
+     */
+    @ZAttr(id=1443)
+    public boolean isPrefWebClientOfflineAccessEnabled() {
+        return getBooleanAttr(Provisioning.A_zimbraPrefWebClientOfflineAccessEnabled, false);
+    }
+
+    /**
+     * user preference to enable/disable access to his mailbox data in the
+     * web client when offline
+     *
+     * @param zimbraPrefWebClientOfflineAccessEnabled new value
+     * @throws com.zimbra.common.service.ServiceException if error during update
+     *
+     * @since ZCS 9.0.0
+     */
+    @ZAttr(id=1443)
+    public void setPrefWebClientOfflineAccessEnabled(boolean zimbraPrefWebClientOfflineAccessEnabled) throws com.zimbra.common.service.ServiceException {
+        HashMap<String,Object> attrs = new HashMap<String,Object>();
+        attrs.put(Provisioning.A_zimbraPrefWebClientOfflineAccessEnabled, zimbraPrefWebClientOfflineAccessEnabled ? Provisioning.TRUE : Provisioning.FALSE);
+        getProvisioning().modifyAttrs(this, attrs);
+    }
+
+    /**
+     * user preference to enable/disable access to his mailbox data in the
+     * web client when offline
+     *
+     * @param zimbraPrefWebClientOfflineAccessEnabled new value
+     * @param attrs existing map to populate, or null to create a new map
+     * @return populated map to pass into Provisioning.modifyAttrs
+     *
+     * @since ZCS 9.0.0
+     */
+    @ZAttr(id=1443)
+    public Map<String,Object> setPrefWebClientOfflineAccessEnabled(boolean zimbraPrefWebClientOfflineAccessEnabled, Map<String,Object> attrs) {
+        if (attrs == null) attrs = new HashMap<String,Object>();
+        attrs.put(Provisioning.A_zimbraPrefWebClientOfflineAccessEnabled, zimbraPrefWebClientOfflineAccessEnabled ? Provisioning.TRUE : Provisioning.FALSE);
+        return attrs;
+    }
+
+    /**
+     * user preference to enable/disable access to his mailbox data in the
+     * web client when offline
+     *
+     * @throws com.zimbra.common.service.ServiceException if error during update
+     *
+     * @since ZCS 9.0.0
+     */
+    @ZAttr(id=1443)
+    public void unsetPrefWebClientOfflineAccessEnabled() throws com.zimbra.common.service.ServiceException {
+        HashMap<String,Object> attrs = new HashMap<String,Object>();
+        attrs.put(Provisioning.A_zimbraPrefWebClientOfflineAccessEnabled, "");
+        getProvisioning().modifyAttrs(this, attrs);
+    }
+
+    /**
+     * user preference to enable/disable access to his mailbox data in the
+     * web client when offline
+     *
+     * @param attrs existing map to populate, or null to create a new map
+     * @return populated map to pass into Provisioning.modifyAttrs
+     *
+     * @since ZCS 9.0.0
+     */
+    @ZAttr(id=1443)
+    public Map<String,Object> unsetPrefWebClientOfflineAccessEnabled(Map<String,Object> attrs) {
+        if (attrs == null) attrs = new HashMap<String,Object>();
+        attrs.put(Provisioning.A_zimbraPrefWebClientOfflineAccessEnabled, "");
         return attrs;
     }
 
