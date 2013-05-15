@@ -57,9 +57,9 @@
 	<classpathentry kind="lib" path="/ZimbraCommon/jars/libidn-1.24.jar" sourcepath="/ZimbraCommon/jars-src/libidn-1.24-src.zip"/>
 	<classpathentry kind="lib" path="/ZimbraCommon/jars/log4j-1.2.16.jar"/>
 	<classpathentry kind="lib" path="/ZimbraCommon/jars/apache-log4j-extras-1.0.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/mysql-connector-java-5.1.18-bin.jar" sourcepath="/ThirdParty/connector-j/mysql-connector-java-5.1.18/src"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/mariadb-java-client-1.1.2.jar" sourcepath="/ThirdParty/connector-j/mariadb-java-client-1.1.2/src"/>
 	<classpathentry kind="lib" path="/ZimbraCommon/jars/nekohtml-1.9.13.1z.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/servlet-api-2.5.jar">
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/servlet-api-3.0.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="http://download.oracle.com/docs/cd/E17802_01/products/products/servlet/2.5/docs/servlet-2_5-mr2/"/>
 		</attributes>
@@ -111,13 +111,13 @@
 			<attribute name="javadoc_location" value="http://kentbeck.github.com/junit/javadoc/latest/"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-util-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-io-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-server-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-security-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-http-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-continuation-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-servlet-7.6.10.z5.jar"/>
-	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-servlets-7.6.10.z5.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-util-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-io-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-server-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-security-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-http-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-continuation-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-servlet-9.0.3.v20130506.jar"/>
+	<classpathentry kind="lib" path="/ZimbraCommon/jars/jetty-servlets-9.0.3.v20130506.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
