@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -29,7 +27,6 @@ import com.zimbra.common.soap.Element;
 import com.zimbra.qa.selenium.framework.util.HarnessException;
 import com.zimbra.qa.selenium.framework.util.XmlStringUtil;
 import com.zimbra.qa.selenium.framework.util.ZimbraAccount;
-import com.zimbra.qa.selenium.framework.util.ZimbraAccount.SOAP_DESTINATION_HOST_TYPE;
 
 
 /**
@@ -188,6 +185,9 @@ public class MailItem implements IItem {
 	}
 	
 	public String getSubject() {
+		if ( dSubject == null ) {
+			return (gSubject);
+		}
 		return (dSubject);
 	}
 	
@@ -358,21 +358,12 @@ public class MailItem implements IItem {
 
 	public static MailItem importFromSOAP(ZimbraAccount account, String query) throws HarnessException {
 		
-		return importFromSOAP(account, query, SOAP_DESTINATION_HOST_TYPE.SERVER, null);
-
-	}
-
-	public static MailItem importFromSOAP(ZimbraAccount account, String query,
-	      SOAP_DESTINATION_HOST_TYPE destType, String accountName) throws HarnessException {
-
 	   try {
 
          account.soapSend(
                "<SearchRequest xmlns='urn:zimbraMail' types='message'>" +
                   "<query>"+ query +"</query>" +
-               "</SearchRequest>",
-               destType,
-               accountName);
+               "</SearchRequest>");
          
          Element[] results = account.soapSelectNodes("//mail:SearchResponse/mail:m");
          if (results.length != 1)
@@ -384,9 +375,7 @@ public class MailItem implements IItem {
          account.soapSend(
                "<GetMsgRequest xmlns='urn:zimbraMail'>" +
                      "<m id='"+ id +"' />" +
-                   "</GetMsgRequest>",
-                   destType,
-                   accountName);
+                   "</GetMsgRequest>");
          Element getMsgResponse = account.soapSelectNode("//mail:GetMsgResponse", 1);
          
          // Using the response, create this item

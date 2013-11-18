@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -27,6 +25,7 @@ ZaTreeItem = function(params) {
 
     params.expandNodeImage = params.expandNodeImage || "Blank_16";
     params.collapseNodeImage= params.collapseNodeImage || "AdminCollapse";
+    params.arrowDisabled = true;
     params = Dwt.getParams(arguments, ZaTreeItem.PARAMS);
     this._parentInTree = params.parent;
     this._countParam = params.count;
@@ -75,7 +74,7 @@ function(index, realizeDeferred, forceNode) {
         }
     }
 
-    if (!this._contextEnabled){
+    if (this._arrowDisabled){
         var tableNode = document.getElementById(this._htmlElId + "_table");
         tableNode.style.tableLayout = "fixed";
         tableNode.style.width = "100%";

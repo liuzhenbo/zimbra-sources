@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -107,7 +107,7 @@
  * 
  * Return		If the input contains an email address, turn it into a bubble
  * Tab		Go to the next field
- * Esc		If requests are pending (it will say "Autocompleting…"), cancel them. If not, cancel compose.
+ * Esc		If requests are pending (it will say "Autocompleting"), cancel them. If not, cancel compose.
  * 
  * 
  * 
@@ -815,6 +815,9 @@ function(on, str) {
  */
 ZmAutocompleteListView.prototype._autocompleteAction =
 function(ev) {
+    if (appCtxt.isWebClientOffline()) {
+        return; // To be removed
+    }
 	var aclv = ev.aclv;
 	aclv._acActionId[ev.element.id] = -1; // so we don't try to cancel
 	aclv.autocomplete(ev.element);

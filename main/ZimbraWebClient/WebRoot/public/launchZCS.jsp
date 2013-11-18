@@ -51,28 +51,13 @@
 
 	// Set standard HTTP/1.0 no-cache header.
 	response.setHeader("Pragma", "no-cache");
+
+	// Prevent IE from ever going into compatibility/quirks mode.
+	response.setHeader("X-UA-Compatible", "IE=edge");
 %>
 
+<!DOCTYPE html>
 <zm:getUserAgent var="ua" session="false"/>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
-<html>
-<head>
-<!--
- launchZCS.jsp
- * ***** BEGIN LICENSE BLOCK *****
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * ***** END LICENSE BLOCK *****
--->
 <%	java.util.List<String> localePref = authResult.getPrefs().get("zimbraPrefLocale");
 	if (localePref != null && localePref.size() > 0) {
 		request.setAttribute("localeId", localePref.get(0));
@@ -157,10 +142,29 @@
 	pageContext.setAttribute("unitTest", unitTest);
 	pageContext.setAttribute("preset", preset);
 	pageContext.setAttribute("editor", editor);
-        pageContext.setAttribute("isCoverage", isCoverage);
-        pageContext.setAttribute("isPerfMetric", isPerfMetric);
-        pageContext.setAttribute("isLocaleId", localeId != null);
+    pageContext.setAttribute("isCoverage", isCoverage);
+    pageContext.setAttribute("isPerfMetric", isPerfMetric);
+    pageContext.setAttribute("isLocaleId", localeId != null);
+    pageContext.setAttribute("isWebClientOfflineEnabled", "TRUE".equals(authResult.getPrefs().get("zimbraPrefWebClientOfflineAccessEnabled").get(0)));
 %>
+<html class="user_font_size_normal">
+<head>
+<!--
+ launchZCS.jsp
+ * ***** BEGIN LICENSE BLOCK *****
+ * Zimbra Collaboration Suite Web Client
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ * 
+ * The contents of this file are subject to the Zimbra Public License
+ * Version 1.4 ("License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * http://www.zimbra.com/license.
+ * 
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ * ***** END LICENSE BLOCK *****
+-->
+
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 <meta http-equiv="cache-control" content="no-cache"/>
 <meta http-equiv="Pragma" content="no-cache"/>
@@ -176,7 +180,7 @@
 <title><fmt:message key="zimbraTitle"/></title>
 <link href="<c:url value="/css/images,common,dwt,msgview,login,zm,spellcheck,skin.css">
 	<c:param name="v" value="${vers}" />
-	<c:param name="debug" value='${isDebug?"1":""}' />
+	<c:param name='debug' value='${isDebug}' />
 	<c:param name="skin" value="${skin}" />
 	<c:param name="locale" value="${locale}" />
 	<c:if test="${not empty param.customerDomain}">
@@ -186,7 +190,7 @@
 <c:if test="${ua.isIE7up}">
     <link href="<c:url value="/css/ie-custom-icons.css">
     <c:param name="v" value="${vers}" />
-    <c:param name="debug" value='${isDebug?"1":""}' />
+	<c:param name='debug' value='${isDebug}' />
     <c:param name="skin" value="${skin}" />
     <c:param name="locale" value="${locale}" />
     <c:if test="${not empty param.customerDomain}">
@@ -217,16 +221,18 @@
     window.appCoverageMode		= ${isCoverage};
     window.isScriptErrorOn		= ${isScriptErrorOn};
     window.isPerfMetric			= ${isPerfMetric};
-
+    window.isWebClientOfflineEnabled = ${isWebClientOfflineEnabled};
 	window.authTokenExpires = <%= authResult.getExpires()%>;
-
-
 </script>
 <noscript>
 <meta http-equiv="Refresh" content="0;url=public/noscript.jsp" >
 </noscript>
 </head>
 <body>
+
+<iframe id="offlineIframe" style="display: none">
+</iframe>
+
 <c:if test="${ua.isChrome or ua.isSafari}">
     <%
         /*preloading splash screen images to avoid latency*/
@@ -244,15 +250,9 @@
     <%--preloading the splash screen images to avoid latency --%>
     <div style="display:none;">
       <img src="<%=contextPath%>/skins/<%=splashLocation%>/logos/LoginBanner.png?v=${vers}" alt=""/>
-      <%if(splashLocation.equals("carbon")){%>
-        <img src="<%=contextPath%>/skins/<%=splashLocation%>/img/vmwarePeel.png?v=${vers}" alt=""/>
-        <img src="<%=contextPath%>/skins/<%=splashLocation%>/logos/AltBanner.png?v=${vers}" alt=""/>
-      <%}%>
       <%if(splashLocation.equals("lemongrass")){%>
         <img src="<%=contextPath%>/skins/<%=splashLocation%>/img/bg_lemongrass.png?v=${vers}" alt=""/>
       <%}%>
-      <%if(splashLocation.equals("twilight")||splashLocation.equals("waves")){%><img src="<%=contextPath%>/skins/<%=splashLocation%>/img/skins/login_bg.png?v=${vers}" alt=""/><%}%>
-      <%if(splashLocation.equals("steel")){%><img src="<%=contextPath%>/skins/<%=splashLocation%>/img/SkinOuter.repeat.gif?v=${vers}" alt=""/><%}%>
       <%if(splashLocation.equals("waves")){%>
         <img src="<%=contextPath%>/skins/<%=splashLocation%>/img/login_bg.png?v=${vers}" alt=""/>
         <img src="<%=contextPath%>/skins/<%=splashLocation%>/img/login_page_bg.png?v=${vers}" alt=""/>
@@ -263,16 +263,13 @@
 <jsp:include page="Resources.jsp">
 	<jsp:param name="res" value="I18nMsg,AjxMsg,ZMsg,ZmMsg,AjxKeys,ZmKeys,ZdMsg,AjxTemplateMsg" />
 	<jsp:param name="skin" value="${skin}" />
+    <jsp:param name="localeId" value="${locale}" />
 </jsp:include>
 
 <!--
-  --
-  --
-  --
-  	BEGIN SKIN
-  --
-  --
-  --
+    ################
+    #  BEGIN SKIN  #
+    ################
   -->
 
 <%-- NOTE: servlet path is needed because the servlet sees it as /public/launchZCS.jsp --%>
@@ -286,13 +283,9 @@
 </jsp:include>
 
 <!--
-  --
-  --
-  --
-  	END SKIN
-  --
-  --
-  --
+    ##############
+    #  END SKIN  #
+    ##############
   -->
 <div style='display:none;'>
 <jsp:include page="Boot.jsp"/>

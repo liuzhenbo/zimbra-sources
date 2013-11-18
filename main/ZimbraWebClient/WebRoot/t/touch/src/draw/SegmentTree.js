@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * This class we summarize the data and returns it when required.
  */
@@ -25,15 +9,15 @@ Ext.define("Ext.draw.SegmentTree", {
 
     /**
      * @private
-     * @param result
-     * @param last
-     * @param dataX
-     * @param dataOpen
-     * @param dataHigh
-     * @param dataLow
-     * @param dataClose
+     * @param {Object} result
+     * @param {Number} last
+     * @param {Number} dataX
+     * @param {Number} dataOpen
+     * @param {Number} dataHigh
+     * @param {Number} dataLow
+     * @param {Number} dataClose
      */
-    "time": function (result, last, dataX, dataOpen, dataHigh, dataLow, dataClose) {
+    time: function (result, last, dataX, dataOpen, dataHigh, dataLow, dataClose) {
         var start = 0, lastOffset, lastOffsetEnd,
             minimum = new Date(dataX[result.startIdx[0]]),
             maximum = new Date(dataX[result.endIdx[last - 1]]),
@@ -149,13 +133,13 @@ Ext.define("Ext.draw.SegmentTree", {
 
     /**
      * @private
-     * @param result
-     * @param position
-     * @param dataX
-     * @param dataOpen
-     * @param dataHigh
-     * @param dataLow
-     * @param dataClose
+     * @param {Object} result
+     * @param {Number} position
+     * @param {Number} dataX
+     * @param {Number} dataOpen
+     * @param {Number} dataHigh
+     * @param {Number} dataLow
+     * @param {Number} dataClose
      */
     "double": function (result, position, dataX, dataOpen, dataHigh, dataLow, dataClose) {
         var offset = 0, lastOffset, step = 1,
@@ -230,16 +214,16 @@ Ext.define("Ext.draw.SegmentTree", {
     /**
      * @private
      */
-    "none": Ext.emptyFn,
+    none: Ext.emptyFn,
 
     /**
      * @private
      *
-     * @param dataX
-     * @param dataOpen
-     * @param dataHigh
-     * @param dataLow
-     * @param dataClose
+     * @param {Number} dataX
+     * @param {Number} dataOpen
+     * @param {Number} dataHigh
+     * @param {Number} dataLow
+     * @param {Number} dataClose
      * @return {Object}
      */
     aggregateData: function (dataX, dataOpen, dataHigh, dataLow, dataClose) {
@@ -292,10 +276,10 @@ Ext.define("Ext.draw.SegmentTree", {
 
     /**
      * @private
-     * @param items
-     * @param start
-     * @param end
-     * @param key
+     * @param {Object} items
+     * @param {Number} start
+     * @param {Number} end
+     * @param {Number} key
      * @return {*}
      */
     binarySearchMin: function (items, start, end, key) {
@@ -322,10 +306,10 @@ Ext.define("Ext.draw.SegmentTree", {
 
     /**
      * @private
-     * @param items
-     * @param start
-     * @param end
-     * @param key
+     * @param {Object} items
+     * @param {Number} start
+     * @param {Number} end
+     * @param {Number} key
      * @return {*}
      */
     binarySearchMax: function (items, start, end, key) {
@@ -356,11 +340,11 @@ Ext.define("Ext.draw.SegmentTree", {
 
     /**
      * Sets the data of the segment tree.
-     * @param dataX
-     * @param dataOpen
-     * @param dataHigh
-     * @param dataLow
-     * @param dataClose
+     * @param {Number} dataX
+     * @param {Number} dataOpen
+     * @param {Number} dataHigh
+     * @param {Number} dataLow
+     * @param {Number} dataClose
      */
     setData: function (dataX, dataOpen, dataHigh, dataLow, dataClose) {
         if (!dataHigh) {

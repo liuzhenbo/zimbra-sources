@@ -2,10 +2,10 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
-# Version 1.3 ("License"); you may not use this file except in
+# Version 1.4 ("License"); you may not use this file except in
 # compliance with the License.  You may obtain a copy of the License at
 # http://www.zimbra.com/license.
 # 
@@ -680,6 +680,37 @@ checkRequiredSpace() {
       echo ""
     fi
   fi
+}
+
+checkStoreRequirements() {
+  echo "Checking required packages for zimbra-store"
+  GOOD="yes"
+  for i in $STORE_PACKAGES; do
+    #echo -n "    $i..."
+    isInstalled $i
+    if [ "x$PKGINSTALLED" != "x" ]; then
+      echo "     FOUND: $PKGINSTALLED"
+    else
+      echo "     MISSING: $i"
+      GOOD="no"
+    fi
+  done
+
+  if [ $GOOD = "no" ]; then
+    echo ""
+    echo "###ERROR###"
+    echo ""
+    echo "One or more required packages for zimbra-store are missing."
+    echo "Please install them before running this installer."
+    echo ""
+    echo "Installation cancelled."
+    echo ""
+    exit 1
+  else
+    echo "zimbra-store package check complete."
+  fi
+
+
 }
 
 checkExistingInstall() {
@@ -1697,8 +1728,12 @@ removeExistingInstall() {
           umount -f ${mp}
         fi
       done
-  
-      /bin/rm -rf /opt/zimbra/*
+ 
+      for i in `ls /opt/zimbra`; do
+        if [ x$i != "xlost+found" ]; then
+          /bin/rm -rf /opt/zimbra/$i
+        fi
+      done
 
       if [ -e "/opt/zimbra/.enable_replica" ]; then
         /bin/rm -f /opt/zimbra/.enable_replica
@@ -1977,6 +2012,7 @@ getInstallPackages() {
   APACHE_SELECTED="no"
   LOGGER_SELECTED="no"
   STORE_SELECTED="no"
+  MTA_SELECTED="no"
   
   CLUSTER_SELECTED="no"
 
@@ -2020,6 +2056,8 @@ getInstallPackages() {
           LOGGER_SELECTED="yes"
         elif [ $i = "zimbra-store" ]; then
           STORE_SELECTED="yes"
+        elif [ $i = "zimbra-mta" ]; then
+          MTA_SELECTED="yes"
         elif [ $i = "zimbra-cluster" ]; then
           CLUSTER_SELECTED="yes"
         fi
@@ -2079,6 +2117,12 @@ getInstallPackages() {
         else
           askYN "Install $i" "N"
         fi
+      elif [ $i = "zimbra-dnscache" ]; then
+        if [ $MTA_SELECTED = "yes" ]; then
+          askYN "Install $i" "Y"
+        else
+          askYN "Install $i" "N"
+        fi
       elif [ $i = "zimbra-cluster" -a "x$CLUSTERTYPE" = "x" ]; then
         askYN "Install $i" "N"
       else
@@ -2095,6 +2139,8 @@ getInstallPackages() {
         APACHE_SELECTED="yes"
       elif [ $i = "zimbra-cluster" ]; then
         CLUSTER_SELECTED="yes"
+      elif [ $i = "zimbra-mta" ]; then
+        MTA_SELECTED="yes"
       fi
 
       if [ $i = "zimbra-mta" ]; then
@@ -2144,6 +2190,12 @@ getInstallPackages() {
 
   done
   checkRequiredSpace
+
+  isInstalled zimbra-store
+  isToBeInstalled zimbra-store
+  if [ "x$PKGINSTALLED" != "x" -o "x$PKGTOBEINSTALLED" != "x" ]; then
+    checkStoreRequirements
+  fi
 
   echo ""
   echo "Installing:"
@@ -2369,12 +2421,14 @@ getPlatformVars() {
     PREREQ_PACKAGES="sudo libidn11 libgmp3c2 libstdc++6"
     CONFLICT_PACKAGES="mail-transport-agent"
     if [ $PLATFORM = "UBUNTU10_64" ]; then
-      PREREQ_PACKAGES="netcat-openbsd sudo libidn11 libpcre3 libgmp3c2 libexpat1 libstdc++6 libperl5.10"
+      PREREQ_PACKAGES="netcat-openbsd sudo libidn11 libpcre3 libgmp3c2 libexpat1 libstdc++6 libperl5.10 resolvconf"
       PRESUG_PACKAGES="pax perl-5.10.1 sysstat sqlite3"
+      STORE_PACKAGES=""
     fi
     if [ $PLATFORM = "UBUNTU12_64" ]; then
-      PREREQ_PACKAGES="netcat-openbsd sudo libidn11 libpcre3 libgmp3c2 libexpat1 libstdc++6 libperl5.14"
+      PREREQ_PACKAGES="netcat-openbsd sudo libidn11 libpcre3 libgmp3c2 libexpat1 libstdc++6 libperl5.14 resolvconf"
       PRESUG_PACKAGES="pax perl-5.14.2 sysstat sqlite3"
+      STORE_PACKAGES="libreoffice"
     fi
   else
     PACKAGEINST='rpm -iv'
@@ -2383,15 +2437,17 @@ getPlatformVars() {
     PACKAGEVERIFY='rpm -K'
     PACKAGEEXT='rpm'
     if [ $PLATFORM = "RHEL6_64" -o $PLATFORM = "CentOS6_64" ]; then
-      PACKAGEINST='yum -y install -v'
-      PACKAGERM='yum -y erase -v'
+      PACKAGEINST='yum -y --disablerepo=* localinstall -v'
+      PACKAGERM='yum -y --disablerepo=* erase -v'
       PREREQ_PACKAGES="nc sudo libidn gmp"
       PREREQ_LIBS="/usr/lib64/libstdc++.so.6"
       PRESUG_PACKAGES="perl-5.10.1 sysstat sqlite"
+      STORE_PACKAGES=""
     elif [ $PLATFORM = "SLES11_64" ]; then
       PREREQ_PACKAGES="netcat sudo libidn gmp"
       PREREQ_LIBS="/usr/lib64/libstdc++.so.6"
       PRESUG_PACKAGES="perl-5.10.0 sysstat sqlite3"
+      STORE_PACKAGES=""
     else
       PREREQ_PACKAGES="sudo libidn gmp"
       PREREQ_LIBS="/usr/lib/libstdc++.so.6"

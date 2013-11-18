@@ -1,10 +1,10 @@
 #
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2010, 2011, 2012, 2013 VMware, Inc.
+# Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
-# Version 1.3 ("License"); you may not use this file except in
+# Version 1.4 ("License"); you may not use this file except in
 # compliance with the License.  You may obtain a copy of the License at
 # http://www.zimbra.com/license.
 # 
@@ -38,23 +38,24 @@ class State:
 
 	startorder = {
 		"ldap"      : 0,
-		"logger"    : 10,
-		"convertd"  : 20,
-		"mailbox"   : 30,
-		"mailboxd"  : 35,
-		"memcached" : 40,
-		"proxy"     : 50,
-		"antispam"  : 60,
-		"antivirus" : 70,
-		"cbpolicyd" : 72,
-		"amavis"    : 75,
-		"opendkim"  : 78,
-		"archiving" : 80,
-		"snmp"      : 90,
-		"spell"     : 100,
-		"mta"       : 110,
-		"sasl"      : 115,
-		"stats"     : 120,
+		"dnscache"  : 10,
+		"logger"    : 20,
+		"convertd"  : 30,
+		"mailbox"   : 40,
+		"mailboxd"  : 50,
+		"memcached" : 60,
+		"proxy"     : 70,
+		"antispam"  : 80,
+		"antivirus" : 90,
+		"cbpolicyd" : 100,
+		"amavis"    : 110,
+		"opendkim"  : 120,
+		"archiving" : 130,
+		"snmp"      : 140,
+		"spell"     : 150,
+		"mta"       : 160,
+		"sasl"      : 170,
+		"stats"     : 180,
 		}
 
 	def __init__(self):
@@ -966,8 +967,10 @@ class State:
 		# Howewver, before we do that action, we need to do variable substitution in the line
 		# and then evaluate the action
 		line = line.rstrip()
-		if(line.startswith("%%") and line.endswith("%%") and line.count('%') is 4):
-			line = line.strip("%%")
+
+		if(line.startswith("%%") and line.endswith("%%") and line.count('%') > 4):
+			line = re.sub('^%%','',line)
+			line = re.sub('%%$','',line)
 			line = re.sub(r"%%([^%]+)%%", self.xformConfigVariable, line)
 			line = line + "%%"
 			line = "%%" + line

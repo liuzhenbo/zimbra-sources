@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -1740,6 +1740,12 @@ function(addrInput, addrs, type, shortForm) {
 	if (typeof addrs == "string" && (addrs.indexOf(ZmAppt.ATTENDEES_SEPARATOR) != -1)) {
 		var result = AjxEmailAddress.parseEmailString(addrs, type);
 		addrs = result.good;
+	}
+
+	if (addrs.isAjxVector) {
+		//todo - why aren't we using ZmRecipients way more here? We probably could use a refactoring to unite this code with the
+		//mail compose recipients case - same thing as attendees, more or less.
+		addrs = ZmRecipients.expandAddrs(addrs);  //expand groups to their individual emails (not DLs).
 	}
 
 	// make sure we have an array to deal with

@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * @aside guide proxies
  *
@@ -57,6 +41,11 @@ Ext.define('Ext.data.proxy.Direct', {
     requires: ['Ext.direct.Manager'],
 
     config: {
+        /**
+         * @cfg url
+         * @hide
+         */
+
         /**
          * @cfg {String/String[]} paramOrder
          * Defaults to undefined. A list of params to be executed server side.  Specify the params in the order in
@@ -112,33 +101,50 @@ Ext.define('Ext.data.proxy.Direct', {
         return paramOrder;
     },
 
-    applyDirectFn: function(directFn) {
-        return Ext.direct.Manager.parseMethod(directFn);
-    },
+    resolveMethods : function() {
+        var me = this,
+            fn = me.getDirectFn(),
+            api = me.getApi(),
+            Manager = Ext.direct.Manager,
+            method;
 
-    applyApi: function(api) {
-        var fn;
+        if (fn) {
+            me.setDirectFn(method = Manager.parseMethod(fn));
 
-        if (api && Ext.isObject(api)) {
+            if (!Ext.isFunction(method)) {
+                Ext.Error.raise('Cannot resolve directFn ' + fn);
+            }
+        }
+        else if (api) {
             for (fn in api) {
                 if (api.hasOwnProperty(fn)) {
-                    api[fn] = Ext.direct.Manager.parseMethod(api[fn]);
+                    method = api[fn];
+                    api[fn] = Manager.parseMethod(method);
+
+                    if (!Ext.isFunction(api[fn])) {
+                        Ext.Error.raise('Cannot resolve Direct api ' + fn + ' method ' + method);
+                    }
                 }
             }
         }
 
-        return api;
+        me.methodsResolved = true;
     },
 
     doRequest: function(operation, callback, scope) {
         var me = this,
             writer = me.getWriter(),
             request = me.buildRequest(operation, callback, scope),
-            api = me.getApi(),
-            fn = api && api[request.getAction()] || me.getDirectFn(),
+            api = me.getApi() || {},
             params = request.getParams(),
             args = [],
-            method;
+            fn, method;
+
+        if (!me.methodsResolved) {
+            me.resolveMethods();
+        }
+
+        fn = api[request.getAction()] || me.getDirectFn();
 
         //<debug>
         if (!fn) {
@@ -178,8 +184,12 @@ Ext.define('Ext.data.proxy.Direct', {
         var me = this;
 
         return function(data, event) {
-            me.processResponse(event.getStatus(), operation, request, event.getResult(), callback, scope);
+            me.processResponse(event.getStatus(), operation, request, event, callback, scope);
         };
+    },
+
+    getResponseResult: function(response) {
+        return response.getResult();
     },
 
     // @inheritdoc

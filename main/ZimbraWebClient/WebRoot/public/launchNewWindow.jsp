@@ -2,10 +2,10 @@
 <%@ page import="java.util.regex.Pattern" %>
 <%@ page import="java.util.regex.Matcher" %>
 <%@ page import="com.zimbra.cs.taglib.bean.BeanUtils" %>
+<%@ taglib prefix="app" uri="com.zimbra.htmlclient" %>
 <%@ taglib prefix="zm" uri="com.zimbra.zm" %>
 <%@ taglib prefix="fmt" uri="com.zimbra.i18n" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-
 <%
 	// Set to expire far in the past.
 	response.setHeader("Expires", "Tue, 24 Jan 2000 17:46:50 GMT");
@@ -15,15 +15,19 @@
 
 	// Set standard HTTP/1.0 no-cache header.
 	response.setHeader("Pragma", "no-cache");
-%><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+	// Prevent IE from ever going into compatibility/quirks mode.
+	response.setHeader("X-UA-Compatible", "IE=edge");
+%><!DOCTYPE html>
+<zm:getUserAgent var="ua" session="false"/>
 <!--
  launchNewWindow.jsp
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -33,15 +37,12 @@
 -->
 <html>
 <head>
-<meta http-equiv="X-UA-Compatible" content="IE=EmulateIE9" />
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8">
 <meta http-equiv="cache-control" content="no-cache"/>
 <meta http-equiv="Pragma" content="no-cache"/>
 
 <%--bug:74490 The page session = "false" has been removed hence it defaults to true. This is required for getting the mailbox object--%>
-<app:handleError>
-    <zm:getMailbox var="mailbox"/>
-</app:handleError>
+<zm:getMailbox var="mailbox"/>
 <%!
 	static String getParameter(HttpServletRequest request, String pname, String defValue) {
 		String value = request.getParameter(pname);
@@ -62,6 +63,8 @@
         skin = application.getInitParameter("zimbraDefaultSkin");
 	}
 	skin = skin.replaceAll("['\"<>&]", "");
+
+    String authTokenExpires = request.getParameter("authTokenExpires");
 
 	boolean isDev = getParameter(request, "dev", "0").equals("1");
 	if (isDev) {
@@ -111,9 +114,12 @@
     }
 	request.setAttribute("localeId", locale.toString());
 
+	String childId = request.getParameter("childId");
+
 	// make variables available in page context (e.g. ${foo})
 	pageContext.setAttribute("contextPath", contextPath);
 	pageContext.setAttribute("skin", skin);
+    pageContext.setAttribute("authTokenExpires", authTokenExpires);
 	pageContext.setAttribute("ext", ext);
 	pageContext.setAttribute("vers", vers);
 	pageContext.setAttribute("locale", locale);
@@ -121,6 +127,7 @@
 	pageContext.setAttribute("isDevMode", isDev);
 	pageContext.setAttribute("isDebug", isSkinDebugMode || isDevMode);
     pageContext.setAttribute("isCoverage", isCoverage);
+    pageContext.setAttribute("childId", childId);
 %>
 <fmt:setLocale value='${pageContext.request.locale}' scope='request' />
 <title><fmt:setBundle basename="/messages/ZmMsg"/><fmt:message key="zimbraTitle"/></title>
@@ -129,6 +136,17 @@
 	<jsp:param name="skin" value="${skin}" />
 </jsp:include>
 <link href='${contextPath}/css/common,dwt,msgview,login,zm,spellcheck,images,skin.css?v=${vers}${isDebug?"&debug=1":""}&skin=${zm:cook(skin)}' rel='stylesheet' type="text/css">
+<c:if test="${ua.isIE7up}">
+    <link href="<c:url value="/css/ie-custom-icons.css">
+    <c:param name="v" value="${vers}" />
+	<c:param name='debug' value='${isDebug}' />
+    <c:param name="skin" value="${skin}" />
+    <c:param name="locale" value="${locale}" />
+    <c:if test="${not empty param.customerDomain}">
+        <c:param name="customerDomain"	value="${param.customerDomain}" />
+    </c:if>		
+</c:url>" rel="stylesheet" type="text/css" />
+</c:if>
 <jsp:include page="Boot.jsp"/>
 <script type="text/javascript">
 	AjxEnv.DEFAULT_LOCALE = "${zm:javaLocaleId(locale)}";
@@ -140,6 +158,8 @@
 	window.appExtension			= "${zm:jsEncode(ext)}";
 	window.appDevMode			= ${isDevMode};
     window.appCoverageMode		= ${isCoverage};
+    window.authTokenExpires     = ${authTokenExpires};
+    window.childId              = ${childId};
 </script>
 
 <%@ include file="loadImgData.jsp" %>

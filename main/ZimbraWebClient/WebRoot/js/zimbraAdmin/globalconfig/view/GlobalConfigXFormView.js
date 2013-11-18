@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -734,7 +734,9 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
                                       showAddButton:true,
                                       showRemoveButton:true,
                                       showAddOnNextRow:true,
-                                      items: [
+                                        addButtonLabel: ZaMsg.NAD_Add,
+                                        removeButtonLabel:ZaMsg.NAD_Remove,
+                                        items: [
                                         {ref:".", type:_TEXTFIELD_, label:null, visibilityChecks:[], enableDisableChecks:[] }
                                       ]
                                     }
@@ -797,6 +799,8 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
                                   showAddButton: true,
                                   showRemoveButton: true,
                                   showAddOnNextRow: true,
+                                  addButtonLabel: ZaMsg.NAD_Add,
+                                  removeButtonLabel:ZaMsg.NAD_Remove,
                                   items: [
                                       {
                                           ref: ".",
@@ -815,6 +819,8 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
                                   showAddButton: true,
                                   showRemoveButton: true,
                                   showAddOnNextRow: true,
+                                  addButtonLabel: ZaMsg.NAD_Add,
+                                  removeButtonLabel:ZaMsg.NAD_Remove,
                                   items: [
                                       {
                                           ref: ".",
@@ -833,6 +839,8 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
                                   showAddButton: true,
                                   showRemoveButton: true,
                                   showAddOnNextRow: true,
+                                  addButtonLabel: ZaMsg.NAD_Add,
+                                  removeButtonLabel:ZaMsg.NAD_Remove,
                                   items: [
                                       {
                                           ref: ".",
@@ -851,6 +859,8 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
                                   showAddButton: true,
                                   showRemoveButton: true,
                                   showAddOnNextRow: true,
+                                  addButtonLabel: ZaMsg.NAD_Add,
+                                  removeButtonLabel:ZaMsg.NAD_Remove,
                                   items: [
                                       {
                                           ref: ".",
@@ -1138,7 +1148,7 @@ GlobalConfigXFormView.myXFormModifier = function(xFormObject, entry) {
                                     buttonImage: "Color", width: "50px" ,
                                     labelLocation:_LEFT_
                                 },
-                                {type:_GROUP_,  colSpan: 2, cssStyle: "margin-top: 10px; margin-left: 200px", items: [
+                                {type:_GROUP_,  colSpan: 2, cssStyle: "margin-top: 10px; margin-left: 200px; width: 200px;", items: [
                                         {type: _DWT_BUTTON_,  label: ZaMsg.bt_ResetAllSkinColor,
                                             onActivate: ZaDomainXFormView.resetAllColorThemes }
                                    ]

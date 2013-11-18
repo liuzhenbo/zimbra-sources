@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -231,9 +231,9 @@ function() {
  */
 AjxSoapDoc.prototype.getHeader =
 function() {
-	// would love to use getElementsByTagNameNS, but IE does not support it
+	// fall back to getElementsByTagName in IE 8 and earlier
 	var d = this._xmlDoc.getDoc();
-	var nodeList = AjxEnv.isIE
+	var nodeList = !d.getElementsByTagNameNS
 		? (d.getElementsByTagName(d.firstChild.prefix + ":Header"))
 		: (d.getElementsByTagNameNS(this._soapURI, "Header"));
 
@@ -247,9 +247,9 @@ function() {
  */
 AjxSoapDoc.prototype.getBody =
 function() {
-	// would love to use getElementsByTagNameNS, but IE does not support it
+	// fall back to getElementsByTagName in IE 8 and earlier
 	var d = this._xmlDoc.getDoc();
-	var nodeList = AjxEnv.isIE
+	var nodeList = !d.getElementsByTagNameNS
 		? (d.getElementsByTagName(d.firstChild.prefix + ":Body"))
 		: (d.getElementsByTagNameNS(this._soapURI, "Body"));
 
@@ -315,7 +315,7 @@ function(node) {
  */
 AjxSoapDoc.prototype.getXml =
 function() {
-	return AjxEnv.isSafari || AjxEnv.isOpera
+	return AjxEnv.isSafari || AjxEnv.isOpera || AjxEnv.isIE9up
 		? (AjxXmlDoc.getXml(this._xmlDoc.getDoc()))
 		: AjxXmlDoc.replaceInvalidChars(this._xmlDoc.getDoc().xml);
 };

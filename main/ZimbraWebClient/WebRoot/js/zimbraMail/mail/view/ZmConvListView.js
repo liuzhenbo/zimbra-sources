@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -119,6 +119,11 @@ function(item, force) {
 	if (changed) {
 		this.setReadingPane(true);	// so that second view gets positioned
 	}
+    else if (item.isUnread && itemView._msgViews && itemView._msgViewList && itemView._msgViews[itemView._msgViewList[0]]._expanded === false){
+        //expand most recent msg
+        itemView._msgViews[itemView._msgViewList[0]]._toggleExpansion();
+        itemView._msgViews[itemView._msgViewList[0]]._item._markReadLocal(true);
+    }
 	return ZmDoublePaneView.prototype.setItem.apply(this, arguments);
 };
 
@@ -290,6 +295,7 @@ function() {
 		this._headerInit[ZmItem.F_EXPAND]	= {icon:"NodeCollapsed", width:ZmListView.COL_WIDTH_ICON, name:ZmMsg.expand, tooltip: ZmMsg.expandCollapse, cssClass:"ZmMsgListColExpand"};
         //bug:45171 removed sorted from converstaion for FROM field
         this._headerInit[ZmItem.F_FROM]		= {text:ZmMsg.from, width:ZmMsg.COLUMN_WIDTH_FROM_CLV, resizeable:true, cssClass:"ZmMsgListColFrom"};
+        this._headerInit[ZmItem.F_FOLDER]		= {text:ZmMsg.folder, width:ZmMsg.COLUMN_WIDTH_FOLDER, resizeable:true, cssClass:"ZmMsgListColFolder",visible:false};
 	}
 };
 
@@ -858,6 +864,9 @@ function(item) {
 
 ZmConvListView.prototype._expandAll =
 function(expand) {
+    if (!this._list)
+        return;
+
 	var a = this._list.getArray();
 	for (var i = 0, count = a.length; i < count; i++) {
 		var conv = a[i];
@@ -1238,9 +1247,9 @@ function(params) {
 };
 
 ZmConvListView.prototype._restoreState =
-function() {
+function(state) {
 
-	var s = this._state;
+	var s = state || this._state;
 	if (s.expanded) {
 		for (var id in s.expanded) {
 			if (s.expanded[id]) {

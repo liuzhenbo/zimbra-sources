@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -114,6 +114,26 @@ Cos_Enum_XModelItem.prototype.validateType = function (value) {
 	
 	// if we get here, we didn't match any of the choices
 	throw this.getModel().getErrorMessage("didNotMatchChoice", value);
+}
+
+Cos_Enum_Polling_XModelItem = function () {}
+XModelItemFactory.createItemType("_COS_ENUM_POLLING_", "cos_enum_polling", Cos_Enum_Polling_XModelItem, Cos_Enum_XModelItem);
+
+Cos_Enum_Polling_XModelItem.prototype.getValue = function (instance, current, ref) {
+
+    var value = this.getLocalValue(instance);
+    if (value == null) {
+        value = this.getSuperValue(instance);
+    }
+
+    var POLLING_REGEX = /^([0-9])+([dhms]|ms)$/;
+
+    // IF the units are not part of the value, then default is seconds
+    if (!POLLING_REGEX.test(value)) {
+        value += "s";
+    }
+
+    return value;
 }
 
 Cos_List_XModelItem = function (){}
@@ -1773,7 +1793,7 @@ ZAGroup_XFormItem.prototype.initializeItems = function () {
 ZAWizGroup_XFormItem = function() {}
 XFormItemFactory.createItemType("_ZAWIZGROUP_", "zawizgroup", ZAWizGroup_XFormItem, Group_XFormItem);
 ZAWizGroup_XFormItem.prototype.numCols = 2;
-ZAWizGroup_XFormItem.prototype.colSizes = [(AjxEnv.isIE ? "100px":"200px"),(AjxEnv.isIE ? "450px":"275px" )];// modified by qin@zimbra.com
+ZAWizGroup_XFormItem.prototype.colSizes = ["125px","450px"];
 ZAWizGroup_XFormItem.prototype.cssStyle = "margin-top:20px;margin-bottom:0px;padding-bottom:0px;";
 
 ZARightGrouper_XFormItem = function() {}

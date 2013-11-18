@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -37,7 +35,7 @@ public class TreeBriefcase extends AbsTree {
 	public static class Locators {
 		public static final String briefcaseListView = "css=[id='zl__BDLV']";
 		public static final String briefcaseTreeView = "css=[id*=zti__main_Briefcase__";
-		public static final String zNewTagTreeMenuItem = "css=td[id^=NEW_TAG__][id$=_title]";
+		public static final String zNewTagTreeMenuItem = "css=div[class*='ZHasSubMenu'] td[id^=NEW_TAG_][id$=_title]";
 		public static final String zNewFolderTreeMenuItem = "//div[contains(@id,NEW_BRIEFCASE)]//tr[contains(@id,POPUP_NEW_BRIEFCASE)]//td[contains(text(),'New Folder')]";
 		public static final String zRenameTagTreeMenuItem = "css=td[id$=_left_icon]>[class=ImgRename]";
 		public static final String zDeleteTreeMenuItem = "css=td[id^=DELETE_WITHOUT_SHORTCUT][id$=_title]";

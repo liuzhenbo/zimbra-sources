@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -512,10 +512,19 @@ ZaGALConfigXWizard.myXFormModifier = function(xFormObject, entry) {
     };
 
 	xFormObject.items = [
-		{type:_OUTPUT_, colSpan:2, align:_CENTER_, valign:_TOP_, ref:ZaModel.currentStep, choices:this.stepChoices,valueChangeEventSources:[ZaModel.currentStep], labelVisibility:labelVisibility},
+        {
+            type: _OUTPUT_,
+            colSpan: 2,
+            valign: _TOP_,
+            cssStyle: "white-space: normal",
+            ref: ZaModel.currentStep,
+            choices: this.stepChoices,
+            valueChangeEventSources: [ZaModel.currentStep],
+            labelVisibility: labelVisibility
+        },
 		{type:_SEPARATOR_, align:_CENTER_, valign:_TOP_},
 		{type:_SPACER_,  align:_CENTER_, valign:_TOP_},				
-		{type: _SWITCH_,width:650, valign:_TOP_,
+		{type: _SWITCH_,width:650, valign:_TOP_, cssStyle: "white-space: normal",
 			items: [
 				{type:_CASE_, caseKey:ZaGALConfigXWizard.GALMODE_STEP,numCols:2,colSizes:["220px","430px"],
 					items: [
@@ -924,63 +933,127 @@ ZaGALConfigXWizard.myXFormModifier = function(xFormObject, entry) {
 						}						
 					]
 				},
-				{type:_CASE_, caseKey:ZaGALConfigXWizard.GAL_TEST_RESULT_STEP,numCols:2,colSizes:["220px","430px"],
-					items: [
-						{type:_GROUP_, 
-							visibilityChecks:[[XForm.checkInstanceValue,ZaDomain.A_GALSearchTestResultCode,ZaDomain.Check_OK]] ,
-							visibilityChangeEventSources:[ZaDomain.A_GALSearchTestResultCode],							
-							numCols:2,
-                            colSpan:2,
-							items: [
-								{type:_DWT_ALERT_,content:ZaMsg.Domain_GALSearchTestSuccessful,
-									ref:null,
-									colSpan:"2",
-									iconVisible: false,
-									align:_CENTER_,				
-									style: DwtAlert.INFORMATION
-								},										
-								{type:_OUTPUT_, value:ZaMsg.Domain_GALSearchResult,  align:_CENTER_, colSpan:2, 
-									visibilityChecks:[[XForm.checkInstanceValueNotEmty,ZaDomain.A_GALTestSearchResults]]
-									
-								},											
-								{type:_SPACER_,  align:_CENTER_, valign:_TOP_, colSpan:"*"},	
-								{ref: ZaDomain.A_GALTestSearchResults, type:_DWT_LIST_, height:"140px", width:"260px",colSpan:2,
-			 				    	cssClass: "DLSource", forceUpdate: true, 
-			 				    	widgetClass:ZaGalObjMiniListView, headerList:resultHeaderList,
-			 				    	hideHeader:true
-			 				    }
-							]
-						},
-						{type:_GROUP_, 
-							visibilityChecks:[[XForm.checkInstanceValueNot,ZaDomain.A_GALSearchTestResultCode,ZaDomain.Check_OK],
-							                  [XForm.checkInstanceValueNot,ZaDomain.A_GALSearchTestResultCode,ZaDomain.Check_SKIPPED]],							
-							visibilityChangeEventSources:[ZaDomain.A_GALSearchTestResultCode],						
-							numCols:2,
-                            colSpan:2,
-							items: [
-							   {type:_DWT_ALERT_,content:ZaMsg.Domain_GALSearchTestFailed,
-									ref:null,
-									colSpan:"2",
-									iconVisible: true,
-									align:_CENTER_,				
-									style: DwtAlert.WARNING
-								},							
-								{type:_OUTPUT_, ref:ZaDomain.A_GALSearchTestResultCode, label:ZaMsg.Domain_GALTestResult, choices:this.TestResultChoices},
-								{type:_TEXTAREA_, ref:ZaDomain.A_GALSearchTestMessage, label:ZaMsg.Domain_GALTestMessage, height:"200px", width:"380px",enableDisableChecks:[]}
-							]
-						},
-						{type:_DWT_ALERT_,content:ZaMsg.Domain_GALSearchTestSkipped,
-							ref:null,
-							colSpan:2,
-							iconVisible: true,
-							align:_CENTER_,				
-							style: DwtAlert.WARNING,
-							visibilityChecks:[[XForm.checkInstanceValue,ZaDomain.A_GALSearchTestResultCode,ZaDomain.Check_SKIPPED]],
-							visibilityChangeEventSources:[ZaDomain.A_GALSearchTestResultCode]									
-						}
-					]
-				},
-				{
+                {
+                    type: _CASE_,
+                    caseKey: ZaGALConfigXWizard.GAL_TEST_RESULT_STEP,
+                    numCols: 2,
+                    colSizes: ["220px", "430px"],
+                    items: [
+                        {
+                            type: _GROUP_,
+                            visibilityChecks: [
+                                [
+                                    XForm.checkInstanceValue,
+                                    ZaDomain.A_GALSearchTestResultCode,
+                                    ZaDomain.Check_OK
+                                ]
+                            ],
+                            visibilityChangeEventSources: [ZaDomain.A_GALSearchTestResultCode],
+                            numCols: 2,
+                            colSpan: 2,
+                            items: [
+                                {
+                                    type: _DWT_ALERT_,
+                                    content: ZaMsg.Domain_GALSearchTestSuccessful,
+                                    ref: null,
+                                    colSpan: "2",
+                                    iconVisible: true,
+                                    style: DwtAlert.SUCCESS
+                                },
+                                {
+                                    type: _OUTPUT_,
+                                    value: ZaMsg.Domain_GALSearchResult,
+                                    colSpan: 2,
+                                    visibilityChecks: [
+                                        [
+                                            XForm.checkInstanceValueNotEmty,
+                                            ZaDomain.A_GALTestSearchResults
+                                        ]
+                                    ]
+                                },
+                                {
+                                    type: _SPACER_,
+                                    align: _CENTER_,
+                                    valign: _TOP_,
+                                    colSpan: "*"
+                                },
+                                {
+                                    ref: ZaDomain.A_GALTestSearchResults,
+                                    type: _DWT_LIST_,
+                                    height: "200px",
+                                    width: "100%",
+                                    colSpan: 2,
+                                    cssClass: "DLSource",
+                                    forceUpdate: true,
+                                    widgetClass: ZaGalObjMiniListView,
+                                    headerList: resultHeaderList,
+                                    hideHeader: true
+                                }
+                            ]
+                        },
+                        {
+                            type: _GROUP_,
+                            visibilityChecks: [
+                                [
+                                    XForm.checkInstanceValueNot,
+                                    ZaDomain.A_GALSearchTestResultCode,
+                                    ZaDomain.Check_OK
+                                ],
+                                [
+                                    XForm.checkInstanceValueNot,
+                                    ZaDomain.A_GALSearchTestResultCode,
+                                    ZaDomain.Check_SKIPPED
+                                ]
+                            ],
+                            visibilityChangeEventSources: [ZaDomain.A_GALSearchTestResultCode],
+                            numCols: 2,
+                            colSpan: 2,
+                            items: [
+                                {
+                                    type: _DWT_ALERT_,
+                                    content: ZaMsg.Domain_GALSearchTestFailed,
+                                    ref: null,
+                                    colSpan: "2",
+                                    iconVisible: true,
+                                    align: _CENTER_,
+                                    style: DwtAlert.WARNING
+                                },
+                                {
+                                    type: _OUTPUT_,
+                                    ref: ZaDomain.A_GALSearchTestResultCode,
+                                    label: ZaMsg.Domain_GALTestResult,
+                                    choices: this.TestResultChoices
+                                },
+                                {
+                                    type: _TEXTAREA_,
+                                    ref: ZaDomain.A_GALSearchTestMessage,
+                                    label: ZaMsg.Domain_GALTestMessage,
+                                    height: "200px",
+                                    width: "400px",
+                                    enableDisableChecks: []
+                                }
+                            ]
+                        },
+                        {
+                            type: _DWT_ALERT_,
+                            content: ZaMsg.Domain_GALSearchTestSkipped,
+                            ref: null,
+                            colSpan: 2,
+                            iconVisible: true,
+                            align: _CENTER_,
+                            style: DwtAlert.WARNING,
+                            visibilityChecks: [
+                                [
+                                    XForm.checkInstanceValue,
+                                    ZaDomain.A_GALSearchTestResultCode,
+                                    ZaDomain.Check_SKIPPED
+                                ]
+                            ],
+                            visibilityChangeEventSources: [ZaDomain.A_GALSearchTestResultCode]
+                        }
+                    ]
+                },
+                {
 					type:_CASE_, caseKey:ZaGALConfigXWizard.SYNC_CONFIG_SUM_STEP,
 					items:[
 						{type:_DWT_ALERT_,content:ZaMsg.Domain_GALSyncTestingInProgress,

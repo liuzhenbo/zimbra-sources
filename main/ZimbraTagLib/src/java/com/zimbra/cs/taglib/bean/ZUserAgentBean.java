@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -25,13 +25,14 @@ public class ZUserAgentBean {
     // state
     Version browserVersion = new Version("-1");
     Version mozVersion = new Version("-1");
+    Version tridentVersion = new Version("-1");
     boolean isOsMac = false;
     boolean isOsWindows = false;
     boolean isOsLinux = false;
     boolean isOsAndroid = false;
-    boolean isAndroidTablet = false;
     boolean isNav  = false;
     boolean isIE = false;
+    boolean isModernIE = false;
     boolean trueNs = false;
     boolean isFirefox = false;
     boolean isMozilla = false;
@@ -44,6 +45,7 @@ public class ZUserAgentBean {
     boolean isIPhone = false;
     boolean isIPod = false;
     boolean isTouchiPad = false;
+    boolean isMobile = false;
 
     // Refer bug 80330 for details.
     @Deprecated
@@ -108,6 +110,8 @@ public class ZUserAgentBean {
                     if (agtArr.hasMoreTokens()) {
                         browserVersion = new Version(agtArr.nextToken());
                     }
+                } else if ((index = token.indexOf("trident/")) != -1){
+					tridentVersion = new Version(token.substring(index + 8));
                 } else if ((index = token.indexOf("gecko/")) != -1){
                     isGeckoBased = true;
                     //bug:70005#c4 suggest to stop build date based version parsing
@@ -123,7 +127,7 @@ public class ZUserAgentBean {
                 } else if ((index = token.indexOf("netscape/")) != -1){
                     trueNs = true;
                     browserVersion = new Version(token.substring(index + 9));
-                } else if ((index = token.indexOf("safari/")) != -1){
+                } else if (token.indexOf("safari/") != -1){
                     isSafari = true;
                 } else if ((index = token.indexOf("chrome/")) != -1){
                     isChrome = true;
@@ -137,12 +141,11 @@ public class ZUserAgentBean {
                     isOsLinux = true;
                 }else if (token.indexOf("android") != -1){
                     isOsAndroid = true;
-                    isAndroidTablet = true;
                 }else if ((index = token.indexOf("version/")) != -1){
                     //In case of safari, get the browser version here
                     browserVersion = new Version(token.substring(index + 8));
-                }else if (token.indexOf("mobile") != -1 && isOsAndroid) {
-                    isAndroidTablet = false;
+                }else if (token.indexOf("mobile") != -1) {
+                    isMobile = true;
                 }
 
                 token = agtArr.hasMoreTokens() ? agtArr.nextToken() : null;
@@ -156,9 +159,15 @@ public class ZUserAgentBean {
 
             isIE = (isIE && !isOpera);
 
+            isModernIE = (!isIE && tridentVersion.getMajor() >= 7 &&
+                          mozVersion.getMajor() >= 11);
+
             isMozilla = ((isNav && mozVersion.getMajor() > -1 && isGeckoBased));
 
             isFirefox = ((isMozilla && isFirefox));
+
+            if (isModernIE)
+                browserVersion = mozVersion;
         }
     }
 
@@ -172,8 +181,6 @@ public class ZUserAgentBean {
 
     public boolean getIsOsAndroid() { return isOsAndroid; }
 
-    public boolean getIsAndroidTablet() { return isAndroidTablet; }
-    
     public boolean getIsOpera() { return isOpera; }
     
     public boolean getIsSafari() { return isSafari; }
@@ -231,7 +238,9 @@ public class ZUserAgentBean {
     public boolean getIsIE10() { return (isIE && (browserVersion.equals(10,0))); }
     
     public boolean getIsIE10up() { return (isIE && (browserVersion.getMajor() >= 10)); }
-    
+
+    public boolean getIsModernIE() { return isModernIE; }
+
     public boolean getIsMozilla() { return isMozilla; }
 
     public boolean getIsMozilla1_4up() { return (isMozilla && (mozVersion.greaterOrEqual(1,4))); }
@@ -260,6 +269,8 @@ public class ZUserAgentBean {
     public boolean getIsiPad() { return isIPad; }
 
     public boolean getIsTouchiPad() { return isTouchiPad; }
+
+    public boolean getIsMobile() { return isMobile; }
 
     public static class Version {
         

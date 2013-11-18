@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite CSharp Client
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 // MapiAccessWrap.cpp : Implementation of CMapiAccessWrap
@@ -423,6 +421,7 @@ STDMETHODIMP CMapiAccessWrap::GetData(BSTR UserId, VARIANT ItemId, FolderType ty
 					pIt[L"workFax"] = SysAllocString((cd.WorkFax).c_str());
 					pIt[L"workPhone"] = SysAllocString((cd.WorkPhone).c_str());
 					pIt[L"workPhone2"] = SysAllocString((cd.WorkPhone2).c_str());
+					pIt[L"workPhone3"] = SysAllocString((cd.PrimaryPhone).c_str());
 					pIt[L"workPostalCode"] = SysAllocString((cd.WorkPostalCode).c_str());
 					pIt[L"workState"] = SysAllocString((cd.WorkState).c_str());
 					pIt[L"workStreet"] = SysAllocString((cd.WorkStreet).c_str());
@@ -818,7 +817,7 @@ STDMETHODIMP CMapiAccessWrap::GetData(BSTR UserId, VARIANT ItemId, FolderType ty
             else if (ft == 4)
             {
                 TaskItemData taskData;
-				dlog.err("Mapiaccess->getItem  TaskItemData ");
+				dlog.trace("Mapiaccess->getItem  TaskItemData ");
                 ret = maapi->GetItem(ItemID, taskData);
                 if((ret != NULL))
                 {

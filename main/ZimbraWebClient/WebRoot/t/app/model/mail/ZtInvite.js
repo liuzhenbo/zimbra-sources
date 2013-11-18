@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -46,7 +46,12 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 			{ name: 'method',               type: 'string' },
 			{ name: 'myResponse',           type: 'string' },
 			{ name: 'apptFolderId',         type: 'string' },
-			{ name: 'calendarIntendedFor',  type: 'string' }
+			{ name: 'calendarIntendedFor',  type: 'string' },
+            { name: 'timezone',             type: 'string' },
+            { name: 'attendeeResponse',     type: 'string' },
+            { name: 'attendeeResponseMsg',  type: 'string' },
+            { name: 'reminderAlert',        type: 'string'},
+            { name: 'recurrence',           type: 'string' }
 		],
 
 		msgId: ''
@@ -68,7 +73,7 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 
 			var invite = new ZCS.model.mail.ZtInvite({
 				id:             comp.apptId,
-				subject:        comp.name,
+				subject:        Ext.String.htmlEncode(comp.name), //Fix for bug: 83580. Prevents XSS attacks.
 				isOrganizer:    !!comp.isOrg,
 				location:       comp.loc,
 				isAllDay:       !!comp.allDay,
@@ -78,7 +83,9 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 
 			var	start = comp.s && comp.s[0],
 				end = comp.e && comp.e[0],
-				organizer = ZCS.model.mail.ZtEmailAddress.fromInviteNode(comp.or);
+				organizer = ZCS.model.mail.ZtEmailAddress.fromInviteNode(comp.or),
+                defaultTz = ZCS.timezone.getServerId(ZCS.timezone.DEFAULT_TZ),
+                timezone = ZCS.timezone.getMediumName(defaultTz);
 
 			// Use HTML description if available
 			invite.set('notes', this.getNotes(comp));
@@ -90,6 +97,15 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 				invite.set('end', ZCS.model.mail.ZtInvite.getDateFromJson(end));
 			}
 
+            if (timezone) {
+                invite.set('timezone', timezone);
+            }
+
+            if (comp.recur) {
+                //Fix for bug: 82159
+                invite.set('recurrence', ZCS.recur.getBlurb(comp));
+            }
+
 			if (comp.or) {
 				invite.set('organizer', organizer);
 				if (comp.or.sentBy) {
@@ -98,19 +114,43 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 			}
 
 			if (comp.at && comp.at.length) {
-				var attendees = [],
+                var attendees = [],
 					optAttendees = [],
-					ln = comp.at.length, i, att, attList;
+					ln = comp.at.length, i, att, attList, email;
 
 				for (i = 0; i < ln; i++) {
 					att = comp.at[i];
 					if (!att.cutype || att.cutype === ZCS.constant.CUTYPE_INDIVIDUAL) {
 						attList = (att.role === ZCS.constant.ROLE_OPTIONAL) ? optAttendees : attendees;
-						attList.push(ZCS.model.mail.ZtEmailAddress.fromInviteNode(att));
+						email = ZCS.model.mail.ZtEmailAddress.fromInviteNode(att);
+                        email.ptst = att.ptst;
+                        attList.push(email);
 					}
 				}
 				invite.set('attendees', attendees);
 				invite.set('optAttendees', optAttendees);
+
+                invite.set('reminderAlert',comp.alarm && comp.alarm[0] && comp.alarm[0].trigger[0].rel[0].m);
+
+                if (comp.method == "REPLY" && invite.get('isOrganizer')) {
+                    var attendeeResponse = comp.at[0].ptst,
+                        inviteMsg;
+
+                    invite.set('attendeeResponse', attendeeResponse);
+
+                    switch (attendeeResponse){
+                        case ZCS.constant.PSTATUS_ACCEPTED:
+                            inviteMsg = ZtMsg.inviteMsgAccepted;
+                            break;
+                        case ZCS.constant.PSTATUS_TENTATIVE:
+                            inviteMsg = ZtMsg.inviteMsgTentative;
+                            break;
+                        case ZCS.constant.PSTATUS_DECLINED:
+                            inviteMsg = ZtMsg.inviteMsgDeclined;
+                    }
+
+                    invite.set('attendeeResponseMsg', Ext.String.format(inviteMsg, comp.at[0].d || comp.at[0].a)); // show address if display name is unavailable
+                }
 			}
 
 			var myResponse = node.replies && node.replies[0].reply[0].ptst;
@@ -184,7 +224,7 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 	 * Returns content of this invite as HTML.
 	 *
 	 * @param {String}  msgBodyId   ID of owning ZtMsgBody
-	 * @return {String}     invite content
+	 * @return {object}     inviteDesc to have invite description, content to have notes.
 	 */
 	getContentAsHtml: function(msgBodyId) {
 
@@ -202,8 +242,12 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 				sentBy:         ZCS.model.mail.ZtMailItem.convertAddressModelToObject(this.get('sentBy')),
 				attendees:      ZCS.model.mail.ZtMailItem.convertAddressModelToObject(this.get('attendees')),
 				optAttendees:   ZCS.model.mail.ZtMailItem.convertAddressModelToObject(this.get('optAttendees')),
-				notes:          this.get('notes'),
 				intendedFor:    this.get('calendarIntendedFor'),
+                timezone:       this.get('timezone'),
+                recurrence:     this.get('recurrence'),
+                isOrganizer:    this.get('isOrganizer'),
+                attendeeResponse: this.get('attendeeResponse'),
+                attendeeResponseMsg: this.get('attendeeResponseMsg'),
 
 				acceptButtonId:     ZCS.util.getUniqueId(Ext.apply({}, {
 					action: ZCS.constant.OP_ACCEPT
@@ -214,14 +258,19 @@ Ext.define('ZCS.model.mail.ZtInvite', {
 				declineButtonId:    ZCS.util.getUniqueId(Ext.apply({}, {
 					action: ZCS.constant.OP_DECLINE
 				}, idParams))
-			};
+            },
+            invite = {};
 
 		if (!this.isCanceled() && !this.get('isOrganizer') && this.hasReplyMethod()) {
 			var myResponse = this.get('myResponse');
 			data.myResponse = myResponse ? ZCS.constant.PSTATUS_TEXT[myResponse] : '';
 		}
-
-		return ZCS.model.mail.ZtMailMsg.inviteTpl.apply(data);
+        if (!this.get('isOrganizer') && this.get('method') == "REQUEST") {
+            data.showButtons = true;
+        }
+		invite.inviteDesc = ZCS.model.mail.ZtMailMsg.inviteDescTpl.apply(data);
+        invite.content = ZCS.model.mail.ZtMailMsg.inviteNotesTpl.apply({notes: this.get('notes')});
+        return invite;
 	},
 
 	/**

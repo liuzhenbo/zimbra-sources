@@ -2,10 +2,10 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2010, 2011, 2012, 2013 VMware, Inc.
+# Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
-# Version 1.3 ("License"); you may not use this file except in
+# Version 1.4 ("License"); you may not use this file except in
 # compliance with the License.  You may obtain a copy of the License at
 # http://www.zimbra.com/license.
 # 
@@ -94,7 +94,7 @@ if ($options{build}) {
     print "ZCS Install not found.\n";
     exit 1;
   }
-  $platform = `${zimbra_home}/libexec/get_plat_tag.sh`;
+  $platform = qx(${zimbra_home}/libexec/get_plat_tag.sh);
   chomp($platform);
   if (-f "source/build") {
     open(BUILD, "source/build");
@@ -376,7 +376,7 @@ sub deployPatch($) {
 sub logSession($) {
   my ($msg) = @_;
   return if $options{dryrun};
-  my $date = `date +%s`;
+  my $date = qx(date +%s);
   chomp($date);
   open(SESS, ">>${zimbra_home}/.install_history");
   print SESS "$date: $msg\n";
@@ -436,7 +436,7 @@ sub detail($) {
   open(LOG, ">>$logfile");
   print LOG "$date $msg\n";
   close(LOG);
-  #`echo "$date $msg" >> $logfile`;
+  #qx(echo "$date $msg" >> $logfile);
 }
 
 sub progress($$$) {

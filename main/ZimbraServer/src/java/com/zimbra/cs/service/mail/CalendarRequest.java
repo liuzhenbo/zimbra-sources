@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 Zimbra, Inc.
- *
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -304,8 +304,9 @@ public abstract class CalendarRequest extends MailDocumentHandler {
             if (aliases != null && aliases.length > 0) {
                 addrs = new String[aliases.length + 1];
                 addrs[0] = acct.getAttr(Provisioning.A_mail);
-                for (int i = 0; i < aliases.length; i++)
+                for (int i = 0; i < aliases.length; i++) {
                     addrs[i + 1] = aliases[i];
+                }
             } else {
                 addrs = new String[1];
                 addrs[0] = acct.getAttr(Provisioning.A_mail);
@@ -318,7 +319,7 @@ public abstract class CalendarRequest extends MailDocumentHandler {
         ParsedMessage pm = new ParsedMessage(csd.mMm, false);
 
         if (csd.mInvite.getFragment() == null || csd.mInvite.getFragment().equals("")) {
-            csd.mInvite.setFragment(pm.getFragment());
+            csd.mInvite.setFragment(pm.getFragment(acct.getLocale()));
         }
 
         boolean willNotify = false;
@@ -493,7 +494,7 @@ public abstract class CalendarRequest extends MailDocumentHandler {
     // for each invite are notified.  (Some invites may have more attendees than others.)
     protected static void notifyCalendarItem(
             ZimbraSoapContext zsc, OperationContext octxt, Account acct, Mailbox mbox, CalendarItem calItem,
-            boolean notifyAllAttendees, List<ZAttendee> addedAttendees, boolean ignorePastExceptions)
+            boolean notifyAllAttendees, List<ZAttendee> addedAttendees, boolean ignorePastExceptions, MailSendQueue sendQueue)
     throws ServiceException {
         boolean onBehalfOf = isOnBehalfOfRequest(zsc);
         Account authAcct = getAuthenticatedAccount(zsc);
@@ -573,8 +574,11 @@ public abstract class CalendarRequest extends MailDocumentHandler {
                 }
                 if (rcpts != null && !rcpts.isEmpty()) {
                     MimeMessage mmModify = CalendarMailSender.createCalendarMessage(authAcct, from, sender, rcpts, mmInv, inv, cal, true);
-                    CalendarMailSender.sendPartial(octxt, mbox, mmModify, null,
-                            new ItemId(mbox, inv.getMailItemId()), null, null, false);
+                    CalSendData csd = new CalSendData();
+                    csd.mMm = mmModify;
+                    csd.mOrigId = new ItemId(mbox, inv.getMailItemId());
+                    MailSendQueueEntry entry = new MailSendQueueEntry(octxt, mbox, csd, null);
+                    sendQueue.add(entry);
                 }
             }
         } finally {

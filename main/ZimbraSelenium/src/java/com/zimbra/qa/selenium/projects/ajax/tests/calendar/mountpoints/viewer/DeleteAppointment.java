@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints.viewer;
@@ -52,7 +50,7 @@ public class DeleteAppointment extends CalendarWorkWeekTest {
 		// Create a folder to share
 		ZimbraAccount.AccountA().soapSend(
 					"<CreateFolderRequest xmlns='urn:zimbraMail'>"
-				+		"<folder name='" + foldername + "' l='" + calendarFolder.getId() + "'/>"
+				+		"<folder name='" + foldername + "' l='" + calendarFolder.getId() + "' view='appointment'/>"
 				+	"</CreateFolderRequest>");
 		
 		FolderItem folder = FolderItem.importFromSOAP(ZimbraAccount.AccountA(), foldername);
@@ -91,8 +89,8 @@ public class DeleteAppointment extends CalendarWorkWeekTest {
 		app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
 		
 		// Mark ON to mounted calendar folder and select the appointment
-		app.zTreeCalendar.zDeSelectCalendarFolder("Calendar");
-		app.zTreeCalendar.zSelectMountedFolder(mountpointname);
+		app.zTreeCalendar.zMarkOnOffCalendarFolder("Calendar");
+		app.zTreeCalendar.zMarkOnOffMountedFolder(mountpointname);
 		app.zPageCalendar.zListItem(Action.A_LEFTCLICK, apptSubject);
 		
 		// Verify delete toolbar button is disabled
@@ -128,7 +126,7 @@ public class DeleteAppointment extends CalendarWorkWeekTest {
 		// Create a folder to share
 		ZimbraAccount.AccountA().soapSend(
 					"<CreateFolderRequest xmlns='urn:zimbraMail'>"
-				+		"<folder name='" + foldername + "' l='" + calendarFolder.getId() + "'/>"
+				+		"<folder name='" + foldername + "' l='" + calendarFolder.getId() + "' view='appointment'/>"
 				+	"</CreateFolderRequest>");
 		
 		FolderItem folder = FolderItem.importFromSOAP(ZimbraAccount.AccountA(), foldername);
@@ -167,8 +165,8 @@ public class DeleteAppointment extends CalendarWorkWeekTest {
 		app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
 		
 		// Mark ON to mounted calendar folder and select the appointment
-		app.zTreeCalendar.zDeSelectCalendarFolder("Calendar");
-		app.zTreeCalendar.zSelectMountedFolder(mountpointname);
+		app.zTreeCalendar.zMarkOnOffCalendarFolder("Calendar");
+		app.zTreeCalendar.zMarkOnOffMountedFolder(mountpointname);
 		app.zPageCalendar.zListItem(Action.A_LEFTCLICK, apptSubject);
 		
 		// Verify delete toolbar button is disabled
@@ -181,6 +179,9 @@ public class DeleteAppointment extends CalendarWorkWeekTest {
 		DialogError dialog = app.zPageMain.zGetErrorDialog(DialogError.DialogErrorID.Zimbra);
 		ZAssert.assertNotNull(dialog, "Verify the PERM DENIED Error Dialog is not created");
 		ZAssert.assertFalse(dialog.zIsActive(), "Verify the PERM DENIED Error Dialog is not appear");
+		
+		// Mark ON/OFF to mounted calendar folder and select the appointment
+		app.zTreeCalendar.zMarkOnOffCalendarFolder("Calendar");
 
 	}
 

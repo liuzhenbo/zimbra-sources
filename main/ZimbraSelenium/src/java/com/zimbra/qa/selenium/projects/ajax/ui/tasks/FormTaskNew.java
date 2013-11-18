@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.ui.tasks;
@@ -218,25 +216,32 @@ public class FormTaskNew extends AbsForm {
 		
 		if ( pulldown == Button.B_PRIORITY ) {
 			
+			logger.info(ZimbraDOM.showIDs());
+
+			String divID = ZimbraDOM.getID(
+					ZimbraDOM.APP.APP_TASKS,
+					ZimbraDOM.COMPONENT_NAME.OP_VIEW_TASKEDIT,
+					ZimbraDOM.COMPONENT_TYPE.WIDGET_VIEW);	
+
 			if ( option == Button.O_PRIORITY_HIGH ) {
 				
-				// TODO
-				pulldownLocator = "css=[id^='zv__COMPOSE'][id$='___priority_left_icon']";
-				optionLocator = "TODO";
+				// I18N: https://bugzilla.zimbra.com/show_bug.cgi?id=83574
+				pulldownLocator = "css=div#"+ divID +" td[id$='_priority'] div.ImgSelectPullDownArrow";
+				optionLocator = "css=td[id$='_title']:contains('High')";
 				page = this;
 
 			} else if ( option == Button.O_PRIORITY_NORMAL ) {
 				
-				// TODO
-				pulldownLocator = "css=[id^='zv__COMPOSE'][id$='___priority_left_icon']";
-				optionLocator = "TODO";
+				// I18N: https://bugzilla.zimbra.com/show_bug.cgi?id=83574
+				pulldownLocator = "css=div#"+ divID +" td[id$='_priority'] div.ImgSelectPullDownArrow";
+				optionLocator = "css=td[id$='_title']:contains('Normal')";
 				page = this;
 
 			} else if ( option == Button.O_PRIORITY_LOW ) {
 				
-				// TODO
-				pulldownLocator = "css=[id^='zv__COMPOSE'][id$='___priority_left_icon']";
-				optionLocator = "TODO";
+				// I18N: https://bugzilla.zimbra.com/show_bug.cgi?id=83574
+				pulldownLocator = "css=div#"+ divID +" td[id$='_priority'] div.ImgSelectPullDownArrow";
+				optionLocator = "css=td[id$='_title']:contains('Low')";
 				page = this;
 
 			} else {

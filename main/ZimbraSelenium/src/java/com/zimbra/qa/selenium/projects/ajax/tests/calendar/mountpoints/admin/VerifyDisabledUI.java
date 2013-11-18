@@ -1,23 +1,23 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints.admin;
 
 import java.util.Calendar;
 import org.testng.annotations.Test;
+
+import com.zimbra.qa.selenium.framework.core.Bugs;
 import com.zimbra.qa.selenium.framework.items.*;
 import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.*;
@@ -30,7 +30,8 @@ public class VerifyDisabledUI extends CalendarWorkWeekTest {
 		super.startingPage = app.zPageCalendar;
 	}
 	
-	@Test(description = "Verify 'Share Calendar' menu remains enabled & 'Reply' menu remains disabled on mountpoint appointment (admin share)",
+	@Bugs(ids = "82558,80555")
+	@Test(description = "Verify 'Share Calendar' menu & 'Reply' menu remains enabled on mountpoint appointment (admin share)",
 			groups = { "functional" })
 			
 	public void VerifyDisabledUI_01() throws HarnessException {
@@ -49,7 +50,7 @@ public class VerifyDisabledUI extends CalendarWorkWeekTest {
 		// Create a folder to share
 		ZimbraAccount.AccountA().soapSend(
 					"<CreateFolderRequest xmlns='urn:zimbraMail'>"
-				+		"<folder name='" + foldername + "' l='" + calendarFolder.getId() + "'/>"
+				+		"<folder name='" + foldername + "' l='" + calendarFolder.getId() + "' view='appointment'/>"
 				+	"</CreateFolderRequest>");
 		
 		FolderItem folder = FolderItem.importFromSOAP(ZimbraAccount.AccountA(), foldername);
@@ -88,8 +89,12 @@ public class VerifyDisabledUI extends CalendarWorkWeekTest {
 		app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
 		
 		// Mark ON to mounted calendar folder and select the appointment
-		app.zTreeCalendar.zDeSelectCalendarFolder("Calendar");
-		app.zTreeCalendar.zSelectMountedFolder(mountpointname);
+		app.zTreeCalendar.zMarkOnOffCalendarFolder("Calendar");
+		app.zTreeCalendar.zMarkOnOffMountedFolder(mountpointname);
+		
+		// Verify Reply menu is enabled
+		app.zPageCalendar.zListItem(Action.A_RIGHTCLICK, apptSubject);
+		ZAssert.assertFalse(app.zPageCalendar.zVerifyDisabledControl(Button.O_REPLY_DISABLED), "Verify 'Reply' menu is enabled");
 		
 		// Verify Share Calendar menu is enabled
 		app.zTreeCalendar.zTreeItem(Action.A_RIGHTCLICK, mountpointname);

@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints;
@@ -38,7 +36,7 @@ public class FindShares extends CalendarWorkWeekTest {
 		
 	}
 	
-	@Bugs(ids = "82125")
+	@Bugs(ids = "82125,84339")
 	@Test( description = "Search for a share using 'Find Shares' and add it",
 			groups = { "functional" })
 			
@@ -73,7 +71,7 @@ public class FindShares extends CalendarWorkWeekTest {
 		app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
 		
 		// Click Find Shares
-		DialogShareFind dialog = (DialogShareFind)app.zTreeMail.zPressButton(Button.B_TREE_FIND_SHARES);
+		DialogShareFind dialog = (DialogShareFind)app.zTreeCalendar.zPressPulldown(Button.B_TREE_FOLDERS_OPTIONS, Button.B_TREE_FIND_SHARES);
 		
 		// Find shares from the user
 		dialog.zSetFindEmail(Owner.EmailAddress);

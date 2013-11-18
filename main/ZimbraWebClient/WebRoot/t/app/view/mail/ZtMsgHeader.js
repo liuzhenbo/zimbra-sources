@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -37,12 +37,21 @@ Ext.define('ZCS.view.mail.ZtMsgHeader', {
 		}
 	},
 
+	setReadOnly: function (isReadOnly) {
+		var header = Ext.fly(this.element.query('.zcs-msgHdr-link')[0]);
+		if (header) {
+			header.setVisible(!isReadOnly);
+		}
+	},
+
 	/**
 	 * Displays the message header in one of three states: collapsed, expanded, or detailed.
 	 *
 	 * @param {ZtMailMsg}   msg     msg being rendered
 	 */
 	render: function(msg, state) {
+
+
 
 		var msgView = this.up('msgview');
 		state = state || msgView.getState();
@@ -54,14 +63,7 @@ Ext.define('ZCS.view.mail.ZtMsgHeader', {
 		var data = msg.getData(),
 			tpl = ZCS.view.mail.ZtMsgHeader.TEMPLATE[state];
 
-		// set up tags with just the data we need, and an associated DOM ID
-		if (data.tags) {
-			data.tags = Ext.Array.map(Ext.Array.clean(data.tags), function(tag) {
-				var tagData = Ext.copyTo({}, tag, 'itemId,color,name,displayName');
-				tagData.id = ZCS.util.getUniqueId(tagData);
-				return tagData;
-			});
-		}
+		data.tags = ZCS.model.ZtItem.getTagData(data.tags);
 
 		this.setMsg(msg);
 
@@ -70,16 +72,15 @@ Ext.define('ZCS.view.mail.ZtMsgHeader', {
 			fromAddr = fromAddrs && fromAddrs[0];
 
 		data.addrs = ZCS.model.mail.ZtMailItem.convertAddressModelToObject(addrObjs);
-		data.from = ZCS.mailutil.getDisplayName(fromAddr);
 		if (state === ZCS.constant.HDR_EXPANDED) {
 			data.recipients = Ext.Array.map(Ext.Array.clean([].concat(data.addrs.TO, data.addrs.CC)), function(addr) {
-				return addr.displayName;
+				return addr.name;
 			}).join(', ');
 		}
 
 		// Get contact image if it has one
         var contact = ZCS.cache.get(fromAddr && fromAddr.get('email'), 'email'),
-            imageUrl = contact && ZCS.common.ZtUtil.getImageUrl(contact);
+            imageUrl = contact && ZCS.model.contacts.ZtContact.getImageUrl(contact, contact.getId());
 
         data.imageStyle = imageUrl ? 'background-image: url(' + imageUrl + ')' : '';
 

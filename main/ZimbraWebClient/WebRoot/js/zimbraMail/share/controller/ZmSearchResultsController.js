@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -73,6 +73,19 @@ function(results, resultsCtlr) {
 	}
 	this._curSearch = results.search;
 	this.inactive = true;	// search tabs can always be reused (unless pinned)
+};
+
+/**
+ * Shows the overview or the filter panel. The overview is showing during a DnD operation.
+ *
+ * @param {Boolean}     show    if true, show the overview; if false, show the filter panel
+ */
+ZmSearchResultsController.prototype.showOverview =
+function(show) {
+	var overview = this._resultsApp.getOverview();
+	if (overview) {
+		appCtxt.getAppViewMgr().setViewComponents(this.viewId, { tree: show ? overview : this._filterPanel }, true);
+	}
 };
 
 // creates the toolbar and filter panel
@@ -227,8 +240,10 @@ function(ev, zimletEvent) {
 
 // Note the error and then eat it - we don't want to show toast or clear out results
 ZmSearchResultsController.prototype._errorCallback =
-function(ev) {
-	this._toolbar.setLabel(ZmMsg.invalidSearch, true);
+function(ex) {
+	var msg = ZmCsfeException.getErrorMsg(ex.code);
+	msg = msg || ZmMsg.unknownError;
+	this._toolbar.setLabel(msg, true);
 	return true;
 };
 

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -48,12 +48,14 @@ import com.zimbra.cs.gal.GalSearchParams;
 import com.zimbra.cs.ldap.ZLdapFilterFactory.FilterId;
 import com.zimbra.cs.mime.MimeTypeInfo;
 import com.zimbra.cs.util.AccountUtil;
+import com.zimbra.cs.util.Zimbra;
 import com.zimbra.soap.admin.type.CacheEntryType;
 import com.zimbra.soap.admin.type.CmdRightsInfo;
 import com.zimbra.soap.admin.type.CountObjectsType;
 import com.zimbra.soap.admin.type.DataSourceType;
 import com.zimbra.soap.admin.type.DistributionListSelector;
 import com.zimbra.soap.admin.type.DomainSelector;
+import com.zimbra.soap.admin.type.GranteeSelector.GranteeBy;
 import com.zimbra.soap.admin.type.ServerSelector;
 import com.zimbra.soap.admin.type.UCServiceSelector;
 import com.zimbra.soap.type.AccountSelector;
@@ -79,8 +81,6 @@ public abstract class Provisioning extends ZAttrProvisioning {
 
     public static final String SERVICE_MAILBOX   = "mailbox";
     public static final String SERVICE_MEMCACHED = "memcached";
-    public static final String SERVICE_WEBCLIENT = "webclient";
-    public static final String SERVICE_ADMINCLIENT = "adminclient";
 
     /**
      * generate appts that try to be compatible with exchange
@@ -225,7 +225,7 @@ public abstract class Provisioning extends ZAttrProvisioning {
 
     public static final int MAX_ZIMBRA_ID_LEN = 127;
 
-    private List<ProvisioningValidator> validators = new ArrayList<ProvisioningValidator>();
+    private final List<ProvisioningValidator> validators = new ArrayList<ProvisioningValidator>();
 
     private static volatile Provisioning singleton;
 
@@ -382,6 +382,19 @@ public abstract class Provisioning extends ZAttrProvisioning {
         reload(e);
     }
 
+    public Domain getDomain(MailTarget mailTarget) throws ServiceException {
+        if (mailTarget instanceof Alias) {
+            return getDomain((Alias) mailTarget);
+        } else if (mailTarget instanceof Account) {
+            return getDomain((Account) mailTarget);
+        } else if (mailTarget instanceof DistributionList) {
+            return getDomain((DistributionList) mailTarget);
+        } else if (mailTarget instanceof DynamicGroup) {
+            return getDomain((DynamicGroup) mailTarget);
+        }
+        return null;
+    }
+
     /**
      * @return the domain of this account, or null if an admin account.
      * @throws ServiceException
@@ -455,6 +468,26 @@ public abstract class Provisioning extends ZAttrProvisioning {
                 }
         }
         return cos;
+    }
+
+    /**
+     * @return the AlwaysOnCluster object for this server, or null if server has no AlwaysOnCluster
+     *
+     * @throws ServiceException
+     */
+    public AlwaysOnCluster getAlwaysOnCluster(Server server) throws ServiceException {
+        // CACHE. If we get reloaded from LDAP, cached data is cleared
+        AlwaysOnCluster aoc = (AlwaysOnCluster) server.getCachedData(EntryCacheDataKey.SERVER_ALWAYSONCLUSTER);
+        if (aoc == null) {
+            String id = server.getAlwaysOnClusterId();
+            if (id != null) {
+                aoc = get(Key.AlwaysOnClusterBy.id, id);
+            }
+            if (aoc != null) {
+                server.setCachedData(EntryCacheDataKey.SERVER_ALWAYSONCLUSTER, aoc);
+            }
+        }
+        return aoc;
     }
 
     /**
@@ -560,6 +593,16 @@ public abstract class Provisioning extends ZAttrProvisioning {
         throw new UnsupportedOperationException();
     }
 
+    public boolean inDistributionList(MailTarget mailTarget, String zimbraId)
+    throws ServiceException {
+        if (mailTarget instanceof Account) {
+            return inDistributionList((Account) mailTarget, zimbraId);
+        } else if (mailTarget instanceof DistributionList) {
+            return inDistributionList((DistributionList) mailTarget, zimbraId);
+        }
+        return false;
+    }
+
     /**
      * @param zimbraId the zimbraId of the dl we are checking for
      * @return true if this account (or one of the dl it belongs to) is a member of the specified dl.
@@ -621,9 +664,9 @@ public abstract class Provisioning extends ZAttrProvisioning {
      * directly or indirectly a member of
      */
     public static class MemberOf {
-        private String mId;            // zimbraId of this group
-        private boolean mIsAdminGroup; // if this group is an admin group (zimbraIsAdminGroup == TRUE)
-        private boolean mIsDynamicGroup; // if this group is a dynamic group
+        private final String mId;            // zimbraId of this group
+        private final boolean mIsAdminGroup; // if this group is an admin group (zimbraIsAdminGroup == TRUE)
+        private final boolean mIsDynamicGroup; // if this group is a dynamic group
 
         public MemberOf(String id, boolean isAdminGroup, boolean isDynamicGroup) {
             mId = id;
@@ -669,12 +712,30 @@ public abstract class Provisioning extends ZAttrProvisioning {
     }
 
     /**
+     * @param mailTarget
+     * @param adminGroupsOnly return admin groups only
+     * @return List of all direct and indirect groups this mailTarget belongs to.
+     *         The returned List is sorted by "shortest distance" to the mailTarget,
+     *         the shorter the distance is, the earlier it appears in the returned List.
+     * @throws ServiceException
+     */
+    public GroupMembership getGroupMembership(MailTarget mailTarget, boolean adminGroupsOnly)
+    throws ServiceException {
+        if (mailTarget instanceof Account) {
+            return getGroupMembership((Account) mailTarget, adminGroupsOnly);
+        } else if (mailTarget instanceof DistributionList) {
+            return getGroupMembership((Account) mailTarget, adminGroupsOnly);
+        }
+        return new GroupMembership();
+    }
+
+    /**
      *
      * @param acct
      * @param adminGroupsOnly return admin groups only
      * @return List of all direct and indirect groups this account belongs to.
      *         The returned List is sorted by "shortest distance" to the account,
-     *         the sorter the distance is, the earlier it appears in the returned List.
+     *         the shorter the distance is, the earlier it appears in the returned List.
      * @throws ServiceException
      */
     public GroupMembership getGroupMembership(Account acct, boolean adminGroupsOnly)
@@ -687,7 +748,7 @@ public abstract class Provisioning extends ZAttrProvisioning {
      * @param list
      * @param adminGroupsOnly return admin groups only
      * @return List of all the zimbraId's of lists this list belongs to, including any list in other list.
-     *         The returned List is sorted by "shortest distance" to the list, the sorter the distance is,
+     *         The returned List is sorted by "shortest distance" to the list, the shorter the distance is,
      *         the earlier it appears in the returned List.
      * @throws ServiceException
      */
@@ -1000,6 +1061,8 @@ public abstract class Provisioning extends ZAttrProvisioning {
      */
     public static final int SO_NO_ACCOUNT_DEFAULTS = 0x200;            // do not set defaults and secondary defaults in makeAccount
     public static final int SO_NO_ACCOUNT_SECONDARY_DEFAULTS = 0x400;  // do not set secondary defaults in makeAccount
+    public static final String SERVICE_WEBCLIENT = "zimbra";
+    public static final String SERVICE_ADMINCLIENT = "zimbraAdmin";
 
     public abstract List<Account> getAllAdminAccounts()  throws ServiceException;
 
@@ -1249,7 +1312,19 @@ public abstract class Provisioning extends ZAttrProvisioning {
     public static boolean onLocalServer(Account account) throws ServiceException {
         String target    = account.getAttr(Provisioning.A_zimbraMailHost);
         String localhost = getInstance().getLocalServer().getAttr(Provisioning.A_zimbraServiceHostname);
-        return (target != null && target.equalsIgnoreCase(localhost));
+        boolean isLocal = (target != null && target.equalsIgnoreCase(localhost));
+        return (isLocal || isAlwaysOn(account));
+    }
+
+    private static boolean isAlwaysOn(Account account) throws ServiceException {
+        String localServerClusterId = Zimbra.getAlwaysOnClusterId();
+        Server server = Provisioning.getInstance().getServer(account);
+        if (server == null) {
+            return false;
+        }
+        String accountHostingServerClusterId = server.getAlwaysOnClusterId();
+        return localServerClusterId != null && accountHostingServerClusterId != null &&
+                localServerClusterId.equals(accountHostingServerClusterId);
     }
 
     public static boolean onLocalServer(Group group) throws ServiceException {
@@ -1270,7 +1345,17 @@ public abstract class Provisioning extends ZAttrProvisioning {
 
     public abstract List<Server> getAllServers(String service)  throws ServiceException;
 
+    public abstract List<Server> getAllServers(String service, String clusterId) throws ServiceException;
+
     public abstract void deleteServer(String zimbraId) throws ServiceException;
+
+    /*
+     * AlwaysOnCluster
+     */
+    public abstract AlwaysOnCluster createAlwaysOnCluster(String name, Map<String, Object> attrs) throws ServiceException;
+    public abstract AlwaysOnCluster get(Key.AlwaysOnClusterBy keyname, String key) throws ServiceException;
+    public abstract void deleteAlwaysOnCluster(String zimbraId) throws ServiceException;
+    public abstract List<AlwaysOnCluster> getAllAlwaysOnClusters()  throws ServiceException;
 
     /*
      * UC service
@@ -1662,7 +1747,7 @@ public abstract class Provisioning extends ZAttrProvisioning {
 
          private String mToken;
          private boolean mHadMore; // for auto-complete only
-         private List<GalContact> mMatches;
+         private final List<GalContact> mMatches;
 
         /*
          * for auto-complete and search only
@@ -1727,7 +1812,7 @@ public abstract class Provisioning extends ZAttrProvisioning {
     }
 
     public static class VisitorSearchGalResult extends SearchGalResult {
-        private GalContact.Visitor mVisitor;
+        private final GalContact.Visitor mVisitor;
         private int mNumMatches; // keep track of num matches
 
         private VisitorSearchGalResult(GalContact.Visitor visitor) {
@@ -1953,21 +2038,21 @@ public abstract class Provisioning extends ZAttrProvisioning {
 
     public boolean checkRight(
             String targetType, TargetBy targetBy, String target,
-            Key.GranteeBy granteeBy, String grantee,
+            GranteeBy granteeBy, String grantee,
             String right, Map<String, Object> attrs,
             AccessManager.ViaGrant via) throws ServiceException {
         throw ServiceException.UNSUPPORTED();
     }
 
     public RightCommand.AllEffectiveRights getAllEffectiveRights(
-            String granteeType, Key.GranteeBy granteeBy, String grantee,
+            String granteeType, GranteeBy granteeBy, String grantee,
             boolean expandSetAttrs, boolean expandGetAttrs) throws ServiceException {
         throw ServiceException.UNSUPPORTED();
     }
 
     public RightCommand.EffectiveRights getEffectiveRights(
             String targetType, TargetBy targetBy, String target,
-            Key.GranteeBy granteeBy, String grantee,
+            GranteeBy granteeBy, String grantee,
             boolean expandSetAttrs, boolean expandGetAttrs) throws ServiceException {
         throw ServiceException.UNSUPPORTED();
     }
@@ -1976,27 +2061,27 @@ public abstract class Provisioning extends ZAttrProvisioning {
             String targetType,
             Key.DomainBy domainBy, String domainStr,
             Key.CosBy cosBy, String cosStr,
-            Key.GranteeBy granteeBy, String grantee) throws ServiceException {
+            GranteeBy granteeBy, String grantee) throws ServiceException {
         throw ServiceException.UNSUPPORTED();
     }
 
     public RightCommand.Grants getGrants(
             String targetType, TargetBy targetBy, String target,
-            String granteeType, Key.GranteeBy granteeBy, String grantee,
+            String granteeType, GranteeBy granteeBy, String grantee,
             boolean granteeIncludeGroupsGranteeBelongs) throws ServiceException{
         throw ServiceException.UNSUPPORTED();
     }
 
     public void grantRight(
             String targetType, TargetBy targetBy, String target,
-            String granteeType, Key.GranteeBy granteeBy, String grantee, String secret,
+            String granteeType, GranteeBy granteeBy, String grantee, String secret,
             String right, RightModifier rightModifier) throws ServiceException {
         throw ServiceException.UNSUPPORTED();
     }
 
     public void revokeRight(
             String targetType, TargetBy targetBy, String target,
-            String granteeType, Key.GranteeBy granteeBy, String grantee,
+            String granteeType, GranteeBy granteeBy, String grantee,
             String right, RightModifier rightModifier) throws ServiceException {
         throw ServiceException.UNSUPPORTED();
     }
@@ -2041,16 +2126,16 @@ public abstract class Provisioning extends ZAttrProvisioning {
                 mCount = count;
             }
 
-            private String mCosId;
-            private String mCosName;
-            private long mCount;
+            private final String mCosId;
+            private final String mCosName;
+            private final long mCount;
 
             public String getCosId()   { return mCosId;}
             public String getCosName() { return mCosName; }
             public long getCount()        { return mCount; }
         }
 
-        private List<CountAccountByCos> mCountAccountByCos = new ArrayList<CountAccountByCos>();
+        private final List<CountAccountByCos> mCountAccountByCos = new ArrayList<CountAccountByCos>();
 
         public void addCountAccountByCosResult(String cosId, String cosName, long count) {
             CountAccountByCos r = new CountAccountByCos(cosId, cosName, count);
@@ -2185,7 +2270,7 @@ public abstract class Provisioning extends ZAttrProvisioning {
     }
 
     public static class GalResult extends Result {
-        private List<GalContact> mResult;
+        private final List<GalContact> mResult;
         public GalResult(String status, String message, List<GalContact> result) {
             super(status, message, null);
             mResult = result;

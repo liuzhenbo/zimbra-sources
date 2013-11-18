@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -40,20 +40,35 @@ Ext.define('ZCS.model.mail.ZtConvWriter', {
 			});
 			methodJson = json.Body.SearchRequest;
 
+			var	query = request.getParams().query,
+				folderId = ZCS.util.localId(ZCS.common.ZtSearch.parseQuery(query)),
+				isOutbound = ZCS.util.isOutboundFolderId(folderId);
+
 			Ext.apply(methodJson, {
-				sortBy: 'dateDesc',
+				sortBy: ZCS.constant.DATE_DESC,
 				offset: operation.getStart(),
-				limit: ZCS.constant.DEFAULT_PAGE_SIZE,
-				query: request.getParams().query,
-				types: 'conversation',
-				fetch: 1
+				limit:  ZCS.constant.DEFAULT_PAGE_SIZE,
+				query:  query,
+				types:  'conversation',
+				fetch:  1,
+				recip:  isOutbound ? 1 : 0
 			});
 
 		} else if (action === 'update') {
 
 			// 'update' operation means we're performing a ConvActionRequest
-			var itemData = Ext.merge(data[0] || {}, options);
+			var itemData = Ext.merge(data[0] || {}, options),
+				op = itemData.op;
+
 			json = this.getActionRequest(request, itemData, 'ConvAction');
+			if (op === 'move' || op === 'trash') {
+				var changeToken = ZCS.session.getChangeToken();
+				if (changeToken) {
+					json.Header.context.change = {
+						token: changeToken
+					};
+				}
+			}
 		}
 
 		// Do not pass query in query string.

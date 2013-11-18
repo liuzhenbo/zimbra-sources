@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -84,7 +84,7 @@ function(list, sortField, folderId) {
 	this._rendered = true;
 
 	// check in case there are more items but no scrollbar
-	if (this._isPageless) {
+	if (this._isPageless && (!list.isGal || list.isGalPagingSupported)) {
 		this._checkItemCount();
 	}
 };
@@ -195,10 +195,29 @@ function(itemArray) {
  */
 ZmContactsBaseView.prototype._modifyContact =
 function(ev) {
+	var list = this.getList();
+	//the item was updated - the list might be "old" (not pointing to the latest items,
+	// since we refreshed the items in the appCtxt cache by a different view. see bug 84226)
+	//therefor let's make sure the modified contact replaces the old one in the list.
+	var contact = ev.item;
+	if (contact) {
+		var arr = list.getArray();
+		for (var i = 0; i < arr.length; i++) {
+			if (arr[i].id === contact.id) {
+				if (arr[i] === contact) {
+					//nothing changed, still points to same object
+					break;
+				}
+				arr[i] = contact;
+				//update the viewed contact
+				this.parent.setContact(contact);
+				break;
+			}
+		}
+	}
 	// if fileAs changed, resort the internal list
 	// XXX: this is somewhat inefficient. We should just remove this contact and reinsert
 	if (ev.getDetail("fileAsChanged")) {
-		var list = this.getList();
 		if (list) {
 			list.sort(ZmContact.compareByFileAs);
 		}

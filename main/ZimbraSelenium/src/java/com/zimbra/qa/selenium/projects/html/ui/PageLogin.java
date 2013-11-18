@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.html.ui;
@@ -30,10 +28,10 @@ import com.zimbra.qa.selenium.framework.util.ZimbraSeleniumProperties;
 public class PageLogin extends AbsTab {
 
 	public static class Locators {
-		public static final String zBtnLogin = "css=input.zLoginButton";
-		public static final String zInputUsername = "css=input#username";
-		public static final String zInputPassword = "css=input#password";
-		public static final String zInputRemember = "css=input#remember";
+		public static final String zBtnLogin = "css=input[class*=LoginButton]";
+		public static final String zInputUsername = "css=input[id='username']";
+		public static final String zInputPassword = "css=input[id='password']";
+		public static final String zInputRemember = "css=input[id='remember']";
 
 	}
 

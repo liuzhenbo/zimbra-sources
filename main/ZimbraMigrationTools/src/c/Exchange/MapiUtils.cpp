@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite CSharp Client
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 #include "common.h"
@@ -314,6 +312,8 @@ HRESULT Zimbra::MAPI::Util::GetUserDNAndLegacyName(LPCWSTR lpszServer, LPCWSTR l
     lpszPwd, wstring &wstruserdn, wstring &wstrlegacyname)
 {
     wstruserdn = L"";
+    LPWSTR dnEmpty = L"No";
+    LPWSTR ldnEmpty = L"No";
 
     // Get IDirectorySearch Object
     CComPtr<IDirectorySearch> pDirSearch;
@@ -384,13 +384,19 @@ HRESULT Zimbra::MAPI::Util::GetUserDNAndLegacyName(LPCWSTR lpszServer, LPCWSTR l
             // distinguishedName
             hr = pDirSearch->GetColumn(hSearch, pAttributes[0], &dnCol);
             if (FAILED(hr))
+            {
+                dnEmpty = L"Yes";
                 break;
+            }
             wstruserdn = dnCol.pADsValues->CaseIgnoreString;
 
             // legacyExchangeDN
             hr = pDirSearch->GetColumn(hSearch, pAttributes[1], &dnCol);
             if (FAILED(hr))
+            {
+                ldnEmpty =  L"Yes";
                 break;
+            }
             wstrlegacyname = dnCol.pADsValues->CaseIgnoreString;
 
             pDirSearch->CloseSearchHandle(hSearch);
@@ -415,7 +421,12 @@ HRESULT Zimbra::MAPI::Util::GetUserDNAndLegacyName(LPCWSTR lpszServer, LPCWSTR l
     pDirSearch->CloseSearchHandle(hSearch);
     if (wstruserdn.empty() || wstrlegacyname.empty())
     {
-        throw MapiUtilsException(hr, L"Util::GetUserDNAndLegacyName(): S_ADS_NOMORE_ROWS",
+		 wstring errorMessage = L"Util::GetUserDNAndLegacyName(): S_ADS_NOMORE_ROWS";
+			errorMessage += L" Error Cause :: DN Empty? : ";
+			errorMessage += dnEmpty;
+			errorMessage += L"  LegacyDN Empty? :";
+			errorMessage += ldnEmpty;
+		throw MapiUtilsException(hr, errorMessage.c_str(),
             ERR_AD_NOROWS, __LINE__, __FILE__);
     }
     return S_OK;
@@ -3308,3 +3319,42 @@ HRESULT Zimbra::MAPI::Util::GetSMTPFromAD(Zimbra::MAPI::MAPISession &session, RE
         return S_OK;
     }
 }
+
+bool Zimbra::MAPI::Util::CheckStringProp(_In_opt_ LPSPropValue lpProp, ULONG ulPropType)
+{
+	if (PT_STRING8 != ulPropType && PT_UNICODE != ulPropType)
+	{
+		return false;
+	}
+	if (!lpProp)
+	{
+		return false;
+	}
+
+	if (PT_ERROR == PROP_TYPE(lpProp->ulPropTag))
+	{
+		return false;
+	}
+
+	if (ulPropType != PROP_TYPE(lpProp->ulPropTag))
+	{
+		return false;
+	}
+
+	if (NULL == lpProp->Value.LPSZ)
+	{
+		return false;
+	}
+
+	if (PT_STRING8 == ulPropType && NULL == lpProp->Value.lpszA[0])
+	{
+		return false;
+	}
+
+	if (PT_UNICODE == ulPropType && NULL == lpProp->Value.lpszW[0])
+	{
+		return false;
+	}
+
+	return true;
+} // CheckStringProp

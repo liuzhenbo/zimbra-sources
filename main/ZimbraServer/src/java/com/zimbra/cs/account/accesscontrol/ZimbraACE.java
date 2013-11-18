@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -14,6 +14,9 @@
  */
 package com.zimbra.cs.account.accesscontrol;
 
+import com.zimbra.common.account.Key;
+import com.zimbra.common.account.Key.AccountBy;
+import com.zimbra.common.account.Key.DomainBy;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.cs.account.Account;
@@ -21,10 +24,8 @@ import com.zimbra.cs.account.DistributionList;
 import com.zimbra.cs.account.Domain;
 import com.zimbra.cs.account.Group;
 import com.zimbra.cs.account.GuestAccount;
+import com.zimbra.cs.account.MailTarget;
 import com.zimbra.cs.account.Provisioning;
-import com.zimbra.common.account.Key;
-import com.zimbra.common.account.Key.AccountBy;
-import com.zimbra.common.account.Key.DomainBy;
 import com.zimbra.cs.mailbox.ACL;
 
 public class ZimbraACE {
@@ -45,13 +46,14 @@ public class ZimbraACE {
      * grp: zimbraId of the entry being granted rights
      * egp: email address of the external group
      * gst: email address of the guest being granted rights
+     * edom: domain name that the email address must match
      * all: The pseudo-GUID GUID_AUTHUSER signifying "all authenticated users"
      * pub: The pseudo-GUID GUID_PUBLIC signifying "all authenticated and unauthenticated users"
      */
     private String mGrantee;
 
     // The type of object the grantee's ID refers to.
-    private GranteeType mGranteeType;
+    private final GranteeType mGranteeType;
 
     // The right being granted.
     private Right mRight;
@@ -78,6 +80,8 @@ public class ZimbraACE {
                 -----------------------------------------------------
                 usr             zimbraId of the account
                 grp             zimbraId of the distribution list or dynamic group
+                dom             zimbraId of the Zimbra domain
+                edom            domain name
                 egp             {zimbraId of the Zimbra domain}:{email addr of the external group}
                 gst             {grantee email}:{password}
                 key             {grantee email (or just a name)}:{access key}
@@ -87,7 +91,7 @@ public class ZimbraACE {
                 grantee name for key grantees, password, and access key(if provided by user)
                 can have spaces, they are enclosed in {}.  {} are not allowed for them.
 
-        grantee-type: usr | grp | egp | gst | key | all | pub
+        grantee-type: usr | grp | dom | edom | egp | gst | key | all | pub
 
         right: one of the supported rights.
                if a '-' (minus sign) is prepended to the right, it means the right is
@@ -121,8 +125,8 @@ public class ZimbraACE {
     public static class ExternalGroupInfo {
         // zimbraId of the Zimbra domain when persisted in ZimbraACE
         // name of the Zimbra domain when specified in CLI and SOAP
-        private String zimbraDomain;
-        private String extGroupName;
+        private final String zimbraDomain;
+        private final String extGroupName;
 
         private ExternalGroupInfo(String zimbraDomain, String externalGroupName) {
             this.zimbraDomain = zimbraDomain;
@@ -203,6 +207,9 @@ public class ZimbraACE {
             // to get the zimbra domain part and external group part.
             mGrantee = grantee;
             break;
+        case GT_EXT_DOMAIN:
+            mGrantee = grantee;
+            break;
         case GT_GUEST:
         case GT_KEY:
             String[] externalParts = grantee.split(S_SECRET_DELIMITER);
@@ -216,6 +223,9 @@ public class ZimbraACE {
             } else {
                 mSecret = null;
             }
+            break;
+        case GT_EMAIL:
+            mGrantee = grantee;
             break;
         default:
             throw ServiceException.PARSE_ERROR("invalid grantee type " + mGranteeType, null);
@@ -271,6 +281,7 @@ public class ZimbraACE {
     /**
      * return a deep copy of the ZimbraACE object
      */
+    @Override
     public ZimbraACE clone() {
         return new ZimbraACE(this);
     }
@@ -376,55 +387,78 @@ public class ZimbraACE {
         return mTargetName;
     }
 
-    /** Returns whether this grant applies to the given {@link Account}.
-     *  If <tt>acct</tt> is <tt>null</tt>, only return
+    /** Returns whether this grant applies to the given {@link MailTarget}.
+     *  If <tt>mailTarget</tt> is <tt>null</tt>, only return
      *  <tt>true</tt> if the grantee is {@link ACL#GRANTEE_PUBLIC}. */
     // orig: ACL.Grant.matches
-    private boolean matches(Account acct, boolean asAdmin) throws ServiceException {
+    private boolean matches(MailTarget mailTarget, boolean asAdmin) throws ServiceException {
         Provisioning prov = Provisioning.getInstance();
-        if (acct == null)
+        if (mailTarget == null)
             return mGranteeType == GranteeType.GT_PUBLIC;
         switch (mGranteeType) {
             case GT_PUBLIC:
                 return true;
             case GT_AUTHUSER:
-                return !(acct instanceof GuestAccount); // return !acct.equals(ACL.ANONYMOUS_ACCT);
+                if (mailTarget instanceof Account) {
+                    return !(mailTarget instanceof GuestAccount); // return !acct.equals(ACL.ANONYMOUS_ACCT);
+                } else {
+                    return false;
+                }
             /*
              * actually never called
              * Group grantees are checked differently via checkGroupPresetRight
              */
             case GT_GROUP:
-                return prov.inDistributionList(acct, mGrantee);
+                return prov.inDistributionList(mailTarget, mGrantee);
             case GT_EXT_GROUP:
                 ExternalGroup extGroup = ExternalGroup.get(DomainBy.id, mGrantee, asAdmin);
                 if (extGroup == null) {
                     ZimbraLog.account.warn("unable to find external group grantee " + mGrantee);
                     return false;
                 }
-                return extGroup.inGroup(acct, asAdmin);
+                return extGroup.inGroup(mailTarget, asAdmin);
             case GT_DOMAIN:
-                return mGrantee.equals(acct.getDomainId());
+                return mGrantee.equals(mailTarget.getDomainId());
+            case GT_EXT_DOMAIN:
+                return matchesDomainForGuest(mailTarget);
             case GT_USER:
-                return mGrantee.equals(acct.getId());
+                return mGrantee.equals(mailTarget.getId());
             case GT_GUEST:
-                return matchesGuestAccount(acct);
+                return matchesGuestAccount(mailTarget);
             case GT_KEY:
-                return matchesAccessKey(acct);
+                return matchesAccessKey(mailTarget);
+            case GT_EMAIL:
+                return matchesEmail(mailTarget, asAdmin);
             default:
                 throw ServiceException.FAILURE("unknown ACL grantee type: " + mGranteeType, null);
         }
     }
 
-    private boolean matchesGuestAccount(Account acct) {
+    private boolean matchesEmail(MailTarget mailTarget, boolean asAdmin) {
+        if (mailTarget instanceof GuestAccount) {
+            return matchesGuestAccount(mailTarget);
+        } else if (mailTarget instanceof Account) {
+            return mGrantee.equalsIgnoreCase(mailTarget.getName());
+        } else if (mailTarget instanceof DistributionList) {
+            return mGrantee.equalsIgnoreCase(mailTarget.getName());
+        }
+        return false;
+    }
+
+    private boolean matchesGuestAccount(MailTarget acct) {
         if (!(acct instanceof GuestAccount))
             return false;
         return ((GuestAccount) acct).matches(mGrantee, mSecret);
     }
 
-    private boolean matchesAccessKey(Account acct) {
+    private boolean matchesAccessKey(MailTarget acct) {
         if (!(acct instanceof GuestAccount))
             return false;
         return ((GuestAccount) acct).matchesAccessKey(mGrantee, mSecret);
+    }
+
+    private boolean matchesDomainForGuest(MailTarget acct) {
+        return mGrantee.equalsIgnoreCase(acct.getDomainName());
     }
 
     /*
@@ -435,7 +469,7 @@ public class ZimbraACE {
     }
     */
 
-    boolean matchesGrantee(Account grantee, boolean asAdmin) throws ServiceException {
+    boolean matchesGrantee(MailTarget grantee, boolean asAdmin) throws ServiceException {
         return matches(grantee, asAdmin);
     }
 
@@ -466,6 +500,7 @@ public class ZimbraACE {
                 break;
             case GT_GUEST:
             case GT_KEY:
+            case GT_EXT_DOMAIN:
                 return mGrantee;
             case GT_AUTHUSER:
             case GT_PUBLIC:

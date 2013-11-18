@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2009, 2010, 2012 VMware, Inc.
+ * Copyright (C) 2007, 2009, 2010, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -57,10 +57,10 @@ function(params) {
 	params1.action = "move";
     if (params1.folder.id == ZmFolder.ID_TRASH) {
 		if (params1.items.length > 1) {
-	        params1.actionText = ZmMsg.actionTrash;
+	        params1.actionTextKey = 'actionTrash';
 		}
     } else {
-        params1.actionText = ZmMsg.actionMove;
+        params1.actionTextKey = 'actionMove';
         params1.actionArg = params.folder.getName(false, false, true);
     }
 	params1.callback = new AjxCallback(this, this._handleResponseMoveItems, params);

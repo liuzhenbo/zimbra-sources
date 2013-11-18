@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -323,11 +323,8 @@ ZmUploadDialog.prototype._popupErrorDialog = function(message) {
 
 ZmUploadDialog.prototype._uploadSaveDocs = function(files, status, guids) {
 	if (status != AjxPost.SC_OK) {
-		var message = AjxMessageFormat.format(ZmMsg.uploadError, status);
-		if(status == '413') {
-			message = ZmMsg.errorAttachmentTooBig;
-		}
-		this._popupErrorDialog(message);
+		appCtxt.getAppController().popupUploadErrorDialog(ZmItem.BRIEFCASE,
+		                                                  status);
 	} else {
 		guids = guids.split(",");
 		for (var i = 0; i < files.length; i++) {
@@ -664,18 +661,6 @@ ZmUploadDialog._addHandler = function(event) {
 ZmUploadDialog.prototype._createUploadHtml = function() {
 	var id = this._htmlElId;
 	var aCtxt = ZmAppCtxt.handleWindowOpener();
-	if (!aCtxt) {
-		//hack if ZmAppCtxt is not defined; not sure why that would be the case.
-		aCtxt = appCtxt;
-		if (window.opener) {
-			try {
-				aCtxt = window.opener.appCtxt;
-			}
-			catch (ex) {
-				aCtxt = appCtxt;
-			}
-		}
-	}
     var uri = aCtxt.get(ZmSetting.CSFE_UPLOAD_URI);
 
     var subs = {

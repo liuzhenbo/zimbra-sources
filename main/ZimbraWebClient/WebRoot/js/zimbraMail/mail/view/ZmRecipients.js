@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -700,7 +700,7 @@ function(addrs) {
         // If there was only one button, the picker will just return the list of selections,
         // not a list per button type
         var typeAddrs = (this._fieldNames.length == 1) ? addrs :  addrs[type];
-		var addrVec = this._expandAddrs(typeAddrs);
+		var addrVec = ZmRecipients.expandAddrs(typeAddrs);
 		this.addAddresses(type, addrVec);
 	}
 
@@ -718,7 +718,7 @@ function(addrs) {
 };
 
 // Expands any addresses that are groups
-ZmRecipients.prototype._expandAddrs =
+ZmRecipients.expandAddrs =
 function(addrs) {
 	var addrsNew = [];
 	var addrsArray = (addrs instanceof AjxVector) ? addrs.getArray() : addrs;

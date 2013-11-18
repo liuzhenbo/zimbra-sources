@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -26,6 +26,7 @@ AjxPackage.require({name:"zimbraMail.unittest.UtAjxUtil",		    method:AjxPackage
 AjxPackage.require({name:"zimbraMail.unittest.UtAjxStringUtil",		method:AjxPackage.METHOD_SCRIPT_TAG});
 AjxPackage.require({name:"zimbraMail.unittest.UtAjxXslt",			method:AjxPackage.METHOD_SCRIPT_TAG});
 AjxPackage.require({name:"zimbraMail.unittest.UtAjxTimezone",		method:AjxPackage.METHOD_SCRIPT_TAG});
+AjxPackage.require({name:"zimbraMail.unittest.UtDwtCssStyle",		method:AjxPackage.METHOD_SCRIPT_TAG});
 AjxPackage.require({name:"zimbraMail.unittest.UtBubbles",			method:AjxPackage.METHOD_SCRIPT_TAG});
 AjxPackage.require({name:"zimbraMail.unittest.UtCompose",			method:AjxPackage.METHOD_SCRIPT_TAG});
 AjxPackage.require({name:"zimbraMail.unittest.UtContactGroup",		method:AjxPackage.METHOD_SCRIPT_TAG});

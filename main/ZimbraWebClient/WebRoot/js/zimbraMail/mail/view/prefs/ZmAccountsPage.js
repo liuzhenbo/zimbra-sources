@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -1167,11 +1167,11 @@ function(id, section, value) {
 		var array = [value];
 		var seenComma = false;
 		for (var i = 0; i < folderIds.length; i++) {
-			var fid = ZmOrganizer.normalizeId(folderIds[i]);
+			var fid = folderIds[i];
 			var searchPath = array[i] = tree.getById(fid).getSearchPath();
 			seenComma = seenComma || searchPath.match(/,/);
 		}
-		value = array.join(seenComma ? "; " : ", ");
+		value = AjxUtil.uniq(array).join(seenComma ? "; " : ", ");
 	}
 
 	switch (setup.displayContainer) {
@@ -1469,7 +1469,7 @@ function( displayOptions, fromAddress){
     var index = -1;
      // Add sendOnBehalfOf emails
     for (var i=0;i < appCtxt.sendOboEmails.length; i++){
-      email = appCtxt.sendOboEmails[i];
+      email = appCtxt.sendOboEmails[i].addr;
       index = -1;
       if (index = AjxUtil.indexOf(fromAddress,email) != -1)
           fromAddress.splice(index, 1);
@@ -1480,7 +1480,7 @@ function( displayOptions, fromAddress){
 
     // Add sendAs emails
     for (var i=0;i < appCtxt.sendAsEmails.length; i++){
-      email = appCtxt.sendAsEmails[i];
+      email = appCtxt.sendAsEmails[i].addr;
       index = -1;
       if ((index = AjxUtil.indexOf(fromAddress,email)) != -1)
           fromAddress.splice(index, 1);

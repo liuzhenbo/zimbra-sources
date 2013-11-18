@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -1042,7 +1042,7 @@ XFormItem.prototype.outputLabelCellHTML = function (html,  rowSpan, labelLocatio
 	if (labelLocation == _INLINE_) {
 		var style = this.getLabelCssStyle();
 		if (style == null) style = "";
-		style = "position:relative;left:10;top:5;text-align:left;background-color:#eeeeee;margin-left:5px;margin-right:5px;" + style;
+		style = "position:relative;left:10px;top:5px;text-align:left;background-color:#eeeeee;margin-left:5px;margin-right:5px;" + style;
 		html.append( "<div id=\"", this.getId(),"___label\"", 
 								this.getLabelCssString(null, style), ">",
 								label,
@@ -1645,6 +1645,9 @@ XFormItem.prototype.getCssString = function () {
 		if(style.length)
 			style += ";";
 			
+		if (!isNaN(Number(width)))
+			width += 'px';
+
 		style += "width:" + width;
 	}
 
@@ -1653,6 +1656,9 @@ XFormItem.prototype.getCssString = function () {
 		if(style.length)
 			style += ";";
 	
+		if (!isNaN(Number(height)))
+			height += 'px';
+
 		style += "height:" + height;
 	}
 

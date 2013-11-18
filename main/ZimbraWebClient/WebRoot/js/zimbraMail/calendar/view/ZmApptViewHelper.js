@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -555,7 +555,7 @@ function(list, type, role, objectManager, htmlElId) {
 	}
 
 	var options = {};
-	options.addrBubbles = false; //todo - do we really want false here? why not use bubbles?
+	options.addrBubbles = appCtxt.get(ZmSetting.USE_ADDR_BUBBLES);
 	options.shortAddress = appCtxt.get(ZmSetting.SHORT_ADDRESS);
 	var addressInfo = ZmMailMsgView.getAddressesFieldHtmlHelper(emails, options,
 		role, objectManager, htmlElId);

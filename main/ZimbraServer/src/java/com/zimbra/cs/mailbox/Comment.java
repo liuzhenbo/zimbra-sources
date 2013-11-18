@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -25,7 +25,11 @@ import com.zimbra.cs.mailbox.MailItem.CustomMetadata.CustomMetadataList;
 public class Comment extends MailItem {
 
     Comment(Mailbox mbox, UnderlyingData data) throws ServiceException {
-        super(mbox, data);
+        this(mbox, data, false);
+    }
+    
+    Comment(Mailbox mbox, UnderlyingData data, boolean skipCache) throws ServiceException {
+        super(mbox, data, skipCache);
     }
 
     public static Comment create(Mailbox mbox, MailItem parent, int id, String uuid, String text, String creatorId, CustomMetadata custom) throws ServiceException {

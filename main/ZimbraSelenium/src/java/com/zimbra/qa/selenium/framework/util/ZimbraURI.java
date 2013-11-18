@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.framework.util;
@@ -203,6 +201,14 @@ public class ZimbraURI {
 	}
 	
 	/**
+	 * Get the URI query parameters as a Map
+	 * @return
+	 */
+	public Map<String, String> getQuery() {
+		return (getQueryFromString(myURI.getQuery()));
+	}
+
+	/**
 	 * Get the current browser location
 	 * @return
 	 * @throws URLSyntaxException
@@ -224,8 +230,8 @@ public class ZimbraURI {
 
 	/**
 	 * Get the 'base' URL being used for this test run.  For example,
-	 * https://zqa-001.eng.vmware.com.  Or, for performance test run,
-	 * https://zqa-001.eng.vmware.com?perfMetric=1
+	 * https://server.  Or, for performance test run,
+	 * https://server?perfMetric=1
 	 * @return
 	 * @throws URLSyntaxException
 	 */
@@ -283,6 +289,12 @@ public class ZimbraURI {
 		if ( ZimbraSeleniumProperties.getAppType() == AppType.MOBILE ) {
 
 			path ="/m/";
+			
+		}
+		
+		if ( ZimbraSeleniumProperties.getAppType() == AppType.TOUCH ) {
+
+			path ="/t/";
 			
 		}
 

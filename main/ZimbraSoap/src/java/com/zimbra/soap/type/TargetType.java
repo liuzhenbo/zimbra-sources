@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -16,6 +16,7 @@
 package com.zimbra.soap.type;
 
 import java.util.Arrays;
+
 import javax.xml.bind.annotation.XmlEnum;
 
 import com.zimbra.common.service.ServiceException;
@@ -26,7 +27,7 @@ import com.zimbra.common.service.ServiceException;
 @XmlEnum
 public enum TargetType {
     // case must match protocol
-    account, calresource, cos, dl, group, domain, server, ucservice,
+    account, calresource, cos, dl, group, domain, server, alwaysoncluster, ucservice,
     xmppcomponent, zimlet, config, global;
 
     public static TargetType fromString(String s)

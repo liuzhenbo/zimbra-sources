@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * This class allows you to use native APIs to take photos using the device camera.
  *
@@ -21,10 +5,10 @@
  * current device:
  *
  * - Sencha Packager
- * - PhoneGap
+ * - Cordova
  * - Simulator
  *
- * Both the Sencha Packager and PhoneGap implementations will use the native camera functionality to take or select
+ * Both the Sencha Packager and Cordova implementations will use the native camera functionality to take or select
  * a photo. The Simulator implementation will simply return fake images.
  *
  * ## Example
@@ -52,7 +36,7 @@ Ext.define('Ext.device.Camera', {
 
     requires: [
         'Ext.device.Communicator',
-        'Ext.device.camera.PhoneGap',
+        'Ext.device.camera.Cordova',
         'Ext.device.camera.Sencha',
         'Ext.device.camera.Simulator'
     ],
@@ -61,15 +45,13 @@ Ext.define('Ext.device.Camera', {
         var browserEnv = Ext.browser.is;
 
         if (browserEnv.WebView) {
-            if (browserEnv.PhoneGap) {
-                return Ext.create('Ext.device.camera.PhoneGap');
-            }
-            else {
+            if (browserEnv.Cordova) {
+                return Ext.create('Ext.device.camera.Cordova');
+            } else if (browserEnv.Sencha) {
                 return Ext.create('Ext.device.camera.Sencha');
             }
         }
-        else {
-            return Ext.create('Ext.device.camera.Simulator');
-        }
+
+        return Ext.create('Ext.device.camera.Simulator');
     }
 });

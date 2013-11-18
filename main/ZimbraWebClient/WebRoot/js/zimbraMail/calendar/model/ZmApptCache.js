@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -675,18 +675,27 @@ function(params, result) {
 ZmApptCache.prototype._getApptSummariesError =
 function(params, ex) {
     var code = ex ? ex.code : null;
-	if (code == ZmCsfeException.MAIL_QUERY_PARSE_ERROR) {
-		var d = appCtxt.getMsgDialog();
-		d.setMessage(ZmMsg.errorCalendarParse);
-		d.popup();
-		return true;
-	}
+	if (params.errorCallback) {
+		//if there is a error callback handler then call it else do default handling
+		params.errorCallback.run(ex);
+		if (code !== ZmCsfeException.ACCT_NO_SUCH_ACCOUNT && code !== ZmCsfeException.MAIL_NO_SUCH_MOUNTPOINT) {
+			//additional processing is needed for these codes so do not return yet.
+			return true;
+		}
+	} else {
+		if (code == ZmCsfeException.MAIL_QUERY_PARSE_ERROR) {
+			var d = appCtxt.getMsgDialog();
+			d.setMessage(ZmMsg.errorCalendarParse);
+			d.popup();
+			return true;
+		}
 
-    if (code == ZmCsfeException.MAIL_NO_SUCH_TAG) {
-        var msg = ex.getErrorMsg();
-        appCtxt.setStatusMsg(msg, ZmStatusView.LEVEL_WARNING);
-        return true;
-    }
+		if (code == ZmCsfeException.MAIL_NO_SUCH_TAG) {
+			var msg = ex.getErrorMsg();
+			appCtxt.setStatusMsg(msg, ZmStatusView.LEVEL_WARNING);
+			return true;
+		}
+	}
 
 	var ids = {};
 	var invalidAccountMarker = {};

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -36,7 +36,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
     config: {
         cls: [
             'x-field',
-            'vm-bubblearea'
+            'zcs-bubblearea'
         ],
 
         /**
@@ -93,19 +93,19 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
 
         name: null,
 
-	    listeners: {
-		    initialize: function() {
-			    var me = this;
+        listeners: {
+            initialize: function() {
+                var me = this;
 
-			    if (!me.getReadOnly()) {
-				    me.inputField = me.down('#inputField');
-				    me.element.on('tap', function (e, el) {
-					    me.focusInput();
-					    return true;
-				    });
-			    }
-		    }
-	    }
+                if (!me.getReadOnly()) {
+                    me.inputField = me.down('#inputField');
+                    me.element.on('tap', function (e, el) {
+                        me.focusInput();
+                        return true;
+                    });
+                }
+            }
+        }
     },
 
     /**
@@ -118,12 +118,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
      *
      * @cfg The tpl to use for bubbles.
      */
-    bubbleTpl: [
-        '<div class="vm-area-bubble {bubbleCls}">',
-            '{bubbleName}',
-            '<div class="bubble-close-icon delete-mini-icon"></div>',
-        '</div>'
-    ],
+    bubbleTpl: ZCS.template.Bubble,
 
     /**
      * @required
@@ -191,7 +186,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
             inputField = this.getInputField();
 
         if (cfg.readOnly) {
-            me.fieldBodyCls += ' vm-read-only';
+            me.fieldBodyCls += ' zcs-read-only';
         }
 
         me.bubbles = new Ext.util.MixedCollection();
@@ -226,6 +221,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
 
             this.fireEvent('initialBubblesAdded');
         }
+        this.inputField = this.down('#inputField');
     },
 
     /**
@@ -313,7 +309,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
                 tpl: me.bubbleTpl,
                 data: bubbleModel,
                 listeners: {
-                    painted: function () {
+                    initialize: function () {
                         var thisBubble = this;
 
                         if (!me.getReadOnly()) {
@@ -327,11 +323,14 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
                         }
 
                         this.element.on('tap', function (event, node, options, eOpts) {
-                            me.fireEvent('bubbleTap', me, thisBubble, thisBubble.data);
+                            me.fireEvent('bubbleTap', thisBubble, {
+                                field:      me,
+                                bubble:     thisBubble,
+                                menuName:   ZCS.constant.MENU_RECIPIENT
+                            });
                         });
                     }
-                },
-                bubbleModel: bubbleModel
+                }
             };
 
         if (me.bubbleElements.getCount() === 0) {
@@ -341,6 +340,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
         bubbleElement = me.down('#mainContents').insert(numberOfBubbles, newBubble);
 
         bubbleElement.data = bubbleModel;
+        bubbleElement.bubbleModel = bubbleModel;
 
         me.bubbles.add(bubbleModel);
 
@@ -478,8 +478,7 @@ Ext.define('ZCS.view.ux.ZtBubbleArea', {
                         // We are not using the dirty feature yet, so for now the function is just a placeholder
                         return false;
                     };
-                },
-                painted: function () {
+
                     var inputEl = this.element.down('input');
 
                     if (!me.getReadOnly()) {

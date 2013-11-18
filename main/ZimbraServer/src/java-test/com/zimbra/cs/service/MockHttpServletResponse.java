@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011 VMware, Inc.
+ * Copyright (C) 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -17,6 +17,7 @@ package com.zimbra.cs.service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Collection;
 import java.util.Locale;
 
 import javax.servlet.ServletOutputStream;
@@ -221,6 +222,30 @@ public class MockHttpServletResponse implements HttpServletResponse {
     public void setStatus(int arg0, String arg1) {
         // TODO Auto-generated method stub
         
+    }
+
+    @Override
+    public String getHeader(String arg0) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Collection<String> getHeaderNames() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public Collection<String> getHeaders(String arg0) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public int getStatus() {
+        // TODO Auto-generated method stub
+        return 0;
     }
 
 }

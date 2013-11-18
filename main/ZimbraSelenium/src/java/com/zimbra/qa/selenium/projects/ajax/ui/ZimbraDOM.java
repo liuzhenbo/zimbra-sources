@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.ui;
@@ -207,6 +205,7 @@ public class ZimbraDOM {
 		public static final String OP_MARK_AS_COMPLETED = "ZmId.OP_MARK_AS_COMPLETED";
 		public static final String OP_CLOSE = "ZmId.OP_CLOSE";
 		public static final String OP_COMPOSE_OPTIONS = "ZmId.OP_COMPOSE_OPTIONS";
+		public static final String OP_VIEW_TASKEDIT = "ZmId.VIEW_TASKEDIT";
 		
 		public static final String OP_MOVE_MENU = "ZmId.OP_MOVE_MENU";
 		public static final String OP_TAG_MENU = "ZmId.OP_TAG_MENU";

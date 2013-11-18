@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -295,7 +295,7 @@ function(ev) {
             break;
 
         case ZmOperation.MONTH_VIEW:
-            Dwt.setDisplay(workDaysOnlyContainer, Dwt.DISPLAY_BLOCK);
+            Dwt.setDisplay(workDaysOnlyContainer, Dwt.DISPLAY_NONE);
             Dwt.setDisplay(oneWeekPerPageContainer, Dwt.DISPLAY_NONE);
             Dwt.setDisplay(oneDayPerPageContainer, Dwt.DISPLAY_NONE);
             Dwt.setDisplay(includeTasksContainer, Dwt.DISPLAY_NONE);
@@ -535,7 +535,7 @@ function(id) {
 
     this._dateInputField = new DwtInputField(params);
     var timeInputEl = this._dateInputField.getInputElement();
-    Dwt.setSize(timeInputEl, "80px", "22px");
+    Dwt.setSize(timeInputEl, "80px", "2rem");
     timeInputEl.typeId = this.id;
 };
 

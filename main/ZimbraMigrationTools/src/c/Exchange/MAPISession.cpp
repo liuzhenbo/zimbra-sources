@@ -1,23 +1,22 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite CSharp Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 #include "common.h"
 #include "Exchange.h"
 #include "MAPISession.h"
 #include "MAPIStore.h"
+#include "edk/edkmapi.h"
 
 // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 // Exception class
@@ -131,6 +130,19 @@ HRESULT MAPISession::OpenDefaultStore(MAPIStore &Store)
 		ERR_STORE_ERR, __LINE__, __FILE__);
     Store.Initialize(m_Session, pDefaultMDB);
     return S_OK;
+}
+
+HRESULT MAPISession::OpenPublicStore(MAPIStore &Store)
+{
+	Zimbra::Util::AutoCriticalSection autocriticalsection(cs);
+    HRESULT hr = S_OK;
+	LPMDB pMdb = NULL;
+	hr=Store.OpenPublicMessageStore(m_Session,0x0000,&pMdb);
+	if (FAILED(hr))
+        throw MAPISessionException(hr, L"OpenPublicMessageStore() Failed.", 
+		ERR_STORE_ERR, __LINE__,  __FILE__);
+    Store.Initialize(m_Session, pMdb);
+	return hr;
 }
 
 HRESULT MAPISession::OpenOtherStore(LPMDB OpenedStore, LPWSTR pServerDn, LPWSTR pUserDn,

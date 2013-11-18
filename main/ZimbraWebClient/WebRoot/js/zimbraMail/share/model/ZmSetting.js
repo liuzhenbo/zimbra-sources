@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -226,6 +226,7 @@ ZmSetting.LOCALE_NAME			= "LOCALE_NAME";
 ZmSetting.COMPOSE_INIT_DIRECTION= "COMPOSE_INIT_DIRECTION";
 ZmSetting.SHOW_COMPOSE_DIRECTION_BUTTONS = "SHOW_COMPOSE_DIRECTION_BUTTONS";
 ZmSetting.FONT_NAME				= "FONT_NAME";
+ZmSetting.FONT_SIZE				= "FONT_SIZE";
 ZmSetting.SKIN_NAME				= "SKIN_NAME";
 
 ZmSetting.BRIEFCASE_ENABLED		= "BRIEFCASE_ENABLED";
@@ -236,6 +237,7 @@ ZmSetting.MAIL_ENABLED			= "MAIL_ENABLED";
 ZmSetting.OPTIONS_ENABLED		= "OPTIONS_ENABLED";
 ZmSetting.PORTAL_ENABLED		= "PORTAL_ENABLED";
 ZmSetting.SEARCH_ENABLED		= "SEARCH_ENABLED";
+ZmSetting.SOCIAL_ENABLED		= "SOCIAL_ENABLED";
 ZmSetting.TASKS_ENABLED			= "TASKS_ENABLED";
 ZmSetting.VOICE_ENABLED			= "VOICE_ENABLED";
 ZmSetting.TAGGING_ENABLED		= "TAGGING_ENABLED";
@@ -243,6 +245,7 @@ ZmSetting.TAGGING_ENABLED		= "TAGGING_ENABLED";
 ZmSetting.CALENDAR_UPSELL_ENABLED	= "CALENDAR_UPSELL_ENABLED";
 ZmSetting.CONTACTS_UPSELL_ENABLED	= "CONTACTS_UPSELL_ENABLED";
 ZmSetting.MAIL_UPSELL_ENABLED		= "MAIL_UPSELL_ENABLED";
+ZmSetting.SOCIAL_EXTERNAL_ENABLED	= "SOCIAL_EXTERNAL_ENABLED";
 ZmSetting.VOICE_UPSELL_ENABLED		= "VOICE_UPSELL_ENABLED";
 
 //user selected font
@@ -250,6 +253,12 @@ ZmSetting.FONT_CLASSIC	= "classic";
 ZmSetting.FONT_MODERN	= "modern";
 ZmSetting.FONT_WIDE		= "wide";
 ZmSetting.FONT_SYSTEM	= "system";
+
+//user selected font size
+ZmSetting.FONT_SIZE_NORMAL = "normal";
+ZmSetting.FONT_SIZE_LARGE = "large";
+ZmSetting.FONT_SIZE_LARGER = "larger";
+
 
 // name for dynamic CSS class created from user font prefs
 ZmSetting.USER_FONT_CLASS = "userFontPrefs";

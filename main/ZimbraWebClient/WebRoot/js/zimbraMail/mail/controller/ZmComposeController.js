@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -545,6 +545,9 @@ function(attId, docIds, draftType, callback, contactId) {
 	var ac = window.parentAppCtxt || window.appCtxt;
 	var acctName = appCtxt.multiAccounts
 		? this._composeView.getFromAccount().name : this._accountName;
+	if (msg.delegatedSenderAddr && !msg.delegatedSenderAddrIsDL) {
+		acctName = msg.delegatedSenderAddr;
+	}
 
 	if (isDraft) {
 		if (appCtxt.multiAccounts) {
@@ -632,7 +635,13 @@ function() {
 };
 
 ZmComposeController.prototype._handleErrorSendMsg =
-function(draftType, msg, ex) {
+function(draftType, msg, ex, params) {
+	if (draftType != ZmComposeController.DRAFT_TYPE_NONE &&
+		!AjxUtil.isUndefined(this._wasDirty)) {
+		this._composeView._isDirty = this._wasDirty;
+		delete this._wasDirty;
+	}
+
     var retVal = false;
 	if (!this.isHidden) {
 		this.resetToolbarOperations();
@@ -642,19 +651,19 @@ function(draftType, msg, ex) {
     appCtxt.notifyZimlets("onSendMsgFailure", [this, ex, msg]);//notify Zimlets on failure
     if (ex && ex.code) {
 	
-        var msg = null;
+        var errorMsg = null;
         var showMsg = false;
 		var style = null;
         if (ex.code == ZmCsfeException.MAIL_SEND_ABORTED_ADDRESS_FAILURE) {
             var invalid = ex.getData ? ex.getData(ZmCsfeException.MAIL_SEND_ADDRESS_FAILURE_INVALID) : null;
             var invalidMsg = (invalid && invalid.length)
                 ? AjxMessageFormat.format(ZmMsg.sendErrorInvalidAddresses, invalid.join(", ")) : null;
-            msg = ZmMsg.sendErrorAbort + "<br/>" +  AjxStringUtil.htmlEncode(invalidMsg);
-            this.popupErrorDialog(msg, ex, true, true, false, true);
+            errorMsg = ZmMsg.sendErrorAbort + "<br/>" +  AjxStringUtil.htmlEncode(invalidMsg);
+            this.popupErrorDialog(errorMsg, ex, true, true, false, true);
             retVal = true;
         } else if (ex.code == ZmCsfeException.MAIL_SEND_PARTIAL_ADDRESS_FAILURE) {
             var invalid = ex.getData ? ex.getData(ZmCsfeException.MAIL_SEND_ADDRESS_FAILURE_INVALID) : null;
-            msg = (invalid && invalid.length)
+            errorMsg = (invalid && invalid.length)
                 ? AjxMessageFormat.format(ZmMsg.sendErrorPartial, AjxStringUtil.htmlEncode(invalid.join(", ")))
                 : ZmMsg.sendErrorAbort;
             showMsg = true;
@@ -675,27 +684,27 @@ function(draftType, msg, ex) {
                     }
                 }
             }
-            msg = ZmMsg.cancelSendMsgWarning;
+            errorMsg = ZmMsg.cancelSendMsgWarning;
             this._composeView.setBackupForm();
             retVal = true;
         } else if (ex.code == ZmCsfeException.MAIL_QUOTA_EXCEEDED) {
-		    msg = ZmMsg.errorQuotaExceeded;
-	    }
+            errorMsg = ZmMsg.errorQuotaExceeded;
+        }
 
         if (this._uploadingProgress){
             this._initAutoSave();
 		    this._composeView._resetUpload(true);
 			if (ex.code === ZmCsfeException.MAIL_MESSAGE_TOO_BIG) {
-				msg = AjxMessageFormat.format(ZmMsg.attachmentSizeError, AjxUtil.formatSize(appCtxt.get(ZmSetting.MESSAGE_SIZE_LIMIT)));
+				errorMsg = AjxMessageFormat.format(ZmMsg.attachmentSizeError, AjxUtil.formatSize(appCtxt.get(ZmSetting.MESSAGE_SIZE_LIMIT)));
 				style = DwtMessageDialog.WARNING_STYLE;
 			}
 			else {
-				msg = msg || ZmMsg.attachingFilesError + "<br>" + (ex.msg || "");
+				errorMsg = errorMsg || ZmMsg.attachingFilesError + "<br>" + (ex.msg || "");
 			}
 			showMsg = true;
         }
-        if (msg && showMsg) {
-			this._showMsgDialog(ZmComposeController.MSG_DIALOG_1, msg, style || DwtMessageDialog.CRITICAL_STYLE, null, true);
+        if (errorMsg && showMsg) {
+			this._showMsgDialog(ZmComposeController.MSG_DIALOG_1, errorMsg, style || DwtMessageDialog.CRITICAL_STYLE, null, true);
             retVal = true;
         }
     }
@@ -705,6 +714,7 @@ function(draftType, msg, ex) {
     this._initAutoSave();
     return retVal;
 };
+
 
 /**
  * Creates a new ZmComposeView if one does not already exist
@@ -1089,6 +1099,12 @@ function(params) {
 			this._draftType = ZmComposeController.DRAFT_TYPE_NONE;
 		}
 	}
+
+
+    if (params && params.isEditAsNew){ // bug: 79175 - edit as new should clear "in reply to" field
+        cv._msg = null; //clear _msg in cv so during send we don't use it for "in reply to"
+    }
+
 
     cv.checkAttachments();
     this.sendMsgCallback = params.sendMsgCallback;
@@ -1590,6 +1606,7 @@ function(draftType, msg, resp) {
 // Send button was pressed
 ZmComposeController.prototype._sendListener =
 function(ev) {
+	appCtxt.notifyZimlets("onSendButtonClicked", [this, this._msg]);
 	this._send();
 };
 
@@ -1627,35 +1644,9 @@ function() {
 // Attachment button was pressed
 ZmComposeController.prototype._attachmentListener =
 function(isInline) {
-
-    var view = this._composeView,
-        fileInputElement;
-
-    if (isInline && AjxEnv.supportsHTML5File && !view._attcBtnInlineFileInpId) {
-        view.collapseAttMenu();//This will create the attach menu options
-    }
-
-    if (AjxEnv.supportsHTML5File) {
-        if (isInline) {
-            if (view._attcBtnInlineFileInpId) {
-                fileInputElement = document.getElementById(view._attcBtnInlineFileInpId);
-            }
-        }
-        else {
-            if (view._attcBtnFileInpId) {
-                fileInputElement = document.getElementById(view._attcBtnFileInpId);
-            }
-        }
-        if (fileInputElement && fileInputElement.click) {
-            try {
-                fileInputElement.click();
-                return;
-            }
-            catch(e) {
-            }
-        }
-    }
-    view.showAttachmentDialog(ZmMsg.myComputer);
+	var type =
+		isInline ? ZmComposeView.UPLOAD_INLINE : ZmComposeView.UPLOAD_COMPUTER;
+	this._composeView.showAttachmentDialog(type);
 };
 
 ZmComposeController.prototype._optionsListener =
@@ -1778,6 +1769,8 @@ function(draftType, attId, docIds, callback, contactId) {
 
 	if (!this._canSaveDraft()) { return; }
 
+	this._wasDirty = this._composeView._isDirty;
+	this._composeView._isDirty = false;
 	draftType = draftType || ZmComposeController.DRAFT_TYPE_MANUAL;
 
 	var respCallback = this._handleResponseSaveDraftListener.bind(this, draftType, callback);
@@ -1790,7 +1783,7 @@ function(draftType, attId, docIds, callback, contactId) {
 };
 
 ZmComposeController.prototype._handleResponseSaveDraftListener =
-function(draftType, callback) {
+function(draftType, callback, result) {
 	if (draftType == ZmComposeController.DRAFT_TYPE_AUTO &&
 		this._draftType == ZmComposeController.DRAFT_TYPE_NONE) {
 		this._draftType = ZmComposeController.DRAFT_TYPE_AUTO;
@@ -1799,10 +1792,8 @@ function(draftType, callback) {
 	}
 //	this._action = ZmOperation.DRAFT;
 
-	this._composeView._isDirty = false;
-
 	if (callback) {
-		callback.run();
+		callback.run(result);
 	}
 };
 
@@ -2203,102 +2194,53 @@ function(callback){
     return this._processDataURIImages(imgArray, length, callback);
 };
 
-ZmComposeController.prototype._processDataURIImages = function(imgArray, length, callback){
+ZmComposeController.prototype._processDataURIImages =
+function (imgArray, length, callback) {
 
-    if (!window.atob) {
+    if ( !(typeof window.atob === "function" && typeof window.Blob === "function") || appCtxt.isWebClientOffline()) {
         return;
     }
 
-    var BlobBuilder = window.MozBlobBuilder || window.WebKitBlobBuilder || window.MSBlobBuilder || window.BlobBuilder;
-    if (typeof (BlobBuilder || window.Blob) !== "function") {
-        return;
-    }
-
-    //converts datauri string to blob object used for uploading the image
-    //dataURI format  data:image/png;base64,iVBORw0
-    var dataURItoBlob = function( dataURI ){
-        if( dataURI ){
-            var dataURIArray = dataURI.split(",");
-            if( dataURIArray.length === 2 ){
-                if (dataURIArray[0].indexOf('base64') === -1){
-                    return;
-                }
-                // convert base64 to raw binary data held in a string
-                // doesn't handle URLEncoded DataURIs
-                try{
-                    var byteString = window.atob( dataURIArray[1] );
-                }
-                catch(e){
-                    return;
-                }
-                if( !byteString ){
-                    return;
-                }
-                // separate out the mime component
-                var mimeString = dataURIArray[0].split(':');
-                if( !mimeString[1] ){
-                    return;
-                }
-                mimeString = mimeString[1].split(';')[0];
-                if(mimeString){
-                    // write the bytes of the string to an ArrayBuffer
-                    var byteStringLength = byteString.length;
-                    var ab = new ArrayBuffer( byteStringLength );
-                    var ia = new Uint8Array(ab);
-                    for (var i = 0; i < byteStringLength; i++) {
-                        ia[i] = byteString.charCodeAt(i);
-                    }
-                    var blob;
-                    // write the ArrayBuffer to a blob, and you're done
-                    if (typeof window.Blob === "function") {
-                        blob = new Blob([ab], {"type" : mimeString});
-                    }
-                    else {
-                        var blobbuilder = new BlobBuilder();
-                        blobbuilder.append(ab);
-
-                        blob = blobbuilder.getBlob(mimeString);
-                        blob.type = mimeString;
-                        blob.name = blob.name || new Date().getTime();
-                    }
-                    return blob;
+    for (var i = 0, blobArray = []; i < length; i++) {
+        var img = imgArray[i];
+        if (img) {
+            var imgSrc = img.src;
+            if (imgSrc && imgSrc.indexOf("data:") !== -1) {
+                var blob = AjxUtil.dataURItoBlob(imgSrc);
+                if (blob) {
+                    //setting data-zim-uri attribute for image replacement in callback
+                    var id = Dwt.getNextId();
+                    img.setAttribute("id", id);
+                    img.setAttribute("data-zim-uri", id);
+                    blob.id = id;
+                    blobArray.push(blob);
                 }
             }
         }
-    };
-
-    var blobArray = [];//Array containing blob objects used for uploading images
-    for(var i = 0; i < length; i++ ){
-        var imgSrc = imgArray[i].src;
-        if(imgSrc && imgSrc.indexOf("data:") !== -1){
-            var blob = dataURItoBlob(imgSrc);
-            if(blob){
-                //setting data-zim-uri attribute for image replacement in callback
-                var id = Dwt.getNextId();
-                imgArray[i].setAttribute("id", id);
-                imgArray[i].setAttribute("data-zim-uri", id);
-                blob.id = id;
-                blobArray.push(blob);
-            }
-        }
     }
+
     length = blobArray.length;
-    if(length === 0){
+    if (length === 0) {
         return;
     }
 
     this._uploadedImageArray = [];
     this._dataURIImagesLength = length;
-    for( i = 0; i < length ; i++ ){
+
+    for (i = 0; i < length; i++) {
         var blob = blobArray[i];
         var uploadImageCallback = this._handleUploadImage.bind(this, callback, blob.id);
-        this._uploadImage( blob, uploadImageCallback);
+        this._uploadImage(blob, uploadImageCallback);
     }
     return true;
 };
 
 ZmComposeController.prototype._uploadMyComputerFile =
-function(files, prevData, start) {
+    function(files, prevData, start){
+        if (appCtxt.isWebClientOffline()) {
+            return this._handleOfflineUpload(files);
+        }
+
     try {
         var req = new XMLHttpRequest(); // we do not call this function in IE
         var curView = this._composeView;
@@ -2405,19 +2347,24 @@ function(attaData){
     return result;
 };
 
-ZmComposeController.prototype._uploadImage = function(blob, callback){
+ZmComposeController.prototype._uploadImage = function(blob, callback, errorCallback){
     var req = new XMLHttpRequest();
     req.open("POST", appCtxt.get(ZmSetting.CSFE_ATTACHMENT_UPLOAD_URI)+"?fmt=extended,raw", true);
     req.setRequestHeader("Cache-Control", "no-cache");
     req.setRequestHeader("X-Requested-With", "XMLHttpRequest");
     req.setRequestHeader("Content-Type", blob.type);
     req.setRequestHeader("Content-Disposition", 'attachment; filename="' + AjxUtil.convertToEntities(blob.name) + '"');
-    req.onreadystatechange = function(){
-        if(req.readyState === 4 && req.status === 200) {
-            var resp = eval("["+req.responseText+"]");
-            callback.run(resp[2]);
+    req.onreadystatechange = function() {
+        if (req.readyState === 4) {
+            if (req.status === 200) {
+                var resp = eval("["+req.responseText+"]");
+                callback.run(resp[2]);
+            }
+            else {
+                errorCallback && errorCallback();
+            }
         }
-    }
+    };
     req.send(blob);
 };
 
@@ -2488,4 +2435,86 @@ function(dlgType, msg, style, callbacks) {
 		}
 	}
 	dlg.popup();
+};
+
+ZmComposeController.prototype._handleOfflineUpload =
+function(files) {
+    var callback = this._readFilesAsDataURLCallback.bind(this);
+    ZmComposeController.readFilesAsDataURL(files, callback);
+};
+
+/**
+ * Read files in DataURL Format and execute the callback with param dataURLArray.
+ *
+ * dataURLArray is an array of objects, with each object containing name, type, size and data in data-url format for an file.
+ *
+ * @param {FileList} files                  Object containing one or more files
+ * @param {AjxCallback/Bound} callback	    the success callback
+ * @param {AjxCallback/Bound} errorCallback the error callback
+ *
+ * @public
+ */
+ZmComposeController.readFilesAsDataURL =
+function(files, callback, errorCallback) {
+    var i = 0,
+        filesLength = files.length,
+        dataURLArray = [],
+        fileReadErrorCount = 0;
+
+    if (!window.FileReader || filesLength === 0) {
+        if (errorCallback) {
+            errorCallback.run(dataURLArray, fileReadErrorCount);
+        }
+        return;
+    }
+
+    for (; i < filesLength; i++) {
+
+        var file = files[i],
+            reader = new FileReader();
+
+        reader.onload = function(file, ev) {
+            dataURLArray.push(
+                {
+                    filename : file.name,
+                    ct : file.type,
+                    s : file.size,
+                    data : ev.target.result,
+                    aid : new Date().getTime().toString(),
+                    isOfflineUploaded : true
+                }
+            );
+        }.bind(null, file);
+
+        reader.onerror = function() {
+            fileReadErrorCount++;
+        };
+
+        //Called when the read is completed, whether successful or not. This is called after either onload or onerror.
+        reader.onloadend = function() {
+            if ((dataURLArray.length + fileReadErrorCount) === filesLength) {
+                if (fileReadErrorCount > 0 && errorCallback) {
+                    errorCallback.run(dataURLArray, fileReadErrorCount);
+                }
+                if (callback) {
+                    callback.run(dataURLArray, fileReadErrorCount);
+                }
+            }
+        };
+
+        reader.readAsDataURL(file);
+    }
+};
+
+ZmComposeController.prototype._readFilesAsDataURLCallback =
+function(filesArray) {
+    for (var j = 0; j < filesArray.length; j++) {
+        var file = filesArray[j];
+        if (file) {
+            appCtxt.cacheSet(file.aid, file);
+        }
+    }
+    var curView = this._composeView,
+        callback = curView._resetUpload.bind(curView);
+    this.saveDraft(ZmComposeController.DRAFT_TYPE_AUTO, filesArray, null, callback);
 };

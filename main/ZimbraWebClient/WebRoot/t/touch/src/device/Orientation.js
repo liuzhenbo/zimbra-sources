@@ -1,25 +1,9 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * This class provides you with a cross platform way of listening to when the the orientation changes on the
  * device your application is running on.
  *
  * The {@link Ext.device.Orientation#orientationchange orientationchange} event gets passes the `alpha`, `beta` and
- * `gamma` values.
+ * `gamma` values. ** These properties only exist when packaging with the Sencha Native Packager. **
  *
  * You can find more information about these values and how to use them on the [W3C device orientation specification](http://dev.w3.org/geo/api/spec-source-orientation.html#deviceorientation).
  *
@@ -55,8 +39,7 @@ Ext.define('Ext.device.Orientation', {
         if (browserEnv.Sencha) {
             return Ext.create('Ext.device.orientation.Sencha');
         }
-        else {
-            return Ext.create('Ext.device.orientation.HTML5');
-        }
+
+        return Ext.create('Ext.device.orientation.HTML5');
     }
 });

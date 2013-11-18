@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -471,12 +471,14 @@ function(task, colIdx) {
 	htmlArr[idx++] = "</tr></table>";
 
     // second row
-    htmlArr[idx++] = "<table width=100% class='BottomRow'><tr>";
-    htmlArr[idx++] = "<td><div style='height:10px; width:80px; border:1px solid #c5c5c5;'><div";
-    htmlArr[idx++] = " class='";
-    htmlArr[idx++] = this.getColorForStatus(task.status);
-    htmlArr[idx++] = "' style='height:10px; width:"+ task.pComplete + "%;'></div></div></td>";
-    htmlArr[idx++] = "<td width=60 align=right><table><tr>";
+    htmlArr[idx++] = "<table width=100% class='BottomRow'><tr><td>";
+	if (task.pComplete) {
+		htmlArr[idx++] = "<div class='ZmTaskProgress'><div";
+		htmlArr[idx++] = " class='";
+		htmlArr[idx++] = this.getColorForStatus(task.status);
+		htmlArr[idx++] = "' style='width:"+ task.pComplete + "%;'></div></div>";
+	}
+    htmlArr[idx++] = "</td><td width=75 align=right><table><tr>";
 
     idx = this._getAbridgedCell(htmlArr, idx, task, ZmItem.F_TAG, colIdx, width);
     if(task.priority == ZmCalItem.PRIORITY_HIGH || task.priority == ZmCalItem.PRIORITY_LOW) {
@@ -748,7 +750,25 @@ function(ev) {
                 }
             } else{
                 var bContained = this._selectedItems.contains(div);
-                this._createItemHtml(task, {div:div, bContained:bContained});
+
+				var today = new Date();
+		        today.setHours(0,0,0,0);
+		        today = today.getTime();
+
+		        var dueDate = task.endDate;
+		        if (dueDate != null) {
+		            dueDate.setHours(0,0,0,0);
+		            dueDate = dueDate.getTime();
+		        }
+
+				var taskStatusClass = this._normalClass;
+				if (task.status == ZmCalendarApp.STATUS_COMP) {
+		           taskStatusClass += " ZmCompletedtask";
+		        } else if (dueDate != null && dueDate < today) {
+		           taskStatusClass += " ZmOverduetask";
+		        }
+
+                this._createItemHtml(task, {div:div, bContained:bContained, divClass:taskStatusClass});
                 this.associateItemWithElement(task, div);
                 if(this._controller.isReadingPaneOn()) {
                     task.message = null;

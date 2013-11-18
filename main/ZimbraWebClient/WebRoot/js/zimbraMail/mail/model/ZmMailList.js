@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -78,7 +78,7 @@ function(params) {
 		return ZmList.prototype.moveItems.apply(this, arguments);
 	}
 
-	params = Dwt.getParams(arguments, ["items", "folder", "attrs", "callback", "finalCallback", "noUndo", "actionText", "fromFolderId"]);
+	params = Dwt.getParams(arguments, ["items", "folder", "attrs", "callback", "finalCallback", "noUndo", "actionTextKey", "fromFolderId"]);
 	params.items = AjxUtil.toArray(params.items);
 
 	var params1 = AjxUtil.hashCopy(params);
@@ -92,9 +92,9 @@ function(params) {
 	params1.attrs.l = params.folder.id;
 	params1.action = (params.folder.id == ZmFolder.ID_TRASH) ? "trash" : "move";
     if (params1.folder.id == ZmFolder.ID_TRASH) {
-        params1.actionText = params.actionText || ZmMsg.actionTrash;
+        params1.actionTextKey = params.actionTextKey || "actionTrash";
     } else {
-        params1.actionText = params.actionText || ZmMsg.actionMove;
+        params1.actionTextKey = params.actionTextKey || "actionMove";
         params1.actionArg = params1.folder.getName(false, false, true);
     }
 	params1.callback = new AjxCallback(this, this._handleResponseMoveItems, [params]);
@@ -123,7 +123,8 @@ function(params) {
 	if (this._handleDeleteFromSharedFolder(params, params1)) {
 		return;
 	}
-	
+
+	params1.safeMove = true; //Move only items currently seen by the client
 	this._itemAction(params1);
 };
 
@@ -188,7 +189,7 @@ function(params) {
 	if (params.folder) {
 		params1.attrs.l = params.folder.id;
 	}
-	params1.actionText = params.markAsSpam ? ZmMsg.actionMarkAsJunk : ZmMsg.actionMarkAsNotJunk;
+	params1.actionTextKey = params.markAsSpam ? 'actionMarkAsJunk' : 'actionMarkAsNotJunk';
 
 	params1.callback = new AjxCallback(this, this._handleResponseSpamItems, params);
 	this._itemAction(params1);
@@ -236,7 +237,7 @@ function(params, result) {
 			list._notify(ZmEvent.E_MOVE, details);
 		}
 		if (params.actionText) {
-			summary = ZmList.getActionSummary(params.actionText, params.numItems, params.type, params.actionArg);
+			summary = ZmList.getActionSummary(params);
 		}
 
 		if (params.childWin) {
@@ -289,7 +290,7 @@ function(params) {
 			params.attrs = params.attrs || {};
 			params.attrs.tcon = ZmFolder.TCON_CODE[searchFolder.nId];
 			params.action = "delete";
-            params.actionText = ZmMsg.actionDelete;
+            params.actionTextKey = 'actionDelete';
 			params.callback = new AjxCallback(this, this._handleResponseDeleteItems, instantOn);
 			return this._itemAction(params);
 		}
@@ -354,7 +355,7 @@ function(params) {
 		params.items = items1;
 		params.op = "read";
 		if (items1.length > 1) {
-        	params.actionText = params.value ? ZmMsg.actionMarkRead : ZmMsg.actionMarkUnread;
+        	params.actionTextKey = params.value ? 'actionMarkRead' : 'actionMarkUnread';
 		}
 		this.flagItems(params);
 	}
@@ -403,7 +404,7 @@ function(params) {
 	if (items1.length) {
 		params.items = items1;
 		params.op = "mute";
-        params.actionText = params.value ? ZmMsg.actionMarkMute : ZmMsg.actionMarkUnmute;
+        params.actionTextKey = params.value ? 'actionMarkMute' : 'actionMarkUnmute';
 		this.flagItems(params);
 	}
     else if(params.forceCallback) {
@@ -664,10 +665,11 @@ function() {
  * 
  * @param {int}	offset	the starting point within list
  * @param {int}	limit		the ending point within list
+ * @param {foldersToOmit}	A hash of folders to omit
  * @return	{ZmMailMsg}		the message
  */
 ZmMailList.prototype.getFirstHit =
-function(offset, limit) {
+function(offset, limit, foldersToOmit) {
 	if (this.type != ZmItem.MSG) { return null; }
 
 	var msg = null;	
@@ -679,7 +681,7 @@ function(offset, limit) {
 		var end = (offset + limit > numMsgs) ? numMsgs : offset + limit;
 		var list = this.getArray();
 		for (var i = offset; i < end; i++) {
-			if (list[i].inHitList) {
+			if (!(foldersToOmit && list[i].folderId && foldersToOmit[list[i].folderId]) && list[i].inHitList) {
 				msg = list[i];
 				break;
 			}

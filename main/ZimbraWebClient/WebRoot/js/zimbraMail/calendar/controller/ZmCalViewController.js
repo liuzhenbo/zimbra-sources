@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -1801,16 +1801,12 @@ function(items, hardDelete, attrs, op) {
 	if ((this._viewMgr.getCurrentViewName() == ZmId.VIEW_CAL_LIST || isTrash) && items.length > 1) {
 		var divvied = this._divvyItems(items);
 
-		// data structure to keep track of which appts to delete and how
-		this._deleteList = {};
-		this._deleteList[ZmCalItem.MODE_DELETE] = divvied.normal;
-
 		// first attempt to deal with read-only appointments
 		if (divvied.readonly.length > 0) {
 			var dlg = appCtxt.getMsgDialog();
 			var callback = (divvied.recurring.length > 0)
-				? new AjxCallback(this, this._showTypeDialog, [divvied.recurring, ZmCalItem.MODE_DELETE])
-				: new AjxCallback(this, this._promptDeleteApptList);
+				? this._showTypeDialog.bind(this, [divvied.recurring, ZmCalItem.MODE_DELETE])
+				: null;
 			var listener = new AjxListener(this, this._handleReadonlyOk, [callback, dlg]);
 			dlg.setButtonListener(DwtDialog.OK_BUTTON, listener);
 			dlg.setMessage(ZmMsg.deleteReadonly);
@@ -1820,7 +1816,7 @@ function(items, hardDelete, attrs, op) {
 			this._showTypeDialog(divvied.recurring, ZmCalItem.MODE_DELETE);
 		}
 		else {
-			this._promptDeleteApptList();
+			this._promptDeleteApptList(divvied.normal);
 		}
 	}
 	else {
@@ -1846,36 +1842,34 @@ function(callback, dlg) {
 };
 
 ZmCalViewController.prototype._handleMultiDelete =
-function() {
+function(deleteList, mode) {
 	var batchCmd = new ZmBatchCommand(true, null, true);
 
 	// first, get details for each appointment
-	for (var j in this._deleteList) {
-		var list = this._deleteList[j];
-		for (var i = 0; i < list.length; i++) {
-			var appt = list[i];
-			var args = [j, null, null, null, null];
-			batchCmd.add(new AjxCallback(appt, appt.getDetails, args));
-		}
+	for (var i = 0; i < deleteList.length; i++) {
+		var appt = deleteList[i];
+		var args = [mode, null, null, null, null];
+		batchCmd.add(new AjxCallback(appt, appt.getDetails, args));
 	}
-	batchCmd.run(new AjxCallback(this, this._handleGetDetails));
+	batchCmd.run(this._handleGetDetails.bind(this, deleteList, mode));
 };
 
 ZmCalViewController.prototype._handleGetDetails =
-function() {
+function(deleteList, mode) {
 	var batchCmd = new ZmBatchCommand(true, null, true);
-	for (var j in this._deleteList) {
-		var list = this._deleteList[j];
-		for (var i = 0; i < list.length; i++) {
-			var appt = list[i];
-			var args = [j, null, null, null];
-			batchCmd.add(new AjxCallback(appt, appt.cancel, args));
-		}
+	for (var i = 0; i < deleteList.length; i++) {
+		var appt = deleteList[i];
+		var args = [mode, null, null, null];
+		batchCmd.add(new AjxCallback(appt, appt.cancel, args));
 	}
 	batchCmd.run();
-	var summary = ZmList.getActionSummary(ZmMsg.actionDelete, batchCmd.size(), ZmItem.APPT);
+	var summary = ZmList.getActionSummary({
+		actionTextKey:  'actionDelete',
+		numItems:       batchCmd.size(),
+		type:           ZmItem.APPT
+	});
 	appCtxt.setStatusMsg(summary);
-	appCtxt.notifyZimlets("onAppointmentDelete", [this._deleteList]);//notify Zimlets on delete 
+	appCtxt.notifyZimlets("onAppointmentDelete", deleteList);//notify Zimlets on delete
 };
 
 ZmCalViewController.prototype.getSelection =
@@ -1899,11 +1893,13 @@ function(items) {
 		var appt = items[i];
 		if (appt.type != ZmItem.APPT) { continue; }
 
-		if (appt.isReadOnly()) {
+		if (appt.isFolderReadOnly()) {
 			readonly.push(appt);
-		} else if (appt.isRecurring() && !appt.isException) { 
+		}
+		else if (appt.isRecurring() && !appt.isException) {
 			recurring.push(appt);
-		} else {
+		}
+		else {
 			normal.push(appt);
 		}
 
@@ -1919,16 +1915,15 @@ function(items) {
 };
 
 ZmCalViewController.prototype._promptDeleteApptList =
-function() {
-	if (this._deleteList[ZmCalItem.MODE_DELETE] &&
-		this._deleteList[ZmCalItem.MODE_DELETE].length > 0)
-	{
-        var calendar = this._deleteList[ZmCalItem.MODE_DELETE][0].getFolder();
-        var isTrash = calendar && calendar.nId==ZmOrganizer.ID_TRASH;
-        var msg = (isTrash) ? ZmMsg.confirmCancelApptListPermanently : ZmMsg.confirmCancelApptList;
-		var callback = new AjxCallback(this, this._handleMultiDelete);
-		appCtxt.getConfirmationDialog().popup(msg, callback);
+function(deleteList) {
+	if (deleteList.length === 0) {
+		return;
 	}
+	var calendar = deleteList[0].getFolder();
+	var isTrash = calendar && calendar.nId === ZmOrganizer.ID_TRASH;
+	var msg = (isTrash) ? ZmMsg.confirmCancelApptListPermanently : ZmMsg.confirmCancelApptList;
+	var callback = this._handleMultiDelete.bind(this, deleteList, ZmCalItem.MODE_DELETE);
+	appCtxt.getConfirmationDialog().popup(msg, callback);
 };
 
 ZmCalViewController.prototype._promptDeleteAppt =
@@ -2131,12 +2126,8 @@ ZmCalViewController.prototype._continueDelete =
 function(appt, mode) {
 	if (appt instanceof Array) {
 		// if list of appointments, de-dupe the same series appointments
-		if (mode == ZmCalItem.MODE_DELETE_SERIES) {
-			this._deleteList[ZmCalItem.MODE_DELETE_SERIES] = this._dedupeSeries(appt);
-		} else {
-			this._deleteList[ZmCalItem.MODE_DELETE_INSTANCE] = appt;
-		}
-		this._handleMultiDelete();
+		var deleteList = (mode === ZmCalItem.MODE_DELETE_SERIES) ? this._dedupeSeries(appt) : appt;
+		this._handleMultiDelete(deleteList, mode);
 	}
 	else {
 		var respCallback = new AjxCallback(this, this._handleResponseContinueDelete, appt);
@@ -2152,7 +2143,11 @@ function(appt) {
         currentView.close();
     }
 
-	var summary = ZmList.getActionSummary(ZmMsg.actionDelete, 1, ZmItem.APPT);
+	var summary = ZmList.getActionSummary({
+		actionTextKey:  'actionDelete',
+		numItems:       1,
+		type:           ZmItem.APPT
+	});
 	appCtxt.setStatusMsg(summary);
 	appCtxt.notifyZimlets("onAppointmentDelete", [appt]);//notify Zimlets on delete 
 };
@@ -3905,6 +3900,7 @@ function(work, forceMaintenance) {
 
 ZmCalViewController.prototype._maintenanceAction =
 function() {
+    if (!navigator.onLine) return;
 	var work = this._pendingWork;
 	this.searchInProgress = true;
 	this._pendingWork = ZmCalViewController.MAINT_NONE;

@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * @author Ed Spencer
  * @private
@@ -93,8 +77,11 @@ Ext.define('Ext.app.Route', {
             return Ext.applyIf(matches, {
                 controller: this.getController(),
                 action    : this.getAction(),
-                historyUrl: url,
-                args      : args
+                url       : url,
+                args      : args,
+
+                // We keep the historyUrl in here for backwards compatibility
+                historyUrl: url
             });
         }
     },
@@ -213,7 +200,7 @@ Ext.define('Ext.app.Route', {
 
         for (i = 0; i < length; i++) {
             cond    = this.getConditions()[paramsInMatchString[i]];
-            matcher = Ext.util.Format.format("({0})", cond || "[%a-zA-Z0-9\-\\_\\s,]+");
+            matcher = Ext.util.Format.format("({0})", cond || "[%a-zA-Z0-9\\-\\_\\s,]+");
 
             url = url.replace(new RegExp(paramsInMatchString[i]), matcher);
         }

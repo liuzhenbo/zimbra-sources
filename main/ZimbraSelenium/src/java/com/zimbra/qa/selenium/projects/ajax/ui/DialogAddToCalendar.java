@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -22,6 +20,7 @@ package com.zimbra.qa.selenium.projects.ajax.ui;
 import com.zimbra.qa.selenium.framework.items.FolderItem;
 import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.HarnessException;
+import com.zimbra.qa.selenium.framework.util.SleepUtil;
 
 public class DialogAddToCalendar extends AbsDialog {
 
@@ -37,6 +36,7 @@ public class DialogAddToCalendar extends AbsDialog {
 		// Buttons
 		public static final String zOkButton = "css=div[id='ChooseFolderDialog_buttons'] td[id^='OK_'] td[id$='_title']";
 		public static final String zCancelButton = "css=div[id='ChooseFolderDialog_buttons'] td[id^='Cancel_'] td[id$='_title']";
+		public static final String zNewButton = "css=div[id='ChooseFolderDialog_buttons'] td[id^='New_'] td[id$='_title']";
 	}
 	
 	
@@ -90,6 +90,10 @@ public class DialogAddToCalendar extends AbsDialog {
 		} else if ( button == Button.B_CANCEL ) {
 
 			locator = Locators.zCancelButton;
+		
+		} else if ( button == Button.B_NEW) {
+
+			locator = Locators.zNewButton;
 
 		} else {
 			throw new HarnessException("Button "+ button +" not implemented");
@@ -105,8 +109,9 @@ public class DialogAddToCalendar extends AbsDialog {
 			throw new HarnessException("Button "+ button +" locator "+ locator +" not present!");
 		}
 
-		this.zClick(locator);
-
+		this.sClickAt(locator, "");
+		SleepUtil.sleepMedium();
+		
 		this.zWaitForBusyOverlay();
 
 		return (page);
@@ -141,15 +146,12 @@ public class DialogAddToCalendar extends AbsDialog {
 
 	}
 	
-	public void zChooseCalendarFolder(FolderItem folder) throws HarnessException {
-		logger.info(myPageName() + " zClickTreeFolder("+ folder +")");
+	public void zChooseCalendarFolder(String folderID) throws HarnessException {
 		
-		if ( folder == null ) 
+		if ( folderID == null ) 
 			throw new HarnessException("folder must not be null");
 		
-		tracer.trace("Click on tree folder with name "+ folder.getName());
-
-		String locator = Locators.DialogDivLocatorCSS + " td[id='zti__ZmChooseFolderDialog_Calendar__"+ folder.getId() +"_textCell']";
+		String locator = Locators.DialogDivLocatorCSS + " td[id='zti__ZmChooseFolderDialog_Calendar__" + folderID + "_textCell']";
 		
 		if ( !this.sIsElementPresent(locator) )
 			throw new HarnessException("unable to find folder in tree "+ locator);

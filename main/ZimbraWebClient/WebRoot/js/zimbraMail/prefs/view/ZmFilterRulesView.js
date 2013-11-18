@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -265,7 +265,7 @@ function(ev) {
 	var button = DwtControl.getTargetControl(ev);
 	var sel = this.notActiveListView.getSelection();
 	if (sel && sel.length) {
-		this.transfer(sel, id);
+		this.transfer(sel);
 		var list = this.notActiveListView.getList();
 		if (list && list.size()) {
 			this._selectFirst(DwtChooserListView.SOURCE);

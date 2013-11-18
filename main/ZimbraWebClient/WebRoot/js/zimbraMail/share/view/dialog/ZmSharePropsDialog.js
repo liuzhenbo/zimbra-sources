@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -103,13 +103,15 @@ function(mode, object, share) {
 	var isGuestShare = share ? share.isGuest() : false;
 	var isPublicShare = share ? share.isPublic() : false;
 	var supportsPublic = object.supportsPublicAccess();
+	var externalEnabled = appCtxt.get(ZmSetting.SHARING_EXTERNAL_ENABLED);
+	var publicEnabled = appCtxt.get(ZmSetting.SHARING_PUBLIC_ENABLED);
 
 	this._userRadioEl.checked = isUserShare;
 	this._userRadioEl.disabled = !isNewShare;
 	this._guestRadioEl.checked = isGuestShare;
-	this._guestRadioEl.disabled = !isNewShare || !supportsPublic;
+	this._guestRadioEl.disabled = !(externalEnabled && isNewShare  && supportsPublic);
 	this._publicRadioEl.checked = isPublicShare;
-	this._publicRadioEl.disabled = !isNewShare || !supportsPublic || (object.type === ZmOrganizer.FOLDER);
+	this._publicRadioEl.disabled = !(publicEnabled && isNewShare && supportsPublic && (object.type !== ZmOrganizer.FOLDER));
 
 	var type = this._getType(isUserShare, isGuestShare, isPublicShare);
 	this._handleShareWith(type);

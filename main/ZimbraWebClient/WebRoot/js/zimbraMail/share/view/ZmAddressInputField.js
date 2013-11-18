@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -576,6 +576,8 @@ function(params) {
 	this._inputId = params.inputId || Dwt.getNextId();
 	this._dragInsertionBarId = Dwt.getNextId();
 	var data = {
+		inputTagName:		AjxEnv.isIE || AjxEnv.isModernIE ?
+								'textarea' : 'input',
 		holderId:			this._holderId,
 		inputId:			this._inputId,
 		dragInsertionBarId:	this._dragInsertionBarId
@@ -653,14 +655,13 @@ function() {
 ZmAddressInputField.prototype._setInputValue =
 function(value) {
 	DBG.println("aif", "SET input value to: " + AjxStringUtil.htmlEncode(value));
-	this._input.value = value;
+	this._input.value = value && value.replace(/\s+/g, ' ');
 	this._resizeInput();
 };
 
 // Handles key events that occur in the INPUT.
 ZmAddressInputField.prototype._keyDownCallback =
 function(ev, aclv) {
-
 	ev = DwtUiEvent.getEvent(ev);
 	var key = DwtKeyEvent.getCharCode(ev);
 	var propagate;
@@ -763,7 +764,7 @@ function(ev) {
 		actionMenu.getOp(ZmOperation.CONTACT).setVisible(false);
 		actionMenu.getOp(ZmOperation.EXPAND).setVisible(false);
 
-		this._setContactText(false);
+		this._setContactText(null);
 		menu.popup(0, ev.docX, ev.docY);
 	}
 
@@ -835,7 +836,15 @@ function() {
 		//not sure this is %100 good, since isExpandableDL returns false also if EXPAND_DL_ENABLED setting is false.
 		//but I tried to do this in _setContactText by passing in the contact we get (using getContactByEmail) - but that contact somehow doesn't
 		//have isGal set or type "group" (the type is "contact"), thus isDistributionList returns null. Not sure what this inconsistency comes from.
-		menu.enable(ZmOperation.CONTACT, !isExpandableDl);
+
+		//so this is messy and I just try to do the best with information - see the comment above - so I use isExpandableDl as indication of DL (sometimes it's false despite it being an expandable DL)
+		//and I also use isDL as another way to try to know if it's a DL (by trying to find the contact from the contactsApp cache - sometimes it's there, sometimes not (it's there
+		//after you go to the DL folder).
+		var contactsApp = appCtxt.getApp(ZmApp.CONTACTS);
+		var contact = contactsApp && contactsApp.getContactByEmail(email);
+		var isDL = contact && contact.isDistributionList();
+		var canEdit = !(isDL || isExpandableDl) || (contact && contact.dlInfo && contact.dlInfo.isOwner);
+		menu.enable(ZmOperation.CONTACT, canEdit);
 
 	}
 
@@ -862,16 +871,13 @@ function() {
 ZmAddressInputField.prototype._handleResponseGetContact =
 function(ev, contact) {
 	ZmAddressInputField.menuContext.contact = contact;
-	this._setContactText(contact != null);
+	this._setContactText(contact);
 	this.getActionMenu().popup(0, ev.docX, ev.docY);
 };
 
 ZmAddressInputField.prototype._setContactText =
-function(isContact) {
-	var actionMenu = this.getActionMenu();
-	var newOp = isContact ? ZmOperation.EDIT_CONTACT : ZmOperation.NEW_CONTACT;
-	var newText = isContact ? null : ZmMsg.AB_ADD_CONTACT;
-	ZmOperation.setOperation(actionMenu, ZmOperation.CONTACT, newOp, newText);
+function(contact) {
+	ZmListController.setContactTextOnMenus(contact, this.getActionMenu());
 };
 
 ZmAddressInputField.prototype._deleteListener =
@@ -928,7 +934,7 @@ function() {
 	var contact = ZmAddressInputField.menuContext.contact;
 	if (contact) {
 		if (contact.isLoaded) {
-			ctlr.show(contact, true);
+			ctlr.show(contact);
 		} else {
 			var callback = this._loadContactCallback.bind(this);
 			contact.load(callback);
@@ -1065,7 +1071,11 @@ function(restore) {
 ZmAddressInputField.prototype._resizeInput =
 function() {
 	var val = AjxStringUtil.htmlEncode(this._input.value);
-	var holderWidth = Dwt.getSize(this._holder).x;
+	var paddings = Dwt.getMargins(this._holder);
+	var margins = Dwt.getMargins(this._input);
+	var maxWidth = Dwt.getSize(this._holder).x - (this._input.offsetLeft + ((AjxEnv.isTrident) ? (margins.left + paddings.left) : 0) + paddings.right + margins.right + 1);
+	maxWidth = Math.max(maxWidth, 3); //don't get too small - minimum 3 - if it gets negative, the cursor would not show up before starting to type (bug 84924)
+
 	var inputFontSize = DwtCssStyle.getProperty(this._input, "font-size");
 	var strW = AjxStringUtil.getWidth(val, false, inputFontSize);
 	if (AjxEnv.isWindows && (AjxEnv.isFirefox || AjxEnv.isSafari || AjxEnv.isChrome) ){
@@ -1073,7 +1083,7 @@ function() {
 		strW = strW * 1.2;
 	}
 	var pad = this._editMode ? ZmAddressInputField.INPUT_EXTRA_SMALL : ZmAddressInputField.INPUT_EXTRA;
-	var inputWidth = Math.min(strW, holderWidth) + pad;
+	var inputWidth = Math.min(strW + pad, maxWidth);
 	if (this._editMode) {
 		inputWidth = Math.max(inputWidth, ZmAddressInputField.INPUT_EXTRA);
 	}

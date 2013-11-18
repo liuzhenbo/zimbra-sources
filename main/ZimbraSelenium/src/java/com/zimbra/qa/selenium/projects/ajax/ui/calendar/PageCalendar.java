@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.ui.calendar;
@@ -24,10 +22,12 @@ import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.*;
 import com.zimbra.qa.selenium.framework.util.staf.Stafpostqueue;
 import com.zimbra.qa.selenium.projects.ajax.ui.*;
+import com.zimbra.qa.selenium.projects.ajax.ui.calendar.DialogOpenRecurringItem.Confirmation;
 import com.zimbra.qa.selenium.projects.ajax.ui.mail.DialogCreateFolder;
 import com.zimbra.qa.selenium.projects.ajax.ui.mail.FormMailNew;
 import com.zimbra.qa.selenium.projects.ajax.ui.DialogWarning;
 
+@SuppressWarnings("unused")
 public class PageCalendar extends AbsTab {
 
 	public static class Locators {
@@ -68,7 +68,7 @@ public class PageCalendar extends AbsTab {
 		public static final String ForwardMenu = "css=div[id='zm__Calendar'] tr[id='POPUP_FORWARD_APPT']";
 		public static final String DeleteMenu = "css=div[id='zm__Calendar'] tr[id='POPUP_DELETE']";
 		public static final String CancelMenu = "css=div#zm__Calendar div#DELETE td[id$='_title']";
-		public static final String MoveMenu = "css=div[id='zm__Calendar'] tr[id='POPUP_MOVE']";
+		public static final String MoveMenu = "css=div[id^='zm__Calendar__'] td[id^='MOVE__DWT'][id$='_title']";
 		public static final String TagAppointmentMenu = "css=div[id='zm__Calendar'] tr[id='POPUP_TAG_MENU']";
 		public static final String TagAppointmentNewTagSubMenu = "id=calendar_newtag_title";
 		public static final String TagAppointmentRemoveTagSubMenu = "css=div[id^='TAG_MENU'] div[id^='calendar_removetag'] td[id^='calendar_removetag'][class='ZWidgetTitle']";
@@ -78,11 +78,16 @@ public class PageCalendar extends AbsTab {
 		
 		public static final String InstanceMenu = "id=VIEW_APPT_INSTANCE_title";
 		public static final String SeriesMenu = "id=VIEW_APPT_SERIES_title";
+		
 		public static final String OpenInstanceMenu = "id=OPEN_APPT_INSTANCE_title";
-		public static final String ForwardInstanceMenu = "id=FORWARD_APPT_INSTANCE_title";
-		public static final String DeleteInstanceMenu = "id=DELETE_INSTANCE_title";
 		public static final String OpenSeriesMenu = "id=OPEN_APPT_SERIES_title";
+		
+		public static final String AcceptRecurringMenu = "css=div[id^='zm__Calendar__DWT'] td[id^='REPLY_ACCEPT'][id$='title']";
+		public static final String DeclineRecurringMenu = "css=div[id^='zm__Calendar__DWT'] td[id^='REPLY_DECLINE'][id$='title']";
+		public static final String CreateACopyRecurringMenu = "css=div[id^='zm__Calendar__DWT'] td[id^='DUPLICATE_APPT'][id$='title']";
+		public static final String ForwardInstanceMenu = "id=FORWARD_APPT_INSTANCE_title";
 		public static final String ForwardSeriesMenu = "id=FORWARD_APPT_SERIES_title";
+		public static final String DeleteInstanceMenu = "id=DELETE_INSTANCE_title";
 		public static final String DeleteSeriesMenu = "id=DELETE_SERIES_title";
 		
 		public static final String NewAppointmentMenu = "id=NEW_APPT_title";
@@ -120,7 +125,7 @@ public class PageCalendar extends AbsTab {
 		public static final String ProposeNewTimeMenu_ViewAppt = "css=div[id^='zm__APPTRO'] td[id^='PROPOSE_NEW_TIME_title']";
 		public static final String DeleteMenu_ViewAppt = "css=div[id^='zm__APPTRO'] td[id^='DELETE_title']";
 		public static final String ShowOriginalMenu_ViewAppt = "css=div[id^='zm__APPTRO'] td[id^='SHOW_ORIG'][id$='_title']";
-
+		
 		// Radio buttons
 		public static final String OpenThisInstanceRadioButton = "css=td input[id*='_defaultRadio']";
 		public static final String OpenTheSeriesRadioButton = "css=td input[id$='_openSeries']";
@@ -153,6 +158,7 @@ public class PageCalendar extends AbsTab {
 		public static final String DialogDivCss = "css=div[id='CNF_DEL_YESNO']";
 		
 		public static final String NextWeek = "css= td[id='zb__CAL__Nav__PAGE_FORWARD_left_icon']";
+		public static final String NextMonth = "css= td[id='zb__CAL__Nav__PAGE_FORWARD_left_icon']";
 		public static final String TodayButton = "css=td[id='zb__CLD__TODAY_title']";
 		public static final String TodayHighlighted = "css=div[class='calendar_heading_day_today']";
 		public static final String TodaySelelcted = "css=div[class='calendar_heading_day_today-selected']";	
@@ -166,13 +172,27 @@ public class PageCalendar extends AbsTab {
 		public static final String NextPage = "css=div[id='zb__CAL__Nav__PAGE_FORWARD'] div[class='ImgRightArrow']";
 		public static final String PreviousPage = "css=div[id='zb__CAL__Nav__PAGE_BACK'] div[class='ImgLeftArrow']";
 		public static final String ImgPrivateAppt = "css= div[class='ImgReadOnly']";
-		                                          
+		
+		public static final String LocationFirstSearchResult = "css= div[class='DwtChooserListView'] div[class='DwtListView-Rows'] div";
+		
+		public static final String DayViewOnFBLink = "css=td[class='TbTop'] td[id='caltb'] a[id='CAL_DAY']";
+		public static final String WorkWeekViewOnFBLink = "css=td[class='TbTop'] td[id='caltb'] a[id='CAL_WORK']";
+		public static final String WeekViewOnFBLink = "css=td[class='TbTop'] td[id='caltb'] a[id='CAL_WEEK']";
+		public static final String MonthViewOnFBLink = "css=td[class='TbTop'] td[id='caltb'] a[id='CAL_MONTH']";
+		public static final String TodayViewOnFBLink = "css=td[class='TbTop'] td[id='caltb'] a[id='CAL_TODAY']";
+
+
 	}
 
 	public PageCalendar(AbsApplication application) {
 		super(application);
 
 		logger.info("new " + PageCalendar.class.getCanonicalName());
+	}
+	
+	public String zGetMoveLocator(String folderName) throws HarnessException {
+		return Locators.MoveFolderOption +  folderName + "')";
+		
 	}
 
 	private String getLocatorBySubject(String subject) throws HarnessException {
@@ -287,9 +307,8 @@ public class PageCalendar extends AbsTab {
 	}
 	
 	public int zGetApptCountMonthView(String apptSubject) throws HarnessException {
-		return sGetCssCount("css=span[id^='zli__CLM__']:contains('" + apptSubject + "')");
+		return sGetCssCount("css=td[class='calendar_month_day_item']");
 	}
-	
 	public String zGetReadOnlyApptLocator(String apptSubject) throws HarnessException {
 		return "css=td.appt_new_name:contains('" + apptSubject + "')";
 	}
@@ -586,8 +605,17 @@ public class PageCalendar extends AbsTab {
 			
 			this.sDoubleClick(locator);
 			this.zWaitForBusyOverlay();
+			
 			page = new FormApptNew(this.MyApplication);
-
+			if ( page.zIsActive() ) {
+				return (page);
+			}
+			
+			page = new DialogOpenRecurringItem(Confirmation.OPENRECURRINGITEM, MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
+			if ( page.zIsActive() ) {
+				return (page);
+			}
+			
 			SleepUtil.sleepMedium();
 
 			// FALL THROUGH
@@ -1003,7 +1031,7 @@ public class PageCalendar extends AbsTab {
 						com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints.viewer.viewappt.VerifyDisabledUI.organizerTest == false ||
 						com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.singleday.create.CreateMeetingWithDL.organizerTest == false) {
 					page = null;
-				} else {	
+				} else {
 					page = new FormApptNew(this.MyApplication);
 				}
 				
@@ -1188,7 +1216,7 @@ public class PageCalendar extends AbsTab {
 				page = null;
 				waitForPostfix = true;
 			
-			} else if ( (action == Action.A_RIGHTCLICK) && (option == Button.B_MOVE) ) {
+			} else if ( option == Button.B_MOVE ) {
 				
 				// Use default actionLocator
 				optionLocator = "css=td[id='MOVE_title']";
@@ -1199,23 +1227,9 @@ public class PageCalendar extends AbsTab {
 
 				// FALL THROUGH
 
-			}else if ( (action == Action.A_RIGHTCLICK) && (option == Button.B_CREATE_COPY) ) {
-				
-				// Use default actionLocator
-				optionLocator = "css=td[id='DUPLICATE_APPT_title']";
-				
-				 page = new FormApptNew(this.MyApplication);
-
-				this.zClickAt(optionLocator,"");
-
-				// FALL THROUGH
-
-			}else if ( option == Button.O_SHOW_ORIGINAL_MENU ) {
+			} else if ( option == Button.O_SHOW_ORIGINAL_MENU ) {
 				
 				optionLocator = Locators.ShowOriginalMenu;
-				page = new SeparateWindow(this.MyApplication);
-				
-				//optionLocator= Locators.zShowOrigTaskMenuItem;
 				
 				page = new SeparateWindow(this.MyApplication);
 				((SeparateWindow)page).zInitializeWindowNames();
@@ -1226,7 +1240,7 @@ public class PageCalendar extends AbsTab {
 				
 				//throw new HarnessException("implement action:"+ action +" option:"+ option);
 
-			}else if ( option == Button.O_CREATE_A_COPY_MENU) {
+			} else if ( option == Button.O_CREATE_A_COPY_MENU) {
 				
 				optionLocator = Locators.CreateACopyMenu;
 				
@@ -1244,6 +1258,14 @@ public class PageCalendar extends AbsTab {
 				}
 				
 				waitForPostfix = false;
+				
+			}else if ( option == Button.O_OPEN) {
+				
+				optionLocator = Locators.OpenMenu;
+				this.zClickAt(optionLocator, "");
+				SleepUtil.sleepMedium();
+			    page = new FormApptNew(this.MyApplication);
+				return page;
 				
 			} else {
 
@@ -1452,20 +1474,83 @@ public class PageCalendar extends AbsTab {
 		AbsPage page = null;
 		String optionLocator = null;
 		String subOptionLocator = null;
+		String itemsLocator = null;
+		
+		if ( this.zIsVisiblePerPosition(Locators.CalendarViewListCSS, 0, 0) ) {
+			itemsLocator = Locators.CalendarViewListCSS;									// LIST
+		} else if ( this.zIsVisiblePerPosition(Locators.CalendarViewDayCSS, 0, 0) ) {
+			itemsLocator = Locators.CalendarViewDayItemCSS;									// DAY
+		} else if ( this.zIsVisiblePerPosition(Locators.CalendarViewWorkWeekCSS, 0, 0) ) {
+			itemsLocator = Locators.CalendarViewWorkWeekItemCSS;							// WORKWEEK
+		} else if ( this.zIsVisiblePerPosition(Locators.CalendarViewWeekCSS, 0, 0) ) {
+			itemsLocator = Locators.CalendarViewWeekItemCSS;								// WEEK
+		} else if ( this.zIsVisiblePerPosition(Locators.CalendarViewMonthCSS, 0, 0) ) {
+			itemsLocator = Locators.CalendarViewMonthCSS;									// MONTH
+		} else {
+			throw new HarnessException("Unknown calendar view");
+		}
+				
+		if ( this.sIsElementPresent(itemsLocator +" td.appt_name:contains('"+ subject +"')")) {
+			
+			// Single occurrence locator
+			locator = itemsLocator +" td.appt_name:contains('"+ subject +"')";
 
-		locator = "css=td.appt_name:contains('" + subject + "')";
-		locator = this.getLocatorBySubject(subject);
+		} else if ( this.sIsElementPresent(itemsLocator +" td[class$='appt_new_name']:contains('"+ subject +"')")) {
+			
+			// Recurring appointment locator (might point to any visible instance)
+			locator = itemsLocator +" td[class$='appt_new_name']:contains('"+ subject +"')";
+			
+		} else if ( this.sIsElementPresent(itemsLocator +" td.appt_allday_name>div:contains('"+ subject +"')")) {
+			
+			// All day single occurrence locator
+			locator = itemsLocator +" td.appt_allday_name>div:contains('"+ subject +"')";
+		
+		} else if ( this.sIsElementPresent(itemsLocator +" td[id$='_responseActionSelectCell'] td[id$='_select_container']")) {
+			
+			// Read-only appointment locator
+			locator = itemsLocator +" td[id$='_responseActionSelectCell'] td[id$='_select_container']";
+			
+		}
 		
 		if (action == Action.A_RIGHTCLICK) {
 			
-			if (option == Button.O_SERIES_MENU) {
+			if ( subOption == Button.O_ACCEPT_MENU ) {
+				subOptionLocator = Locators.AcceptRecurringMenu;
+			
+			} else if ( subOption == Button.O_DECLINE_MENU ) {
+				subOptionLocator = Locators.DeclineRecurringMenu;
 				
-				optionLocator = "css=div#VIEW_APPT_SERIES td[id$='_title']";
+			}
+			
+			if (option == Button.O_SERIES_MENU) {
+				optionLocator = Locators.SeriesMenu;
+				
+				if ( subOption == Button.O_FORWARD_MENU ) {
+					subOptionLocator = Locators.ForwardSeriesMenu;
+				
+				} else if ( subOption == Button.O_DELETE_MENU ) {
+					subOptionLocator = Locators.DeleteSeriesMenu;
+				
+				} else if ( subOption == Button.O_CREATE_A_COPY_MENU) {
+					subOptionLocator = Locators.CreateACopyRecurringMenu;
+				
+				} else if ( subOption == Button.O_MOVE_MENU) {
+					subOptionLocator = Locators.MoveMenu;
+					
+				}
 				
 			} else if (option == Button.O_INSTANCE_MENU) {
+				optionLocator = Locators.InstanceMenu;
 				
-				optionLocator = "css=div#VIEW_APPT_INSTANCE td[id$='_title']";
+				if ( subOption == Button.O_FORWARD_MENU ) {
+					subOptionLocator = Locators.ForwardInstanceMenu;
 				
+				} else if ( subOption == Button.O_DELETE_MENU ) {
+					subOptionLocator = Locators.DeleteInstanceMenu;
+				
+				} else if ( subOption == Button.O_CREATE_A_COPY_MENU) {
+					subOptionLocator = Locators.CreateACopyRecurringMenu;
+				}
 			}
 
 			this.zRightClickAt(locator, "");
@@ -1474,34 +1559,7 @@ public class PageCalendar extends AbsTab {
 			this.sFocus(optionLocator);
 			this.sMouseOver(optionLocator);
 			this.zWaitForBusyOverlay();
-			
-			// Very complicated popups at this point
-			// Instance and Series will have id='zm__Calendar__DWTXYZ' format.
-			// Determine which is visible
-//			String popupCSS = null;
-//			int count = this.sGetCssCount("css=div[id^='zm__Calendar']");
-//			if ( count < 1 ) {
-//				throw new HarnessException("No popup ever opened!");
-//			}
-//			if (count == 1) {
-//				popupCSS = "css=div[id^='zm__Calendar']";
-//			} else {
-//				for (int i = 1; i <= count; i ++) {
-//					String l = "css=div[id^='zm__Calendar']:nth-child("+ i +")";
-//					if ( this.sIsElementPresent(l) && this.zIsVisiblePerPosition(l, 0, 0) ) {
-//						popupCSS = l;
-//						break;
-//					}
-//				}
-//			}
-//			if ( popupCSS == null ) {
-//				throw new HarnessException("No popup ever opened!");
-//			}
-			
-			if ( subOption == Button.O_DELETE ) {
-				subOptionLocator = "css=td#DELETE_SERIES_title";
-			}
-
+						
 			if ( subOptionLocator == null ) {
 				throw new HarnessException("implement action:"+ action +" option:"+ option +" suboption:" + subOption);
 			}
@@ -1513,7 +1571,6 @@ public class PageCalendar extends AbsTab {
 			// a small delay to make sure the dialog shows up
 			// before the zIsActive() method is called
 			SleepUtil.sleepMedium();
-
 
 			// If the organizer deletes an appointment, you get "Send Cancellation" dialog
 			page = new DialogConfirmDeleteOrganizer(MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
@@ -1534,6 +1591,16 @@ public class PageCalendar extends AbsTab {
 			}
 			
 			page = new DialogConfirmDeleteRecurringAppointment(MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
+			if ( page.zIsActive() ) {
+				return (page);
+			}
+			
+			page = new DialogInformational(DialogInformational.DialogWarningID.InformationalDialog, MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
+			if ( page.zIsActive() ) {
+				return (page);
+			}
+			
+			page = new DialogMove(MyApplication, ((AppAjaxClient) MyApplication).zPageCalendar);
 			if ( page.zIsActive() ) {
 				return (page);
 			}
@@ -1750,6 +1817,11 @@ public class PageCalendar extends AbsTab {
 		} else if (button == Button.B_NEXT_WEEK) {
 	
 			locator = Locators.NextWeek;
+			page = null;
+			
+		} else if (button == Button.B_NEXT_MONTH) {
+	
+			locator = Locators.NextMonth;
 			page = null;
 			
 		} else if (button == Button.O_GO_TO_TODAY_MENU) {
@@ -2587,16 +2659,20 @@ public class PageCalendar extends AbsTab {
 	}
 	
 	public void zWaitForElementAppear(String locator) throws HarnessException {
-		for (int i=0; i<=30; i++) {
-			boolean isElementPresent = this.sIsElementPresent(locator);
+		boolean isElementPresent = false;
+		for (int i=0; i<=50; i++) {
+			isElementPresent = this.sIsElementPresent(locator);
 			if (isElementPresent == false) {
 				SleepUtil.sleepMedium();
 				if (locator == Locators.NewTagMenu_ViewAppt) {
 					this.zClickAt(Locators.TagButton_ViewAppt, "");
 				}
-			} else {
+			} else if (isElementPresent == true) {
 				return;
 			}	
+		}
+		if (isElementPresent == false) {
+			throw new HarnessException("Element not found");
 		}
 	}
 	

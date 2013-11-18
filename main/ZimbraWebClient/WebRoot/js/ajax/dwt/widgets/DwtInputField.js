@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -49,8 +49,6 @@
  *
  * @extends		DwtComposite
  * 
- * TODO: Use HTML5 feature of placeholder text for inputs (not supported by IE):
- * http://www.whatwg.org/specs/web-apps/current-work/multipage/common-input-element-attributes.html#the-placeholder-attribute
  */
 DwtInputField = function(params) {
 
@@ -267,6 +265,31 @@ DwtInputField.prototype.setInputType = function(type) {
 }
 
 /**
+ * Applies a regular expression to the contents of this input field, retaining
+ * selection and carent location if supported by the browser.
+ *
+ * @param	{RegExp}	regex		the regular expression to search for
+ * @param	{String}	replacement	the replacement string
+ */
+DwtInputField.prototype.applySubstitution = function(regex, replacement) {
+	if (!this._inputField.setRangeText) {
+		// IE8 doesn't support setRangeText() - so we replace the value
+		// directly. This moves the caret, if any, to the end of the text.
+		this.setValue(this.getValue().replace(regex, replacement));
+	} else {
+		var match;
+
+		while ((match = regex.exec(this.getValue()))) {
+			this._inputField.setRangeText(replacement, match.index,
+		    	                          match.index + match[0].length);
+
+			if (!regex.global)
+				return;
+		}
+	}
+};
+
+/**
 * Sets the validator function. This function is executed during validation.
 *
 * @param {Object}	obj 		if present, the validator function is executed within
@@ -373,15 +396,21 @@ function() {
  */
 DwtInputField.prototype.setHint =
 function(hint) {
-	var oldHint = this._hint;
 	this._hint = hint;
+	var inputElement = this.getInputElement();
+	if (AjxEnv.supportsPlaceholder) {
+		inputElement.placeholder = hint || "";
+		return;
+	}
+
 	if (this._hintIsVisible) {
-		this.getInputElement().value = hint;
+		inputElement.value = hint;
 		if (!hint) {
 			this._hintIsVisible = false;
 			this._updateClassName();
 		}
-	} else if (this._inputField.value == '') {
+	}
+	else if (inputElement.value === '') {
 		this._showHint();
 	}
 };
@@ -524,6 +553,16 @@ function() {
 		else
 			throw ex;
 	}
+};
+
+/**
+ * Checks the validity of the input field value; returns the error message, if any.
+ */
+DwtInputField.prototype.getValidationError =
+function() {
+	this.validate();
+
+	return this._validationError;
 };
 
 /**
@@ -749,16 +788,18 @@ function(ev) {
 
 DwtInputField.prototype._hideHint = 
 function(value) {
-	var element = this.getInputElement();
-	element.value = value;
-	element.title = this._hint || "";
-	this._hintIsVisible = false;
-	this._updateClassName();
+	if (!AjxEnv.supportsPlaceholder) {
+		var element = this.getInputElement();
+		element.value = value;
+		element.title = this._hint || "";
+		this._hintIsVisible = false;
+		this._updateClassName();
+	}
 };
 
 DwtInputField.prototype._showHint = 
 function() {
-	if (this._hint) {
+	if (!AjxEnv.supportsPlaceholder && this._hint) {
 		var element = this.getInputElement();
 		if (!element.value) {
 			this._hintIsVisible = true;
@@ -792,7 +833,7 @@ DwtInputField.prototype._validateInput =
 function(value) {
 	var isValid = true;
 	var retVal;
-	var errorStr;
+	this._validationError = null;
 
 	if (!this.getEnabled()) {
 		retVal = this.getValue();
@@ -803,21 +844,21 @@ function(value) {
 					? this._validator.call(this._validatorObj, value, this)
 					: this._validator(value);
 			} else if (!this._validator.test(value)) {
-				errorStr = this._errorString;
+				this._validationError = this._errorString;
 			}
 		} catch(ex) {
 			if (typeof ex == "string")
-				errorStr = ex;
+				this._validationError = ex;
 			else
 				throw ex;
 		}
 	}
 	
-	if (errorStr) {
+	if (this._validationError) {
 		this._hasError = true;
 		if (this._errorIconTd)
 			this._errorIconTd.innerHTML = DwtInputField._ERROR_ICON_HTML;
-		this.setToolTipContent(errorStr);
+		this.setToolTipContent(this._validationError);
 		isValid = false;
 		retVal = null;
 	} else {
@@ -885,17 +926,8 @@ function(params) {
 	// create new input field
 	var ninput;
 	var type = this._type != DwtInputField.PASSWORD ? "text" : "password";
-	if (AjxEnv.isIE) {
-		try {
-			var ninput = document.createElement(["<INPUT type='",type,"'>"].join(""));
-		} catch(e) {
-			ninput = document.createElement("INPUT");
-			ninput.type = type;
-		}
-	} else {
-		ninput = document.createElement("INPUT");
-		ninput.type = type;
-	}
+	ninput = document.createElement("INPUT");
+	ninput.type = type;
 	this._inputField = ninput;
 
 	// set common values
@@ -914,6 +946,10 @@ function(params) {
     if (params && params.inputId) {
         ninput.id = params.inputId;
     }
+
+	if (AjxEnv.supportsPlaceholder && this._hint) {
+		ninput.placeholder = this._hint;
+	}
 
 	// add event handlers
 	ninput.onkeyup = DwtInputField._keyUpHdlr;

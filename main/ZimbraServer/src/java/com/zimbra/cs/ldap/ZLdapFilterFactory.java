@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -69,6 +69,7 @@ public abstract class ZLdapFilterFactory extends ZLdapElement {
         ALL_NON_SYSTEM_ARCHIVING_ACCOUNTS(SINGLETON.allNonSystemArchivingAccounts()),
         ALL_NON_SYSTEM_INTERNAL_ACCOUNTS(SINGLETON.allNonSystemInternalAccounts()),
         ALL_SERVERS(SINGLETON.allServers()),
+        ALL_ALWAYSONCLUSTERS(SINGLETON.allAlwaysOnClusters()),
         ALL_UC_SERVICES(SINGLETON.allUCServices()),
         ALL_SIGNATURES(SINGLETON.allSignatures()),
         ALL_XMPP_COMPONENTS(SINGLETON.allXMPPComponents()),
@@ -123,6 +124,9 @@ public abstract class ZLdapFilterFactory extends ZLdapElement {
 
         SERVER_BY_ID(SINGLETON.serverById("{SERVER-ID}")),
         SERVER_BY_SERVICE(SINGLETON.serverByService("{SERVICE}")),
+        SERVER_BY_ALWAYSONCLUSTER(SINGLETON.serverByAlwaysOnCluster("{ALWAYSONCLUSTER-ID}")),
+        SERVERY_BY_SERVICE_AND_ALWAYSONCLUSTER(SINGLETON.serverByServiceAndAlwaysOnCluster("{SERVICE}", "{ALWAYSONCLUSTER-ID}")),
+        ALWAYSONCLUSTER_BY_ID(SINGLETON.alwaysOnClusterById("{ALWAYSONCLUSTER-ID}")),
         UC_SERVICE_BY_ID(SINGLETON.ucServiceById("{SERVER-ID}")),
         SHARE_LOCATOR_BY_ID(SINGLETON.shareLocatorById("{SHARE-LOCATOR-ID}")),
         SIGNATURE_BY_ID(SINGLETON.signatureById("{SIGNATURE-ID}")),
@@ -168,7 +172,7 @@ public abstract class ZLdapFilterFactory extends ZLdapElement {
 
         TODO("TODO");
 
-        private String template;
+        private final String template;
 
         private FilterId(ZLdapFilter template) {
             this(template.toFilterString());
@@ -426,6 +430,14 @@ public abstract class ZLdapFilterFactory extends ZLdapElement {
     public abstract ZLdapFilter allServers();
     public abstract ZLdapFilter serverById(String id);
     public abstract ZLdapFilter serverByService(String service);
+    public abstract ZLdapFilter serverByAlwaysOnCluster(String clusterId);
+    public abstract ZLdapFilter serverByServiceAndAlwaysOnCluster(String service, String clusterId);
+
+    /*
+     * alwaysOnCluster
+     */
+    public abstract ZLdapFilter allAlwaysOnClusters();
+    public abstract ZLdapFilter alwaysOnClusterById(String id);
 
     /*
      * UC service

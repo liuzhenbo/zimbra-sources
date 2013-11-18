@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -58,6 +58,8 @@ ZmGroupView = function(parent, controller) {
 
 ZmGroupView.prototype = new DwtComposite;
 ZmGroupView.prototype.constructor = ZmGroupView;
+ZmGroupView.prototype.isZmGroupView = true;
+
 
 /**
  * Returns a string representation of the object.
@@ -140,7 +142,7 @@ function(contact, isDirty) {
 		this._contact.removeChangeListener(this._changeListener);
 	}
 	contact.addChangeListener(this._changeListener);
-	this._contact = contact;
+	this._contact = this._item = contact;
 
 	if (!this._htmlInitialized) {
 		this._createHtml();
@@ -288,12 +290,15 @@ function() {
 ZmGroupView.prototype._getGroupName =
 function() {
 	if (this.isDistributionList()) {
-		var username = this._usernameEditable 
-				? AjxStringUtil.trim(this._groupNameInput.getValue())
-				: this._emailUsername;
+		var username = this._getDlAddressLocalPart();
 		return username + "@" + this._getGroupDomainName();
 	}
 	return AjxStringUtil.trim(this._groupNameInput.getValue());
+};
+
+ZmGroupView.prototype._getDlAddressLocalPart =
+function() {
+	return this._usernameEditable ? AjxStringUtil.trim(this._groupNameInput.getValue()) : this._emailUsername;
 };
 
 ZmGroupView.prototype._getDlDisplayName =
@@ -385,8 +390,8 @@ function() {
 	if (!this._usernameEditable) {
 		return true; //to be on the safe and clear side. no need to check.
 	}
-	var groupName = this._getGroupName();
-	return AjxEmailAddress.isValid(groupName);
+	var account = this._getDlAddressLocalPart();
+	return AjxEmailAddress.accountPat.test(account);
 };
 
 ZmGroupView.prototype.isValidDlDomainName =
@@ -707,9 +712,9 @@ function() {
 
 ZmGroupView.prototype._addWidgets =
 function() {
-	this._groupNameInput = new DwtInputField({parent:this, size: this.isDistributionList() ? 20: 40, inputId: this._htmlElId + "_groupName"});
-	this._groupNameInput.setHint(this.isDistributionList() ? ZmMsg.distributionList : ZmMsg.groupNameLabel);
-	if (document.getElementById(this._htmlElId + "_groupNameParent")) {
+	if (!this.isDistributionList() || this._usernameEditable) {
+		this._groupNameInput = new DwtInputField({parent:this, size: this.isDistributionList() ? 20: 40, inputId: this._htmlElId + "_groupName"});
+		this._groupNameInput.setHint(this.isDistributionList() ? ZmMsg.distributionList : ZmMsg.groupNameLabel);
 		this._groupNameInput.reparentHtmlElement(this._htmlElId + "_groupNameParent");
 	}
 	
@@ -1115,23 +1120,7 @@ function() {
 	var tagCell = this._getTagCell();
 	if (!tagCell) { return; }
 
-	// get sorted list of tags for this msg
-	var ta = [];
-	for (var i = 0; i < this._contact.tags.length; i++)
-		ta.push(this._tagList.root.getByNameOrRemote(this._contact.tags[i]));
-	ta.sort(ZmTag.sortCompare);
-
-	var html = [];
-	var i = 0;
-	for (var j = 0; j < ta.length; j++) {
-		var tag = ta[j];
-		if (!tag) continue;
-		var icon = tag.getIconWithColor();
-		html[i++] = AjxImg.getImageSpanHtml(icon, null, null, AjxStringUtil.htmlEncode(tag.name));
-		html[i++] = "&nbsp;";
-	}
-
-	tagCell.innerHTML = html.join("");
+	tagCell.innerHTML = ZmTagsHelper.getTagsHtml(this._contact, this);
 };
 
 // Consistent spot to locate various dialogs

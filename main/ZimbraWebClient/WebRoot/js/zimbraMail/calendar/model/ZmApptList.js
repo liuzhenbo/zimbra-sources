@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -206,17 +206,17 @@ function(startTime, endTime) {
  * @param	{closure}		params.finalCallback	the callback to run after all items have been processed
  * @param	{int}			params.count			the starting count for number of items processed
  * @param	{boolean}		params.noUndo			true if the action is not undoable (e.g. performed as an undo)
- * @param	{String}		params.actionText		optional text to display in the confirmation toast instead of the default summary. May be set explicitly to null to disable the confirmation toast entirely
+ * @param	{String}		params.actionTextKey	key for optional text to display in the confirmation toast instead of the default summary. May be set explicitly to null to disable the confirmation toast entirely
  */
 ZmApptList.prototype.moveItems =
 function(params) {
-	params = Dwt.getParams(arguments, ["items", "folder", "attrs", "callback", "errorCallback" ,"finalCallback", "noUndo", "actionText"]);
+	params = Dwt.getParams(arguments, ["items", "folder", "attrs", "callback", "errorCallback" ,"finalCallback", "noUndo", "actionTextKey"]);
 
 	var params1 = AjxUtil.hashCopy(params);
 	params1.items = AjxUtil.toArray(params.items);
 	params1.attrs = params.attrs || {};
 	if (params1.folder.id == ZmFolder.ID_TRASH) {
-		params1.actionText = (params.actionText !== null) ? (params.actionText || ZmMsg.actionTrash) : null;
+		params1.actionTextKey = (params.actionTextKey !== null) ? (params.actionTextKey || 'actionTrash') : null;
 		params1.action = "trash";
         //This code snippet differs from the ZmList.moveItems
         var currentView = appCtxt.getCurrentView();
@@ -228,7 +228,7 @@ function(params) {
             }
         }
 	} else {
-		params1.actionText = (params.actionText !== null) ? (params.actionText || ZmMsg.actionMove) : null;
+		params1.actionTextKey = (params.actionTextKey !== null) ? (params.actionTextKey || 'actionMove') : null;
 		params1.actionArg = params.folder.getName(false, false, true);
 		params1.action = "move";
 		params1.attrs.l = params.folder.id;

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -113,10 +113,10 @@ function() {
 	html[i++] = ZmMsg.sendUpdatesNew;
 	html[i++] = "</label>";
 	html[i++] = "</td></tr>";
-	html[i++] = "<tr><td width=1%><input value='2' type='radio' name='";
+	html[i++] = "<tr><td width=1%><input value='2' type='radio'" + "id='" + this._defaultRadioId + this._notifyChoiceName + "' name='"; // Applying unique Id. Fix for bug: 77590 & bug: 76533
 	html[i++] = this._notifyChoiceName;
 	html[i++] = "'></td><td style='white-space:nowrap'>";
-	html[i++] = "<label for='" + this._notifyChoiceName + "'>";
+	html[i++] = "<label for='" + this._defaultRadioId + this._notifyChoiceName + "'>"; // Applying unique Id. Fix for bug: 77590 & bug: 76533
 	html[i++] = ZmMsg.sendUpdatesAll;
 	html[i++] = "</label>";
 	html[i++] = "</td></tr>";

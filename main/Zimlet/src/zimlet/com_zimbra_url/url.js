@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Zimlets
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -558,7 +558,11 @@ function(msg, msgView) {
 
 	this._msgId = msg.id;
 	this._viewId = appCtxt.getCurrentViewId();
-	var view = appCtxt.getCurrentView().getItemView();
+	var view = appCtxt.getCurrentView();
+	if (view.getItemView) {
+		//view is a instance of list view so get the item view
+		view = view.getItemView();
+	}
 	var widgetId = this._isConv ? (view._msgViews && view._msgViews[this._msgId] && view._msgViews[this._msgId]._msgBodyDivId) : view._msgBodyDivId;
 	var el = document.getElementById(widgetId);
 	

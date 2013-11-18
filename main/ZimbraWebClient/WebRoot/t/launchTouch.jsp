@@ -47,13 +47,13 @@
  launchTouch.jsp
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- *
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -63,6 +63,8 @@
    		<meta http-equiv="Refresh" content="0;url=/t/noscript.jsp" >
    	</noscript>
     <meta charset="UTF-8">
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
     <title><fmt:message key="zimbraTitle"/></title>
     <style type="text/css">
             /**
@@ -74,7 +76,7 @@
         }
 
         #SplashScreenImgBanner{
-            background-image: url("/skins/serenity/logos/LoginBanner.png");
+            background-image: url("/skins/_base/logos/LoginBanner_white.png");
             background-position: left bottom;
             background-repeat: no-repeat;
             height: 60px;

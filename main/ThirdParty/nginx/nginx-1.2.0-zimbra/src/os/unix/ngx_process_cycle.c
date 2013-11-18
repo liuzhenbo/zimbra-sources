@@ -5,7 +5,7 @@
  */
 
 /*
- * Portions Copyright (c) VMware, Inc. [1998-2011]. All Rights Reserved.
+ * Portions Copyright (c) Zimbra Software, LLC. [1998-2011]. All Rights Reserved.
  */
 
 
@@ -362,8 +362,8 @@ ngx_single_process_cycle(ngx_cycle_t *cycle)
     ngx_uint_t  i;
 
     if (ngx_set_environment(cycle, NULL) == NULL) {
-            /* fatal */
-            exit(2);
+        /* fatal */
+        exit(2);
     }
 
     for (i = 0; ngx_modules[i]; i++) {

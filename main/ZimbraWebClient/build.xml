@@ -81,6 +81,7 @@
     <property name='build.adminhelp.dir' value='${build.web.dir}/adminhelp'/>
     <property name='build.dist.dir' value='${build.dir}/dist'/>
     <property name='build.touch.dir' value='${build.web.dir}/t'/>
+    <property name='build.touch.debug.dir' value='${build.web.dir}/tdebug'/>
 
 	<property name='build.docs.dir' value='${build.dir}/docs'/>
 	<property name='build.jsapi-zimbra-doc.dir' value='${build.docs.dir}/jsapi-zimbra-doc'/>
@@ -101,6 +102,7 @@
     <property name='nodebug.ext' value='.nodebug'/>
     <property name="jsmin.ext" value='.min'/>
     <property name="compress.ext" value='.zgz'/>
+    <property name='compresserror.ext' value='.err'/>
 
     <!-- ZIMBRA FIREFOX EXTENSION -->
     <property name="ffext.jarfile" value="zimbradnd.jar"/>
@@ -109,9 +111,12 @@
     <property name="ffext.src.dir" value="ffext/src/zimbradnd"/>
 
     <!-- TINY_MCE INTEGRATION -->
-    <property name="tinymce.version" value="3.5.4.1"/>
+    <property name="tinymce.version" value="4.0.10"/>
     <property name='tinymce.dir' value='${js.dir}/ajax/3rdparty/tinymce'/>
     <property name="tinymce.zplugins.dir" value="${web.dir}/tiny_mce_plugins"/>
+
+    <!-- MODERNIZR INTEGRATION -->
+    <property name="modernizr.version" value="2.6.1"/>
 
     <!-- jQuery INTEGRATION -->
     <property name="jquery.version" value="1.8.1"/>
@@ -227,7 +232,7 @@
         <property name='build.web.excludes' value='${common.build.web.excludes}'/>
         <property name='webinf.includes' value='${common.webinf.includes}'/>
         <property name='webinf.excludes' value='${common.webinf.excludes}'/>
-        <property name='touch.includes' value='app/**,app.json,app.js,resources/**,touch/**,launchTouch.jsp'/>
+        <property name='touch.includes' value='app/**,app.json,app.js,resources/**,touch/**,launchTouch.jsp,noscript.jsp'/>
         <property name='touch.excludes' value='compass/**,lib/**,install.txt,*.xml,build/**,archive/**'/>
 
         <fileset id='help.fileset'
@@ -330,7 +335,7 @@
         </war>
     </target>
 
-    <target name='sync' depends='jquery,tinymce,templates'>
+    <target name='sync' depends='jquery,modernizr,tinymce,templates'>
         <!-- NOTE: Keep order in sync with list of war filesets. -->
         <copy todir='${webapp.dir}/WEB-INF' verbose='${sync.verbose}'>
             <fileset refid="webinf.fileset" />
@@ -988,7 +993,7 @@
         </if>
     </target>
 
-    <target name='jam-files' depends='jquery,tinymce,templates,timezones'>
+    <target name='jam-files' depends='jquery,modernizr,tinymce,templates,timezones'>
         <property name='jam.jsp.dir' value='${build.web.dir}/public/jsp'/>
 
         <mkdir dir='${build.js.dir}'/>
@@ -1027,6 +1032,7 @@
 
         <property name='jam.file' value='${build.js.dir}/${arg}_all.js'/>
         <property name='jsp.file' value='${build.web.dir}/public/jsp/${arg}.jsp'/>
+        <property name='appcache.file' value='${build.js.dir}/${arg}.appcache'/>
         <property name='depends.file' value='${jam.file}${depends.ext}'/>
 
         <packagedependset>
@@ -1037,8 +1043,21 @@
         </packagedependset>
 
         <if>
+            <available file="${depends.file}"/>
+            <then>
+                <files includesfile="${depends.file}" />
+
+                <uptodate targetfile="${jam.file}" property="jam.uptodate">
+                    <srcresources>
+                        <files includesfile="${depends.file}" />
+                    </srcresources>
+                </uptodate>
+            </then>
+        </if>
+
+        <if>
             <not>
-                <available file='${jam.file}'/>
+                <equals arg1="${jam.uptodate}" arg2="true" />
             </not>
             <then>
                 <condition property='wrap' value='false' else='true'>
@@ -1081,7 +1100,7 @@
                     </else>
                 </if>
 
-                <jammer jsDestFile='${jam.file}' htmlDestFile='${jsp.file}'
+                <jammer jsDestFile='${jam.file}' htmlDestFile='${jsp.file}' appCacheDestFile='${appcache.file}'
                         dependsFile='${depends.file}' output='all'
                         basepath='&lt;%=contextPath%>/js/'
                         extension='.js?v=&lt;%=vers%>'>
@@ -1150,7 +1169,7 @@ if (ext == null) ext = "";
 	                    <try>
 	                        <block>
 		                        <java jar="${common.lib.dir}/yuicompressor-2.4.2-zimbra.jar" fork="true" failonerror="true"
-		                              output="${build.dir}/yui-compress.out">
+		                              output="${build.dir}/yui-compress.out" error="@{var}${compresserror.ext}">
 		                            <arg value="--line-break"/>
 		                            <arg value="0"/>
 		                            <arg value="--type"/>
@@ -1158,6 +1177,7 @@ if (ext == null) ext = "";
 		                            <arg value="-o"/>
 		                            <arg value="@{var}${jsmin.ext}"/>
 		                            <arg value="@{var}${nodebug.ext}"/>
+                                    <arg value="--verbose"/>
 		                        </java>
 	                        </block>
 		                    <catch>
@@ -1237,49 +1257,92 @@ if (ext == null) ext = "";
     </target>
 
     <target name='touch' depends='touch-init' unless="no.touch">
-        <mkdir dir='${build.touch.dir}'/>
         <if>
             <not>
                <isset property='build.prod'/>
             </not>
             <then>
+                <mkdir dir='${build.touch.dir}'/>
+
                 <antcall target="compile.sass"/>
 
                 <copy todir='${build.touch.dir}'>
                     <fileset dir='${touch.dir}' includes="${touch.includes}" excludes="${touch.excludes}"/>
                 </copy>
-
             </then>
             <else>
-                <if>
-                    <not>
-                        <isset property='touch.prod.build.mode'/>
-                    </not>
-                    <then>
-                        <property name="touch.prod.build.mode" value="production"/>
-                    </then>
-                </if>
 
-                <!--Execute the prod build command-->
-                <exec executable="/bin/bash">
-                    <arg value="${this.zwc.basedir}/build-prod-touch.sh"/>
-                    <arg value="${touch.prod.build.mode}"/>
-                </exec>
+                <!--First run sencha build in production mode for the main touch app-->
+                <antcall target="touch-prod">
+                    <param name="touch.prod.build.mode" value="production"/>
+                </antcall>
 
-                <!--Copy the production dir-->
-                <copy todir='${build.touch.dir}'>
-                    <fileset dir='${touch.prod.dir}/${touch.prod.build.mode}'/>
-                </copy>
+                <!--Now run sencha build in testing mode to create debugging app-->
+                <antcall target="touch-prod">
+                    <param name="touch.prod.build.mode" value="testing"/>
+                    <param name="build.touch.dir" value="${build.touch.debug.dir}"/>
+                </antcall>
 
-                <!--Copy the templates dir-->
-                <fileset id="templates.fileset" dir="${touch.dir}/resources/templates" casesensitive="yes"/>
-
-                <copy todir="${build.touch.dir}/resources/templates" verbose="true">
-                    <fileset refid="templates.fileset"/>
-                </copy>
-
+                <!-- noscript.jsp copied into production dir-->
+                <copy todir="${build.touch.dir}" file="${touch.dir}/noscript.jsp"/>
             </else>
         </if>
+    </target>
+
+    <target name="touch-prod">
+        <mkdir dir='${build.touch.dir}'/>
+
+        <exec executable="/bin/bash">
+            <arg value="${this.zwc.basedir}/build-prod-touch.sh"/>
+            <arg value="${touch.prod.build.mode}"/>
+        </exec>
+
+        <!--Copy the production dir-->
+        <copy todir='${build.touch.dir}'>
+            <fileset dir='${touch.prod.dir}/${touch.prod.build.mode}'/>
+        </copy>
+
+        <!--Copy the templates dir-->
+        <fileset id="templates.fileset" dir="${touch.dir}/resources/templates" casesensitive="yes"/>
+
+        <copy todir="${build.touch.dir}/resources/templates" verbose="true">
+            <fileset refid="templates.fileset"/>
+        </copy>
+    </target>
+
+    <target name="touch-prod-deploy" depends="init">
+
+        <exec executable="/bin/bash">
+            <arg value="${this.zwc.basedir}/build-prod-touch.sh"/>
+            <arg value="production"/>
+        </exec>
+
+        <delete dir="${webapp.dir}/t"/>
+
+        <!--Copy the production dir-->
+        <copy todir='${webapp.dir}/t'>
+            <fileset dir='${touch.prod.dir}/production'/>
+        </copy>
+
+        <!--Copy the templates dir-->
+        <fileset id="templates.fileset" dir="${touch.dir}/resources/templates" casesensitive="yes"/>
+
+        <copy todir="${webapp.dir}/t/resources/templates" verbose="true">
+            <fileset refid="templates.fileset"/>
+        </copy>
+
+    </target>
+
+    <target name="touch-dev-deploy" depends="init">
+
+        <antcall target="compile.sass"/>
+
+        <delete dir="${webapp.dir}/t"/>
+
+        <copy todir='${webapp.dir}/t'>
+            <fileset dir='${touch.dir}' includes="${touch.includes}" excludes="${touch.excludes}"/>
+        </copy>
+
     </target>
     
     <target name='deploy' depends='war'>
@@ -1315,6 +1378,9 @@ if (ext == null) ext = "";
         <replace file="${webapp.dir}/WEB-INF/web.xml" token="%%zimbraMailSSLPort%%" value="${webxml.zimbraMailSSLPort}"/>
     	<replace file="${webapp.dir}/WEB-INF/web.xml" token="%%zimbraMailTrustedIP%%" value="${webxml.zimbraMailTrustedIP}"/>
     	<replace file="${webapp.dir}/WEB-INF/web.xml" token="%%zimbraHttpDosFilterMaxRequestsPerSec%%" value="${webxml.zimbraHttpDosFilterMaxRequestsPerSec}"/>
+    	<replace file="${webapp.dir}/WEB-INF/web.xml" token="zimbraHttpCompressionEnabled,-->%%" value="-->" />
+    	<replace file="${webapp.dir}/WEB-INF/web.xml" token="%%comment VAR:zimbraHttpCompressionEnabled," value="" />
+    	<replace file="${webapp.dir}/WEB-INF/web.xml" token="%%zimbraWebGzipEnabled%%" value="true"/>
     </target>
 
     <target name='clean' depends='customer-init'>
@@ -1508,18 +1574,15 @@ if (ext == null) ext = "";
     <path id='jspc.class.path'>
         <pathelement  path="${build.classes.dir}" />
         <pathelement path="${server.dist.dir}/jetty/resources" />
-        <fileset dir="${lib.dir}/jsp-2.1" includes="*.jar"/>
+        <fileset dir="${lib.dir}/jsp-2.2" includes="*.jar"/>
         <fileset dir="${taglib.build.dir}" includes="zimbrataglib.jar"/>
         <fileset dir="${client.build.dir}" includes="zimbraclient.jar"/>
         <fileset dir="${server.dist.dir}/jetty/common/lib" includes="zimbracommon.jar"/>
         <fileset dir="${server.build.dir}" includes="zimbrastore.jar"/>
-        <fileset dir="${lib.dir}" includes="standard.jar,servlet-api-3.0.jar"/>
-        <fileset dir="${common.lib.dir}" includes="*.jar"/>
-        <fileset dir="${jspc.src.dir}/WEB-INF/lib" includes="*.jar"/>
+        <fileset dir="${common.lib.dir}" includes="servlet-api-3.0.jar,javamail-1.4.5.jar,json.jar,yuicompressor-2.4.2-zimbra.jar,guava-13.0.1.jar,commons-httpclient-3.1.jar,commons-codec-1.7.jar"/>
     </path>
 
     <target name="jspc">
-        <echo>Pre-compiling ${param.jspfiles}</echo>
         <java classname="org.apache.jasper.JspC" fork="true" classpathref="jspc.class.path">
             <arg value="-l" />
             <arg value="-s" />
@@ -1538,15 +1601,10 @@ if (ext == null) ext = "";
         <copy todir="${jspc.src.dir}">
             <fileset dir='${web.dir}' includes="${custom.web.jsp.includes},h/**,m/**,public/*.jsp,WEB-INF/**"/>
         </copy>
-        <fileset id='jspc.fileset1' dir='${jspc.src.dir}' includes="${custom.web.jsp.includes},h/**"/>
+        <fileset id='jspc.fileset1' dir='${jspc.src.dir}' includes="${custom.web.jsp.includes},h/**,m/**,public/*.jsp"/>
         <pathconvert property='jspc.files1' refid='jspc.fileset1' pathsep=' ' />
         <antcall target="jspc">
             <param name="param.jspfiles" value="${jspc.files1}" />
-        </antcall>
-        <fileset id='jspc.fileset2' dir='${jspc.src.dir}' includes="m/**,public/*.jsp"/>
-        <pathconvert property='jspc.files2' refid='jspc.fileset2' pathsep=' ' />
-        <antcall target="jspc">
-            <param name="param.jspfiles" value="${jspc.files2}" />
         </antcall>
     </target>
 
@@ -1581,15 +1639,125 @@ if (ext == null) ext = "";
     <target name="tinymce">
         <copy todir='${tinymce.dir}' verbose='${sync.verbose}'>
             <fileset dir='${web.dir}/tiny_mce/${tinymce.version}' />
+            <fileset dir='${web.dir}/tiny_mce/custom' />
+            <scriptmapper language="javascript">
+                // replace dots with underscores in JS file names, retaining the suffix
+                if (/\.js$/.test(source)) {
+                  source = source.substr(0, source.length - 3).replace(/\./g, '_') + '.js';
+                }
+                self.addMappedName(source);
+            </scriptmapper>
         </copy>
-        <copy todir='${tinymce.dir}/plugins' verbose='${sync.verbose}'>
-            <fileset dir='${tinymce.zplugins.dir}' excludes="plugins/**,themes/**,langs/**"/>
-        </copy>
-        <copy todir='${tinymce.dir}' verbose='${sync.verbose}' overwrite="true">
-            <fileset dir="${tinymce.zplugins.dir}" includes="plugins/**,themes/**,langs/**">
-                <different targetdir="${tinymce.dir}"/>
-            </fileset>
-        </copy>
+
+        <!-- generate an authoritative and correct list of locales -->
+        <property name="tinymce.locale.file" location="${tinymce.dir}/locales.js"/>
+
+        <fileset id="tinymce.locales.ref"
+                 dir="${web.dir}/tiny_mce/custom/langs"
+                 includes="*.js"/>
+
+        <uptodate targetfile="${tinymce.locale.file}"
+		          property="tinymce.locales.uptodate">
+            <srcresources>
+                <fileset refid="tinymce.locales.ref" />
+            </srcresources>
+        </uptodate>
+
+        <if>
+            <not>
+                <equals arg1="${tinymce.locales.uptodate}" arg2="true" />
+            </not>
+            <then>
+                <echo message="Generating ${tinymce.locale.file}" />
+
+                <pathconvert property='tinymce.locales'
+                             refid='tinymce.locales.ref'
+                             pathsep='", "'>
+                    <regexpmapper from="^.*/(.*)\.js" to="\1" />
+                </pathconvert>
+
+                <echo file="${tinymce.dir}/locales.js"
+                      message='tinyMCE.locale_list = [ "${tinymce.locales}" ];'
+                      />
+            </then>
+        </if>
+
+        <!-- generate a mapping of emoticons to their image data -->
+        <property name="tinymce.emoticon.file" location="${tinymce.dir}/plugins/zemoticons/data.js"/>
+
+        <fileset id="tinymce.emoticons.ref"
+                 dir="${web.dir}/tiny_mce/${tinymce.version}/plugins/emoticons/img"/>
+
+        <uptodate targetfile="${tinymce.emoticon.file}"
+                  property="tinymce.emoticons.uptodate">
+            <srcresources>
+                <fileset refid="tinymce.emoticons.ref" />
+            </srcresources>
+        </uptodate>
+
+        <if>
+            <not>
+                <equals arg1="${tinymce.emoticons.uptodate}" arg2="true" />
+            </not>
+            <then>
+                <echo message="Generating ${tinymce.emoticon.file}" />
+
+                <script language="javascript">
+                    importClass(org.apache.tools.ant.util.Base64Converter);
+                    importClass(java.nio.charset.StandardCharsets);
+                    importClass(java.nio.file.Files);
+                    importClass(java.nio.file.Paths);
+                    importClass(java.nio.file.StandardOpenOption);
+
+                    var conv = new Base64Converter();
+                    var filename_patt = /smiley-(.*)\.(\w+)/;
+
+                    var mimemap = {
+                        gif: 'image/gif',
+                        png: 'image/png',
+                        jpg: 'image/jpeg',
+                    };
+
+                    var emoticons =
+                        self.getProject().getReference("tinymce.emoticons.ref");
+                    var dstfile =
+                        self.getProject().getProperty("tinymce.emoticon.file");
+                    var iter = emoticons.iterator();
+
+                    // build up a map of emoticon name -> image data URI
+                    var map = {};
+
+                    while (iter.hasNext()) {
+                        var path = iter.next().getFile().toPath();
+                        var match =
+                            String(path.getFileName()).match(filename_patt);
+
+                        var data = conv.encode(Files.readAllBytes(path));
+                        var name = match[1];
+                        var type = mimemap[match[2]];
+
+                        map[name] =
+                            String(java.lang.String.format("data:%s;base64,%s",
+                                                           type, data));
+                    }
+
+                    // write it to disk as a loadable JavaScript source file
+                    writer = Files.newBufferedWriter(Paths.get(dstfile),
+                                                     StandardCharsets.UTF_8,
+                                                     StandardOpenOption.TRUNCATE_EXISTING,
+                                                     StandardOpenOption.CREATE);
+
+                    writer.write("tinyMCE.emoticon_map = ");
+                    writer.write(JSON.stringify(map, null, 4));
+                    writer.write(";\n");
+                    writer.close();
+                </script>
+            </then>
+        </if>
+    </target>
+
+    <target name="modernizr">
+        <copy todir='${js.dir}/ajax/3rdparty/modernizr' file='${web.dir}/modernizr/${modernizr.version}/modernizr.js' verbose='${sync.verbose}'/>
     </target>
 
     <target name="jquery">
@@ -1626,12 +1794,6 @@ if (ext == null) ext = "";
         <copy todir='${webapp.dir}/t' verbose='true'>
             <fileset refid="touch.fileset"/>
         </copy>
-    </target>
-
-    <target name="prod-deploy-debug-touch">
-        <antcall target="prod-deploy">
-            <param name="touch.prod.build.mode" value="testing"/>
-        </antcall>
     </target>
 
 </project>

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -57,20 +57,14 @@ Ext.define('ZCS.model.ZtWriter', {
 			session = !sessionId ? {} : {
 				_content: sessionId,
 				id: sessionId
-			};
+			},
+			notifySeq = ZCS.session.getNotifySeq();
 
 		var json = {
 			Header: {
 				context: {
 					_jsns: 'urn:zimbra',
-					userAgent: {
-						name: Ext.browser.userAgent,
-						version: Ext.browser.version.version
-					},
 					session: session,
-					notify: {
-						seq: ZCS.session.getNotifySeq()
-					},
 					account: {
 						_content: ZCS.session.getAccountName(),
 						by: 'name'
@@ -79,6 +73,17 @@ Ext.define('ZCS.model.ZtWriter', {
 			},
 			Body: {}
 		};
+
+		if (notifySeq > 0) {
+			json.Header.context.notify = { seq: notifySeq };
+		}
+
+		if (method !== 'NoOp') {
+			json.Header.context.userAgent = {
+				name: Ext.browser.userAgent,
+				version: Ext.browser.version.version
+			};
+		}
 
 		var methodName = method + 'Request';
 		json.Body[methodName] = {

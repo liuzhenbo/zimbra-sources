@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -593,7 +593,17 @@ function(ev) {
 
 ZmMainSearchToolBar.prototype._setInputExpanded =
 function(expanded) {
-	this._searchField.getInputElement().className = expanded ? "search_input-expanded" : "search_input";
+	var input = this._searchField.getInputElement();
+	var cls = expanded ? "search_input-expanded" : "search_input";
+
+	if (AjxEnv.isIE9) {
+		// bug 83493: IE9 gets the layout wrong on the first try
+		setTimeout(function() {
+			input.className = cls;
+		}, 0);
+	} else {
+		input.className = cls;
+	}
 };
 
 ZmMainSearchToolBar.prototype._checkSharedMenuItem =

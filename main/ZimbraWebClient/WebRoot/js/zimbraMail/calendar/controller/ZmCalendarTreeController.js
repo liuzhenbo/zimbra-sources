@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -284,6 +284,8 @@ function() {
                 ZmOperation.CLEAR_ALL);
     }
 
+	ops.push(ZmOperation.FIND_SHARES);
+
 	return ops;
 };
 
@@ -340,7 +342,9 @@ function(organizer) {
             return;
         }
 
-        if (organizer.id == ZmOrganizer.ID_TRASH) return;
+        if (Number(organizer.nId) === ZmOrganizer.ID_TRASH) { //nId is String so change to Number so I can do === to compare to number. A bit messy but I prefer that over keeping ==.
+			return;
+		}
 
 		var appId = ZmOrganizer.APP[organizer.type];
 		var app = appId && appCtxt.getApp(appId);
@@ -416,12 +420,9 @@ function(ev) {
             dlg.setMessage(ZmMsg.orgChange, DwtMessageDialog.WARNING_STYLE);
             dlg.popup();
 		} else {
-            if(data instanceof ZmCalendar){
-                // Root node's type is folder, but it's labelled 'Calendars'.  Pass the proper
-                // name down to the status message.
-                var folderName = (dropFolder.nId == ZmFolder.ID_ROOT) ? ZmMsg.calendars : null;
-                this._doMove(data, dropFolder, folderName);
-            } else{
+            if (data instanceof ZmCalendar) {
+                this._doMove(data, dropFolder);
+            } else {
                 ctlr._doMove(appts, dropFolder, null, isShiftKey);
             }
 		}
@@ -702,6 +703,11 @@ function(ev, account) {
 	}
 
 	ZmController.showDialog(newDialog, this._newCb, this._pendingActionData, account);
+
+    // Clear the external calendar data once dialog is rendered
+    // Fix for bug: 82811
+    this.setExternalCalendarData(null);
+
 	newDialog.registerCallback(DwtDialog.CANCEL_BUTTON, this._clearDialog, this, newDialog);
 };
 

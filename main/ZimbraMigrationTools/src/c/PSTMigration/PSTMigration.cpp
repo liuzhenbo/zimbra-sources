@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite CSharp Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 #include "common.h"
@@ -53,7 +51,7 @@ void AdminAuth()
     m_pAdminConnection = new Zimbra::Rpc::AdminConnection(lpServerAddress, nAdminPort, TRUE, 0,
         L"");
     m_pAdminConnection->SetCurrentUser((LPWSTR)lpAccountUser);
-    m_pAdminConnection->SendRequest(authRequest, pResponseXml.getref());
+    m_pAdminConnection->SendRequestSynchronousXMLDoc(authRequest, pResponseXml.getref());
 }
 
 void UserAuth()
@@ -67,7 +65,7 @@ void UserAuth()
 
     Zimbra::Rpc::AuthRequest authRequest(lpAccountUser, lpAccountUserPwd, lpServerAddress);
 
-    m_pConnection->SendRequest(authRequest, pResponseXml.getref());
+    m_pConnection->SendRequestSynchronousXMLDoc(authRequest, pResponseXml.getref());
 
     Zimbra::Util::ScopedPtr<Zimbra::Rpc::Response> pResponse(
     Zimbra::Rpc::Response::Manager::NewResponse(pResponseXml.get()));
@@ -129,7 +127,7 @@ void ZCFileUploadTest()
 
     try
     {
-        z_pConnection->SendRequest(request, pResponse.getref());
+        z_pConnection->SendRequestSynchronousZC(request, pResponse.getref());
     }
     catch (Zimbra::Rpc::SoapFaultResponse &fault)
     {
@@ -311,7 +309,7 @@ DWORD WINAPI AccountMigrationThread(LPVOID lpParameter)
                 printf(
                     "%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S			\
 					%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S		\
-					%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S\n "                                                                                                            ,
+					%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S\n "                                                                                                            ,
                     cd.Birthday.c_str(), cd.CallbackPhone.c_str(), cd.CarPhone.c_str(),
                     cd.Company.c_str(), cd.Email1.c_str(), cd.Email2.c_str(), cd.Email3.c_str(),
                     cd.FileAs.c_str(), cd.FirstName.c_str(), cd.HomeCity.c_str(),
@@ -329,7 +327,7 @@ DWORD WINAPI AccountMigrationThread(LPVOID lpParameter)
                     cd.WorkCity.c_str(), cd.WorkCountry.c_str(), cd.WorkFax.c_str(),
                     cd.WorkPhone.c_str(), cd.WorkPostalCode.c_str(), cd.WorkState.c_str(),
                     cd.WorkStreet.c_str(), cd.WorkURL.c_str(), cd.Anniversary.c_str(), cd.Department.c_str(), cd.NickName.c_str(),
-                    cd.AssistantPhone.c_str(), cd.WorkPhone2.c_str(), cd.CompanyPhone.c_str(), cd.pDList.c_str());
+                    cd.AssistantPhone.c_str(), cd.WorkPhone2.c_str(), cd.CompanyPhone.c_str(), cd.PrimaryPhone.c_str(), cd.pDList.c_str());
 				if(cd.UserDefinedFields.size())
 				{
 					printf("User Defined Field:\n");
@@ -371,7 +369,7 @@ void MAPIAccessAPITestV()
     else
     {
         // Create Session and Open admin store.
-        MAPIAccessAPI::InitGlobalSessionAndStore(L"Admin@Exch2k7");
+        MAPIAccessAPI::InitGlobalSessionAndStore(L"Outlook");
         DWORD const MAX_THREADS = 1;
         HANDLE hThreadArray[MAX_THREADS] = { 0 };
         migrationThreadParams mtparams[MAX_THREADS];
@@ -404,6 +402,144 @@ void MAPIAccessAPITestV()
     }
 
     // destroy session and admin store.
+    MAPIAccessAPI::UnInitGlobalSessionAndStore();
+}
+
+void MigratePublicFolder()
+{
+	// Create Session and Open admin store.
+    MAPIAccessAPI::InitGlobalSessionAndStore(L"Outlook.PUBLIC");
+
+	Zimbra::MAPI::MAPIAccessAPI *maapi = NULL;
+	maapi = new Zimbra::MAPI::MAPIAccessAPI(L"", L"");
+	maapi->InitializePublicFolders();
+    
+	std::vector<std::string> pubFldrList;
+	
+	//enumerate public folder
+    maapi->EnumeratePublicFolders(pubFldrList); 
+	//print pblic folder
+	vector<std::string>::iterator pfenumItr;
+	printf("Enumerated Public folders:\n");
+	for (pfenumItr = pubFldrList.begin(); pfenumItr != pubFldrList.end(); pfenumItr++)
+    {
+		printf("- %s \n", (*pfenumItr).c_str());
+	}
+	
+	// Get data from public folders	
+	vector<Folder_Data> vfolderlist;
+	maapi->GetRootFolderHierarchy(vfolderlist);
+    //
+    vector<Item_Data> vItemDataList;
+    vector<Folder_Data>::iterator it;
+
+    vector<Item_Data>::iterator idItr;
+    for (it = vfolderlist.begin(); it != vfolderlist.end(); it++)
+    {
+		printf("FolderName:  %S ", (*it).name.c_str());
+        printf("FolderPath: %S ", (*it).folderpath.c_str());
+        printf("ContainerClass: %S ", (*it).containerclass.c_str());
+        printf("ItemCount: %d ", (*it).itemcount);
+        printf("ZimbraId: %d\n", (*it).zimbraid);
+        printf("\n\n");
+
+        SBinary sbin = (*it).sbin;
+
+        maapi->GetFolderItemsList(sbin, vItemDataList);
+
+		for (idItr = vItemDataList.begin(); idItr != vItemDataList.end(); idItr++)
+        {
+            if ((*idItr).lItemType == ZT_MAIL)
+            {
+				MessageItemData msgdata;
+
+                printf("Got message item:");
+                maapi->GetItem((*idItr).sbMessageID, msgdata);
+                printf(
+                    "Subject: %S Date: %I64X DateString:%S		\
+					DeliveryDate: %I64X deliveryDateString: %S		\
+					Has Attachments: %d Has HTML:%d Has Text:%d	\
+					Is Draft:%d Is Flagged: %d Is Forwarded: %d	\
+					IsFromMe:%d IsUnread:%d IsUnsent:%d IsRepliedTo:%d	\
+					URLName: %S\n"                                                                                                                                                                                                                                                   ,
+                    msgdata.Subject.c_str(), msgdata.Date, msgdata.DateString.c_str(),
+                    msgdata.deliveryDate, msgdata.DeliveryDateString.c_str(),
+                    msgdata.HasAttachments, msgdata.HasHtml, msgdata.HasText, msgdata.IsDraft,
+                    msgdata.IsFlagged, msgdata.IsForwared, msgdata.IsFromMe, msgdata.IsUnread,
+                    msgdata.IsUnsent, msgdata.RepliedTo, msgdata.Urlname.c_str());
+
+                //printf("MIME Buffer: %S\n\n\n\n",msgdata.wstrmimeBuffer.c_str());
+            }
+            else if ((*idItr).lItemType == ZT_CONTACTS)
+            {
+				ContactItemData cd;
+                printf("Got contact item:");
+                maapi->GetItem((*idItr).sbMessageID, cd);
+				printf("CONTACT_TYPE: %S\n\n", cd.Type.c_str());
+                printf(
+                    "%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S			\
+					%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S		\
+					%S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S %S\n "                                                                                                            ,
+                    cd.Birthday.c_str(), cd.CallbackPhone.c_str(), cd.CarPhone.c_str(),
+                    cd.Company.c_str(), cd.Email1.c_str(), cd.Email2.c_str(), cd.Email3.c_str(),
+                    cd.FileAs.c_str(), cd.FirstName.c_str(), cd.HomeCity.c_str(),
+                    cd.HomeCountry.c_str(), cd.HomeFax.c_str(), cd.HomePhone.c_str(),
+                    cd.HomePhone2.c_str(), cd.HomePostalCode.c_str(), cd.HomeState.c_str(),
+                    cd.HomeStreet.c_str(), cd.HomeURL.c_str(), cd.IMAddress1.c_str(),
+                    cd.JobTitle.c_str(), cd.LastName.c_str(), cd.MiddleName.c_str(),
+                    cd.MobilePhone.c_str(), cd.NamePrefix.c_str(), cd.NameSuffix.c_str(),
+                    cd.NickName.c_str(), cd.Notes.c_str(), cd.OtherCity.c_str(),
+                    cd.OtherCountry.c_str(), cd.OtherFax.c_str(), cd.OtherPhone.c_str(),
+                    cd.OtherPostalCode.c_str(), cd.OtherState.c_str(), cd.OtherStreet.c_str(),
+                    cd.OtherURL.c_str(), cd.Pager.c_str(), cd.pDList.c_str(),
+                    cd.PictureID.c_str(), cd.Type.c_str(), cd.UserField1.c_str(),
+                    cd.UserField2.c_str(), cd.UserField3.c_str(), cd.UserField4.c_str(),
+                    cd.WorkCity.c_str(), cd.WorkCountry.c_str(), cd.WorkFax.c_str(),
+                    cd.WorkPhone.c_str(), cd.WorkPostalCode.c_str(), cd.WorkState.c_str(),
+                    cd.WorkStreet.c_str(), cd.WorkURL.c_str(), cd.Anniversary.c_str(), cd.Department.c_str(), cd.NickName.c_str(),
+                    cd.AssistantPhone.c_str(), cd.WorkPhone2.c_str(), cd.CompanyPhone.c_str(), cd.PrimaryPhone.c_str(), cd.pDList.c_str());
+				if(cd.UserDefinedFields.size())
+				{
+					printf("User Defined Field:\n");
+					vector<ContactUDFields>::iterator it;
+					for (it= cd.UserDefinedFields.begin();it != cd.UserDefinedFields.end();it++)
+					{
+						printf("%S : %S \n", it->Name.c_str(), it->value.c_str());
+					}
+				}
+				
+                printf("Contact Image Path: %S \n", cd.ContactImagePath.c_str());
+            }
+			else if ((*idItr).lItemType == ZT_APPOINTMENTS)
+			{
+				ApptItemData ad;
+				printf("Got appointment item:");
+                maapi->GetItem((*idItr).sbMessageID, ad);
+				printf(
+                    "%S %S %S %S %S \n\n\n\n", ad.Subject.c_str(), ad.Name.c_str(), ad.StartDate.c_str(),
+					ad.EndDate.c_str(),ad.Location.c_str());
+			}
+			else if ((*idItr).lItemType == ZT_TASKS)
+			{
+				TaskItemData tid;
+				printf("Got task item:");
+				maapi->GetItem((*idItr).sbMessageID, tid);
+				printf(
+                    "%S %S %S %S %S \n\n\n\n", tid.Subject.c_str(), tid.Status.c_str(), tid.TaskStart.c_str(),
+					tid.TaskDue.c_str(),tid.PercentComplete.c_str());
+			}
+            else
+            {
+                printf("PSTMIG: %d Skipping it...\n", (*idItr).lItemType);
+            }
+            FreeEntryID((*idItr).sbMessageID);
+        }
+		FreeEntryID(sbin);
+        vItemDataList.clear();
+	}
+
+	delete maapi;
+	 // destroy session and admin store.
     MAPIAccessAPI::UnInitGlobalSessionAndStore();
 }
 
@@ -453,10 +589,10 @@ int main(int argc, TCHAR *argv[])
 // CreateExchangeMailBox();
 // GetAllProfiles();
 // GetDomainName();
-    MAPIAccessAPITestV();
+//    MAPIAccessAPITestV();
 // Zimbra::MAPI::Util::ReverseDelimitedString(L"lb1/tv2/cr3/Inbox/TopFolder",L"/");
 // ExchangeMigrationSetupTest();
 // CreateExchangeMailBox();
-
+	MigratePublicFolder();
     return 0;
 }

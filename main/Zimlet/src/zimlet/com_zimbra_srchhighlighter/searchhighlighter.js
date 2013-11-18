@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Zimlets
- * Copyright (C) 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -75,10 +75,15 @@ function(line, startIndex) {
  */
 SearchHighlighterZimlet.prototype.generateSpan =
 function(html, idx, obj, spanId, context) {
-	var id = Dwt.getNextId();
-	this._spanIds.push(id);
-	html[idx++] = ["<span id= '",id,"'class='ZmSearchResult'>",AjxStringUtil.htmlEncode(obj),"</span>"].join("");
-	return idx;
+    var currentApp  = appCtxt.getCurrentApp();
+    if (currentApp && currentApp.isZmSearchApp){
+        var id = Dwt.getNextId();
+        this._spanIds.push(id);
+        html[idx++] = ["<span id= '",id,"'class='ZmSearchResult'>",AjxStringUtil.htmlEncode(obj),"</span>"].join("");
+    } else {
+        html[idx++] = AjxStringUtil.htmlEncode(obj);
+    }
+    return idx;
 };
 
 /**

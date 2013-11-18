@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -44,6 +44,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import com.google.common.base.Strings;
+import com.google.common.io.Closeables;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.soap.Element.ElementFactory;
 import com.zimbra.common.util.Log;
@@ -72,6 +73,12 @@ public class W3cDomUtil {
                         // However, property does not appear to be recognized on Java 6
                         dbf.setAttribute("http://apache.org/xml/properties/entity-expansion-limit", new Integer("100"));
                     } catch (IllegalArgumentException iae) {
+                        ZimbraLog.misc.debug("Setting entity expansion limit not supported", iae);
+                    }
+                    try {
+                        dbf.setAttribute("http://apache.org/xml/features/disallow-doctype-decl", true);
+                    } catch (IllegalArgumentException iae) {
+                        ZimbraLog.misc.debug("Disabling doctype-decl not supported", iae);
                     }
                     return dbf.newDocumentBuilder();
                 } catch (javax.xml.parsers.ParserConfigurationException pce) {
@@ -142,11 +149,25 @@ public class W3cDomUtil {
         }
     }
 
+    /**
+     * Use JAXP to parse XML into an {@link Element} tree.
+     * Note: DOCTYPE is disallowed for security reasons
+     */
     public static Element parseXML(File file)
     throws ServiceException, FileNotFoundException {
-        return parseXML(new FileInputStream(file));
+        FileInputStream fis = null;
+        try {
+            fis = new FileInputStream(file);
+            return parseXML(new FileInputStream(file));
+        } finally {
+            Closeables.closeQuietly(fis);
+        }
     }
 
+    /**
+     * Use JAXP to parse XML into an {@link Element} tree.
+     * Note: DOCTYPE is disallowed for security reasons
+     */
     public static Element parseXML(InputStream is)
     throws XmlParseException {
         return parseXML(is, Element.XMLElement.mFactory);
@@ -155,6 +176,7 @@ public class W3cDomUtil {
     /**
      * Use JAXP to parse XML into an {@link Element} tree.
      * This is faster and uses less resources than using dom4j
+     * Note: DOCTYPE is disallowed for security reasons
      */
     public static Element parseXML(InputStream is, ElementFactory factory)
     throws XmlParseException {
@@ -172,6 +194,10 @@ public class W3cDomUtil {
         return nodeToElement(doc, factory);
     }
 
+    /**
+     * Use JAXP to parse XML into an {@link Element} tree.
+     * Note: DOCTYPE is disallowed for security reasons
+     */
     public static Element parseXML(String xml)
     throws XmlParseException {
         return parseXML(xml, Element.XMLElement.mFactory);
@@ -180,6 +206,7 @@ public class W3cDomUtil {
     /**
      * Use JAXP to parse XML into an {@link Element} tree.
      * This is faster and uses less resources than using dom4j
+     * Note: DOCTYPE is disallowed for security reasons
      */
     public static Element parseXML(String xml, ElementFactory factory)
     throws XmlParseException {

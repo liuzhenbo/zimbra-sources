@@ -1,10 +1,10 @@
 --
 -- ***** BEGIN LICENSE BLOCK *****
 -- Zimbra Collaboration Suite Server
--- Copyright (C) 2011, 2012 VMware, Inc.
+-- Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
 -- 
 -- The contents of this file are subject to the Zimbra Public License
--- Version 1.3 ("License"); you may not use this file except in
+-- Version 1.4 ("License"); you may not use this file except in
 -- compliance with the License.  You may obtain a copy of the License at
 -- http://www.zimbra.com/license.
 -- 
@@ -89,6 +89,7 @@ CREATE TABLE mailbox (
    highest_indexed     VARCHAR(21), -- deprecated
    version             VARCHAR(16),
    last_purge_at       INTEGER DEFAULT 0 NOT NULL,
+   itemcache_checkpoint       INTEGER DEFAULT 0 NOT NULL,
    
    CONSTRAINT i_account_id UNIQUE (account_id),
    CONSTRAINT fk_mailbox_index_volume_id FOREIGN KEY (index_volume_id) REFERENCES volume(id)
@@ -195,3 +196,12 @@ CREATE TABLE pending_acl_push (
    PRIMARY KEY (mailbox_id, item_id, date),
    CONSTRAINT fk_pending_acl_push_mailbox_id FOREIGN KEY (mailbox_id) REFERENCES mailbox(id) ON DELETE CASCADE
 );
+
+
+CREATE TABLE current_sessions (
+	id				INTEGER NOT NULL,
+	server_id		VARCHAR(127) NOT NULL,
+	PRIMARY KEY (id, server_id)
+); 
+
+

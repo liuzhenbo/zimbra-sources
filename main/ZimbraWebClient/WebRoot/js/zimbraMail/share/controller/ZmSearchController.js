@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -561,8 +561,15 @@ function(params, noRender, callback, errorCallback) {
 	}
 
 	var respCallback = this._handleResponseDoSearch.bind(this, search, noRender, callback, params.noUpdateOverview);
+    var offlineCallback = this._handleOfflineDoSearch.bind(this, search, respCallback);
+    if (search.folderId == ZmFolder.ID_OUTBOX) {
+        var offlineRequest = true;
+    }
 	if (!errorCallback) {
 		errorCallback = this._handleErrorDoSearch.bind(this, search);
+		if (!params.errorCallback) {
+			params.errorCallback = errorCallback;
+		}
 	}
 
 	// calendar searching is special so hand it off if necessary
@@ -578,10 +585,10 @@ function(params, noRender, callback, errorCallback) {
 			search.calController = controller;
 			controller.handleUserSearch(params, respCallback);
 		} else {
-            search.execute({callback:respCallback, errorCallback:errorCallback});            
+            search.execute({offlineCache:params && params.offlineCache, callback:respCallback, errorCallback:errorCallback, offlineCallback:offlineCallback, offlineRequest:offlineRequest});
         }
 	} else {
-		search.execute({callback:respCallback, errorCallback:errorCallback});
+		search.execute({offlineCache:params && params.offlineCache, callback:respCallback, errorCallback:errorCallback, offlineCallback:offlineCallback, offlineRequest:offlineRequest});
 	}
 };
 
@@ -615,6 +622,18 @@ function(search, noRender, callback, noUpdateOverview, result) {
 	if (callback) {
 		callback.run(result);
 	}
+};
+
+/**
+ * Takes the search result and hands it to the appropriate controller for display.
+ *
+ * @param {ZmSearch}	search			contains search info used to run search against server
+ * @param {AjxCallback}	callback		the callback to run after generating offline result
+ */
+ZmSearchController.prototype._handleOfflineDoSearch =
+function(search, callback) {
+    var respCallback = this._handleOfflineResponseDoSearch.bind(this, search, callback);
+    ZmOfflineDB.search(search, respCallback);
 };
 
 /**
@@ -670,23 +689,19 @@ function(results, search, noUpdateOverview) {
  * folder, no such tag, and bad query. If it's a "no such folder" error caused
  * by the deletion of a folder backing a mountpoint, we pass it along for
  * special handling by ZmZimbraMail.
- * 
+ *
  * @private
  */
 ZmSearchController.prototype._handleErrorDoSearch =
 function(search, ex) {
 	DBG.println(AjxDebug.DBG1, "Search exception: " + ex.code);
-
-	if (ex.code == ZmCsfeException.MAIL_NO_SUCH_TAG ||
+    if (ex.code == ZmCsfeException.MAIL_NO_SUCH_TAG ||
 		ex.code == ZmCsfeException.MAIL_QUERY_PARSE_ERROR ||
 		ex.code == ZmCsfeException.MAIL_TOO_MANY_TERMS ||
 		(ex.code == ZmCsfeException.MAIL_NO_SUCH_FOLDER && !(ex.data.itemId && ex.data.itemId.length)))
 	{
 		var msg = ex.getErrorMsg();
 		appCtxt.setStatusMsg(msg, ZmStatusView.LEVEL_WARNING);
-		var results = new ZmSearchResult(search);
-		results.type = search.types ? search.types.get(0) : null;
-		this._showResults(results, search);
 		return true;
 	}
 	return false;
@@ -918,4 +933,44 @@ function(id) {
 	}
 
 	return nid;
+};
+
+/**
+ * Takes the search result and hands it to the appropriate controller for display.
+ *
+ * @param {ZmSearch}	search			contains search info used to run search against server
+ * @param {AjxCallback}	callback		online response callback to run after generating search response
+ * @param {Object}	    result			the object stored in indexedDB
+ *
+ * @private
+ */
+ZmSearchController.prototype._handleOfflineResponseDoSearch =
+function(search, callback, result) {
+
+    if (search.sortBy === ZmSearch.DATE_DESC) {
+        result.reverse();
+    }
+
+    var searchResult = new ZmSearchResult(search);
+    searchResult.set({m : result});
+
+    var zmCsfeResult = new ZmCsfeResult(searchResult);
+    callback(zmCsfeResult);
+
+    if (search.folderId == ZmFolder.ID_OUTBOX) {
+        ZmOffline.updateOutboxFolderCountCallback(result.length);
+    }
+};
+
+ZmSearchController.prototype._addOfflineDrafts =
+function(search, result) {
+    var callback = this._addOfflineDraftsCallback.bind(this, search, result);
+    var key = {methodName : "SaveDraftRequest"};
+    ZmOfflineDB.indexedDB.getItemInRequestQueue(key, callback, callback);
+};
+
+ZmSearchController.prototype._addOfflineDraftsCallback =
+function(search, result, newResult) {
+    var respEl = ZmOffline.generateMsgResponse(newResult);
+    this._handleResponseDoIndexedDBSearch(search, [].concat(result).concat(respEl));
 };

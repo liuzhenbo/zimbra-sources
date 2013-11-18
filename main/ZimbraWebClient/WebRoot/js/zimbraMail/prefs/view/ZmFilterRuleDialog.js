@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -96,7 +96,7 @@ function(rule, editMode, referenceRule, accountName, outgoing) {
 	this._rule = rule || ZmFilterRule.getDummyRule();
 	this._editMode = editMode;
 	this._referenceRule = referenceRule;
-	this.setTitle(rule ? ZmMsg.editFilter : ZmMsg.addFilter);
+	this.setTitle(editMode ? ZmMsg.editFilter : ZmMsg.addFilter);
 
 	var nameField = Dwt.byId(this._nameInputId);
 	var name = rule ? rule.name : null;
@@ -615,7 +615,7 @@ function(conf, field, options, rowData, testType, rowId) {
 			date = new Date(dataValue);
 			dateText = AjxDateUtil.simpleComputeDateStr(date);
 		} else {
-			date = new Date();
+			date = null;
 			dateText = ZmMsg.chooseDate;
 		}
 		dateButton.setText(dateText);
@@ -626,7 +626,7 @@ function(conf, field, options, rowData, testType, rowId) {
 		var cal = new DwtCalendar({parent:calMenu});
 		cal.setSkipNotifyOnPage(true);
 		cal.addSelectionListener(this._dateLstnr);
-		cal.setDate(date);
+		cal.setDate(date || new Date());
 		cal._dateButton = dateButton;
 		this._inputs[rowId][field] = {id: id, dwtObj: dateButton};
 		tabGroup.addMember(dateButton.getTabGroupMember());
@@ -1467,7 +1467,7 @@ function(rowId) {
 		caseSensitive = inputs["caseSensitive"] ? inputs["caseSensitive"].value : null;	
 	}
 
-	return { testType:testType, comparator:comparator, value:value, subjectMod:subjectMod, caseSensitive:caseSensitive };
+	return { testType:testType, comparator:comparator, value:value, subjectMod:subjectMod, caseSensitive:caseSensitive, subject: subject };
 };
 
 /**
@@ -1511,6 +1511,9 @@ function(inputs, conf, field) {
 	}
 	if (type == ZmFilterRule.TYPE_CALENDAR) {
 		var date = inputs[field].dwtObj.getData(ZmFilterRuleDialog.DATA);
+		if (!date) {
+			return null;
+		}
 		return String(date.getTime() / 1000);
 	}
 	if (type == ZmFilterRule.TYPE_FOLDER_PICKER) {
@@ -1559,7 +1562,7 @@ function() {
 };
 
 /**
-* Returns true if the condition has the necessary parts, an error message otherwise.
+* Returns false if the condition has the necessary parts, an error message otherwise.
 *
 * @param condition	[Object]	condition
 * 

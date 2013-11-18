@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -353,7 +353,13 @@ function(ev) {
 	if (!msg && this._data) {
 		for (var i = 0; i < folderList.length; i++) {
 			var folder = folderList[i];
-			if (folder.mayContain && !folder.mayContain(this._data, null, this._acceptFolderMatch)) {
+			//Note - although this case is checked in mayContain, I do not chagne mayContain since mayContain is complicated and returns a boolean and used from DnD and is overridden a bunch of times.
+			//Only here we need the special message (see bug 82064) so I settle for that for now.
+			if (!folder.isInTrash() && folder.hasChild(this._data.name) && !this._acceptFolderMatch) {
+				msg = ZmMsg.folderAlreadyExistsInDestination;
+				break;
+			}
+			else if (folder.mayContain && !folder.mayContain(this._data, null, this._acceptFolderMatch)) {
 				if (this._data.isZmFolder) {
 					msg = ZmMsg.badTargetFolder; 
 				} else {

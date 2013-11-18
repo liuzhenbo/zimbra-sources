@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011 VMware, Inc.
+ * Copyright (C) 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -14,14 +14,17 @@
  */
 package com.zimbra.cs.index;
 
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.collect.Lists;
 import com.zimbra.common.soap.SoapProtocol;
 import com.zimbra.cs.account.MockProvisioning;
 import com.zimbra.cs.account.Provisioning;
@@ -68,11 +71,19 @@ public final class LuceneQueryOperationTest {
         params.setSortBy(SortBy.NONE);
         ZimbraQuery query = new ZimbraQuery(new OperationContext(mbox), SoapProtocol.Soap12, mbox, params);
         ZimbraQueryResults results = query.execute();
+        List<Integer> expecteds = Lists.newArrayList();
+        List<Integer> matches = Lists.newArrayList();
         Assert.assertTrue(results.hasNext());
-        Assert.assertEquals(msg2.getId(), results.getNext().getItemId());
+        matches.add(results.getNext().getItemId());
         Assert.assertTrue(results.hasNext());
-        Assert.assertEquals(msg3.getId(), results.getNext().getItemId());
+        matches.add(results.getNext().getItemId());
         Assert.assertFalse(results.hasNext());
+        expecteds.add(msg2.getId());
+        expecteds.add(msg3.getId());
+        Collections.sort(matches);
+        Collections.sort(expecteds);
+        Assert.assertEquals("Match Item ID", expecteds.get(0), matches.get(0));
+        Assert.assertEquals("Match Item ID", expecteds.get(1), matches.get(1));
         results.close();
     }
 
@@ -91,11 +102,19 @@ public final class LuceneQueryOperationTest {
         params.setSortBy(SortBy.NONE);
         ZimbraQuery query = new ZimbraQuery(new OperationContext(mbox), SoapProtocol.Soap12, mbox, params);
         ZimbraQueryResults results = query.execute();
+        List<Integer> expecteds = Lists.newArrayList();
+        List<Integer> matches = Lists.newArrayList();
         Assert.assertTrue(results.hasNext());
-        Assert.assertEquals(msg2.getId(), results.getNext().getItemId());
+        matches.add(results.getNext().getItemId());
         Assert.assertTrue(results.hasNext());
-        Assert.assertEquals(msg3.getId(), results.getNext().getItemId());
+        matches.add(results.getNext().getItemId());
         Assert.assertFalse(results.hasNext());
+        expecteds.add(msg2.getId());
+        expecteds.add(msg3.getId());
+        Collections.sort(matches);
+        Collections.sort(expecteds);
+        Assert.assertEquals("Match Item ID", expecteds.get(0), matches.get(0));
+        Assert.assertEquals("Match Item ID", expecteds.get(1), matches.get(1));
         results.close();
     }
 

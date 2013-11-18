@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -30,6 +30,12 @@ Ext.define('ZCS.view.ZtOrganizerList', {
 
 		cls: 'zcs-folder-list',
 
+		grouped: true,
+
+		listConfig: {
+			itemTpl: '<div class="zcs-menu-icon {type}"></div><div class="zcs-menu-label">{name}</div>'
+		},
+
 		// Show the folder's child list.
 		onItemDisclosure: function(record, item, index, e) {
 
@@ -41,9 +47,10 @@ Ext.define('ZCS.view.ZtOrganizerList', {
 				nestedList = this.up('nestedlist');
 
 			nestedList.goToNode(node);
-		},
-
-		grouped: true
+			if (node.parentNode) {
+				node.parentNode.set('expanded', true);
+			}
+		}
 	},
 
 	/**
@@ -82,6 +89,7 @@ Ext.define('ZCS.view.ZtOrganizerList', {
 
 		var list = this.callParent(arguments);
 
+		list.xtype = 'foldersublist';
 		list.grouped = this.getGrouped();
 		list.store.setGrouper(this.getStore().config.grouper);
 
@@ -101,5 +109,26 @@ Ext.define('ZCS.view.ZtOrganizerList', {
 
 	getTitleTextTpl: function(node) {
 		return this.getItemTextTpl(node);
+	}
+});
+
+Ext.define('ZCS.view.ZtOrganizerSubList', {
+
+	extend: 'Ext.dataview.List',
+
+	xtype: 'foldersublist',
+
+	// The two overrides below are so that absolutely nothing happens when the user taps on a
+	// disabled organizer. Don't show the pressed or the selected background color.
+	onItemTrigger: function(me, index) {
+		if (!me.getItemAt(index).getDisabled()) {
+			this.callParent(arguments);
+		}
+	},
+
+	doItemTouchStart: function(me, index, target, record) {
+		if (me.getItemAt(index) && !me.getItemAt(index).getDisabled()) {
+			this.callParent(arguments);
+		}
 	}
 });

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -88,6 +88,21 @@ function(batchCommand, saveState) {
 				return;
 			}
             batchCommand.add(new AjxCallback(organizer, organizer.rename, [name, null, this._handleRenameErrorCallback]));
+            saveState.commandCount++;
+		}
+	}
+
+    if (!organizer.isDataSource() && appCtxt.isWebClientOfflineSupported) {
+        var webOfflineSyncDays = $('#folderOfflineLblId').val() || 0;
+		if (organizer.webOfflineSyncDays != webOfflineSyncDays) {
+			var error = ZmOrganizer.checkWebOfflineSyncDays(webOfflineSyncDays);
+			if (error) {
+                saveState.errorMessage.push(error);
+                // Only error checking for now.  If additional, should not return here
+				return;
+			}
+            var cb = appCtxt.webClientOfflineHandler && appCtxt.webClientOfflineHandler._modifyWebOfflineSyncDays.bind(appCtxt.webClientOfflineHandler, organizer.nId);
+            batchCommand.add(new AjxCallback(organizer, organizer.setOfflineSyncInterval, [webOfflineSyncDays, cb, this._handleErrorCallback]));
             saveState.commandCount++;
 		}
 	}
@@ -189,6 +204,7 @@ function(event) {
 
 	this._props.setPropertyVisible(this._urlId, organizer.url);
 	this._props.setPropertyVisible(this._permId, showPerm);
+    $('#folderOfflineLblId').val(organizer.webOfflineSyncDays || 0)
 
 	Dwt.setVisible(this._excludeFbEl, !organizer.link && (organizer.type == ZmOrganizer.CALENDAR));
 	// TODO: False until server handling of the flag is added
@@ -250,6 +266,11 @@ function() {
 	this._urlId   = this._props.addProperty(ZmMsg.urlLabel,    this._urlEl);
 	this._permId  = this._props.addProperty(ZmMsg.permissions, this._permEl);
 	this._colorId = this._props.addProperty(ZmMsg.colorLabel,  this._color);
+    if (appCtxt.isWebClientOfflineSupported) {
+        this._offlineEl = document.createElement("DIV");
+        this._offlineId = this._props.addProperty(ZmMsg.offlineFolderSyncInterval,  this._offlineEl);
+        $(this._offlineEl).closest("tr").find(">:first-child").attr("colSpan", 2);
+    }
 
     var container = this.getHtmlElement();
 	container.appendChild(this._props.getHtmlElement());

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -454,10 +454,13 @@ function(params) {
 			asyncMode:true,
 			callback:respCallback,
 			errorCallback:params.errorCallback,
+            offlineCallback:params.offlineCallback,
 			timeout:params.timeout,
+            offlineCache:params.offlineCache,
 			noBusyOverlay:params.noBusyOverlay,
 			response:this.response,
-			accountName:this.accountName
+			accountName:this.accountName,
+            offlineRequest:params.offlineRequest
 		};
 		return appCtxt.getAppController().sendRequest(searchParams);
 	}
@@ -781,14 +784,25 @@ function() {
  */
 ZmSearch.prototype.matches =
 function(item) {
-	var matchFunc = this.parsedQuery && this.parsedQuery.getMatchFunction();
-	return matchFunc ? matchFunc(item) : null;
-};
 
-ZmSearch.prototype.isMatchable =
-function(item) {
-	var matchFunc = this.parsedQuery && this.parsedQuery.getMatchFunction();
-	return (matchFunc != null);
+	if (!this.parsedQuery) {
+		return null;
+	}
+
+	// if search is constrained to a folder, we can return false if item is not in that folder
+	if (this.folderId && !this.parsedQuery.hasOrTerm) {
+		if (item.type === ZmItem.CONV) {
+			if (item.folders && !item.folders[this.folderId]) {
+				return false;
+			}
+		}
+		else if (item.folderId && item.folderId !== this.folderId) {
+			return false;
+		}
+	}
+
+	var matchFunc = this.parsedQuery.getMatchFunction();
+	return matchFunc ? matchFunc(item) : null;
 };
 
 /**
@@ -917,6 +931,7 @@ function() {
  * TODO: handle "field[lastName]" and "#lastName"
  */
 ZmParsedQuery = function(query) {
+	this.hasOrTerm = false;
 	this._tokens = this._parse(AjxStringUtil.trim(query, true));
 };
 
@@ -1261,7 +1276,7 @@ function() {
  * 
  * @return {Function}	the match function
  * 
- * TODO: refactor so that items generate their code
+ * TODO: refactor so that tokens generate their code
  * TODO: handle more ops
  */
 ZmParsedQuery.prototype.getMatchFunction =
@@ -1287,7 +1302,7 @@ function() {
 			} else if (t.op == "tag") {
 				tagId = this._getTagId(t.arg, true);
 				if (tagId) {
-					func.push("item.hasTag('" + tagId + "')");
+					func.push("item.hasTag('" + t.arg + "')");
 				}
 			} else if (t.op == "is") {
 				var test = ZmParsedQuery.FLAG[t.arg];

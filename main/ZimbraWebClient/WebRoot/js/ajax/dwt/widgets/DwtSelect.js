@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -129,7 +129,7 @@ function(element) {
 /**
  * Adds an option.
  * 
- * @param {string|DwtSelectOption}		option			a {String} for the option value or the {@link DwtSelectOption} object
+ * @param {string|DwtSelectOption|DwtSelectOptionData}		option			a {String} for the option value or the {@link DwtSelectOption} object
  * @param {boolean}	[selected]		indicates whether option should be the selected option
  * @param {Object}	value			if the option parameter is a {@link DwtSelectOption}, this will override the value already set in the option.
  * @param {String}  image	(optional)
@@ -145,6 +145,7 @@ function(option, selected, value, image) {
 
 	var opt = null;
 	var val = null;
+    var id = null;
 	if (typeof(option) == 'string') {
 		val = value != null ? value : option;
 		opt = new DwtSelectOption(val, selected, option, this, null, image);
@@ -157,8 +158,9 @@ function(option, selected, value, image) {
 			selected = opt.isSelected();
 		} else if(option instanceof DwtSelectOptionData || option.value != null) {
 			val = value != null ? value : option.value;
-			opt = new DwtSelectOption(val, option.isSelected, option.displayValue, this, null, option.image, option.selectedValue);
+			opt = new DwtSelectOption(val, option.isSelected, option.displayValue, this, null, option.image, option.selectedValue, false, option.extraData);
 			selected = Boolean(option.isSelected);
+            id = option.id;
 		} else {
 			return -1;
 		}
@@ -176,7 +178,7 @@ function(option, selected, value, image) {
 	var cell = row.insertCell(-1);
 	cell.className = 'ZSelectPseudoItem';
 	cell.innerHTML = [
-        "<div class='ZWidgetTitle'>",
+        "<div class='ZWidgetTitle' id='" + id + "'>",
             AjxStringUtil.htmlEncode(opt.getDisplayValue()),
         "</div>"
     ].join("");
@@ -329,7 +331,12 @@ function() {
 	this._selectedOption = null;
 	this._currentSelectedOption = null;
 	if (this._pseudoItemsEl) {
-		this._pseudoItemsEl.innerHTML = "";
+		try {
+			this._pseudoItemsEl.innerHTML = ""; //bug 81504
+		}
+		catch (e) {
+			//do nothing - this happens in IE for some reason. Stupid IE. "Unknown runtime error".
+		}
 	}
 };
 
@@ -626,7 +633,7 @@ function(templateId, data) {
 
     el.className = "ZSelectAutoSizingContainer";
     el.setAttribute("style", "");
-    if (AjxEnv.isIE) {
+    if (AjxEnv.isIE && !AjxEnv.isIE9up) {
         el.style.overflow = "hidden";
     }
 };
@@ -757,7 +764,7 @@ function() {
  * 
  * @private
  */
-DwtSelectOptionData = function(value, displayValue, isSelected, selectedValue, image) {
+DwtSelectOptionData = function(value, displayValue, isSelected, selectedValue, image, id, extraData) {
 	if (value == null || displayValue == null) { return null; }
 
 	this.value = value;
@@ -765,6 +772,8 @@ DwtSelectOptionData = function(value, displayValue, isSelected, selectedValue, i
 	this.isSelected = isSelected;
 	this.selectedValue = selectedValue;
 	this.image = image;
+	this.extraData = extraData;
+    this.id = id || Dwt.getNextId();
 };
 
 //
@@ -784,14 +793,16 @@ DwtSelectOptionData = function(value, displayValue, isSelected, selectedValue, i
  * @param {String}	optionalDOMId		not used
  * @param {String}	[selectedValue] 	the text value to use when this value is the currently selected value
  * @param {Boolean}	hr                  True => This option will be usd to create a unselectable horizontal rule
+ * @param {Object} extraData  map of extra name/value pairs
  */
-DwtSelectOption = function(value, selected, displayValue, owner, optionalDOMId, image, selectedValue, hr) {
+DwtSelectOption = function(value, selected, displayValue, owner, optionalDOMId, image, selectedValue, hr, extraData) {
 	this._value = value;
 	this._selected = selected;
 	this._displayValue = displayValue;
 	this._image = image;
 	this._selectedValue = selectedValue;
     this._hr = hr;
+	this._extraData = extraData;
 
 	this._internalObjectId = DwtSelect._assignId(this);
 	this.enabled = true;
@@ -907,6 +918,13 @@ DwtSelectOption.prototype.getIdentifier =
 function() {
 	return this._internalObjectId;
 };
+
+DwtSelectOption.prototype.getExtraData =
+function(key) {
+	return this._extraData && this._extraData[key];
+};
+
+
 
 /**
  * Creates a select menu.

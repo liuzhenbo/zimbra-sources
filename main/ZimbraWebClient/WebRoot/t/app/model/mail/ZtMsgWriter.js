@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -43,13 +43,13 @@ Ext.define('ZCS.model.mail.ZtMsgWriter', {
 			methodJson = json.Body.SearchConvRequest;
 
 			var curFolder = ZCS.session.getCurrentSearchOrganizer(),
-				curFolderId = curFolder && curFolder.get('itemId'),
+				curFolderId = curFolder && curFolder.get('zcsId'),
 				fetch = (curFolderId === ZCS.constant.ID_DRAFTS) ? 'all' : 'u1';
 
 			Ext.apply(methodJson, {
 				cid:    convId,
 				fetch:  fetch,
-				sortBy: 'dateDesc',
+				sortBy: ZCS.constant.DATE_DESC,
 				offset: 0,
 				limit:  100,
 				recip:  '2',
@@ -58,7 +58,7 @@ Ext.define('ZCS.model.mail.ZtMsgWriter', {
 				query:  itemData.convQuery
 			});
 		}
-		else if (action === 'create' || itemData.isDraft) {
+		else if ((action === 'create' && !itemData.apptView) || itemData.isDraft) {
 
 			// 'create' operation means we are sending a msg
 			var	msg = request.getRecords()[0],
@@ -79,6 +79,7 @@ Ext.define('ZCS.model.mail.ZtMsgWriter', {
 				parts = m.mp = [],                  // Note: should only ever be one top-level part
 				mime = msg.getMime(),
 				origAtt = msg.get('origAttachments'),
+				attachments = msg.get('attachments'),
 				draftId = msg.get('draftId');
 
 			// recipient addresses
@@ -123,6 +124,23 @@ Ext.define('ZCS.model.mail.ZtMsgWriter', {
 				};
 			}
 
+			if (attachments && attachments.length > 0) {
+				if (!m.attach) {
+					m.attach = {
+						aid: ""
+					};
+				} else {
+					m.attach.aid = "";
+				}
+
+				Ext.each(attachments, function (attachment) {
+					m.attach.aid += attachment.aid + ",";
+				});
+
+				m.attach.aid = m.attach.aid.slice(0, -1);
+
+			}
+
 			if (itemData.isInviteReply) {
 				Ext.apply(methodJson, {
 					compNum:            0,
@@ -144,7 +162,7 @@ Ext.define('ZCS.model.mail.ZtMsgWriter', {
 
 			this.addMimePart(parts, mime);
 		}
-		else if (action === 'update') {
+		else if (action === 'update' || itemData.apptView) {
 			// 'update' operation means we are performing a MsgActionRequest or GetMsgRequest
 
 			if (itemData.op === 'load') {
@@ -160,6 +178,7 @@ Ext.define('ZCS.model.mail.ZtMsgWriter', {
 						read:       '1',
 						html:       '1',
 						needExp:    '1',
+                        ridZ:       itemData.apptView ? itemData.ridZ : '',
 						max:        itemData.noMax ? 0 : ZCS.constant.MAX_MESSAGE_SIZE * 1000,
 						header:     ZCS.constant.ADDITIONAL_MAIL_HEADERS
 					}

@@ -2,10 +2,10 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+# Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
-# Version 1.3 ("License"); you may not use this file except in
+# Version 1.4 ("License"); you may not use this file except in
 # compliance with the License.  You may obtain a copy of the License at
 # http://www.zimbra.com/license.
 # 
@@ -38,10 +38,11 @@ zmsetvars -f \
   mailboxd_keystore \
   mailboxd_keystore_password \
   mailboxd_truststore_password \
-  postfix_smtpd_tls_cert_file \
-  postfix_smtpd_tls_key_file
-  
+  ssl_default_digest
+
 export JAVA_HOME=${zimbra_java_home}
+
+DIGEST=${ssl_default_digest}
 
 java_version=$(${zimbra_java_home}/bin/java -version 2>&1 | grep "java version" | sed -e 's/"//g' | awk '{print $NF}' | awk -F_ '{print $1}')
 if [ x"$java_version" = "x1.6.0" ]; then
@@ -103,6 +104,18 @@ if [ -f "${zimbra_java_home}/lib/security/cacerts" ]; then
 else
   CACERTS=${zimbra_java_home}/jre/lib/security/cacerts
 fi
+
+checkDigest() {
+  if [ x"$DIGEST" != "xmd4" -a x"$DIGEST" != "xmd5" -a \
+       x"$DIGEST" != "xmdc2" -a x"$DIGEST" != "xripemd160" -a \
+       x"$DIGEST" != "xsha" -a x"$DIGEST" != "xsha1" -a \
+       x"$DIGEST" != "xsha224" -a x"$DIGEST" != "xsha256" -a \
+       x"$DIGEST" != "xsha384" -a x"$DIGEST" != "xsha512" ]; then
+         echo "WARNING: Unknown digest method: $DIGEST"
+         echo "Defaulting digest method to sha1"
+         DIGEST="sha1"
+  fi
+}
 
 backupSSLDirs() {
   if [ x"${1}" != "x" ]; then
@@ -258,6 +271,7 @@ createCAKey() {
   echo -n "** Creating CA private key ${zimbra_ca_key}..."
   tmpfile=`mktemp -t zmcertmgr.XXXXXX 2> /dev/null` || (echo "Failed to create tmpfile" && exit 1)
   ${openssl} req -batch -subj "${SUBJECT}" \
+    -${DIGEST} \
     -days ${validation_days} \
     -config ${zimbra_ca_ssl_conf} \
     -new -newkey rsa:${KEYSIZE} -nodes  \
@@ -459,6 +473,11 @@ createCA() {
   fi
   #echo "createCA: RSA keysize: $KEYSIZE"
   
+  if [ x"${1}" = "x-digest" ]; then
+    shift
+    DIGEST="${1}"
+    shift
+  fi
 
   if [ x"${1}" = "x-subject" ]; then
     shift
@@ -601,7 +620,7 @@ deployCert() {
   else
     type=$1
     if [ x"$type" != "xself" -a x"$type" != "xcomm" ]; then
-      echo "cert type most be one of self or comm"
+      echo "cert type must be one of self or comm"
       usage
     fi
     shift
@@ -708,11 +727,11 @@ deployCert() {
 
   if [ x"$DEPLOY" = "xall" -o x"$DEPLOY" = "xmta" ]; then
     echo -n "** Installing mta certificate and key..."
-    cp -f ${current_crt} ${postfix_smtpd_tls_cert_file}
-    cp -f ${current_key} ${postfix_smtpd_tls_key_file}
-    chown ${zimbra_uid}:${zimbra_gid} ${postfix_smtpd_tls_cert_file}
-    chown ${zimbra_uid}:${zimbra_gid} ${postfix_smtpd_tls_key_file}
-    chmod 640 ${postfix_smtpd_tls_cert_file} ${postfix_smtpd_tls_key_file}
+    cp -f ${current_crt} ${zimbra_conf_directory}/smtpd.crt
+    cp -f ${current_key} ${zimbra_conf_directory}/smtpd.key
+    chown ${zimbra_uid}:${zimbra_gid} ${zimbra_conf_directory}/smtpd.crt
+    chown ${zimbra_uid}:${zimbra_gid} ${zimbra_conf_directory}/smtpd.key
+    chmod 640 ${zimbra_conf_directory}/smtpd.crt ${zimbra_conf_directory}/smtpd.key
 
     echo "done."
   fi
@@ -876,6 +895,7 @@ createConf() {
   echo -n "** Creating ${ssl_conf}..."
   cat ${zimbra_conf_directory}/zmssl.cnf.in | \
     sed -e "s/@@HOSTNAME@@/$zimbra_server_hostname/" \
+    -e "s/@@ssl_default_digest@@/$ssl_default_digest/" \
     -e "s/@@SUBJECT_ALT_NAMES@@/$ALTNAMES/"  > ${ssl_conf}
   chmod 640 ${ssl_conf}
   chown ${zimbra_uid}:${zimbra_gid} ${ssl_conf}
@@ -911,9 +931,9 @@ createServerCertReq() {
 
   echo -n "** Creating server cert request ${current_csr}..."
 
-  ${openssl} req -new -nodes -out ${current_csr} -keyout ${current_key} \
-    -newkey rsa:${KEYSIZE} -config ${zimbra_cert_ssl_conf} \
-    -subj "${SUBJECT}" -batch > ${tmpfile} 2>&1
+  ${openssl} req -new -${DIGEST} -nodes -out ${current_csr} -keyout ${current_key} \
+      -newkey rsa:${KEYSIZE} -config ${zimbra_cert_ssl_conf} \
+      -subj "${SUBJECT}" -batch > ${tmpfile} 2>&1
 
   if [ $? != 0 ]; then
     echo "failed."
@@ -974,6 +994,12 @@ createCert() {
     shift
   fi
 
+  if [ x"${1}" = "x-digest" ]; then
+    shift
+    DIGEST="${1}"
+    shift
+  fi
+
   initSSLDirs
 
   createCASerial  
@@ -1008,10 +1034,10 @@ createCert() {
   if [ x"${ALLSERVERS}" = "x-allserver" ]; then
     # merge these with cli specified. -bp
     subject_alt_names=`su - zimbra -c "${zimbra_home}/bin/zmprov -m -l gas | xargs "`
-    createCSR self -new -keysize ${KEYSIZE}
+    createCSR self -new -keysize ${KEYSIZE} -digest ${DIGEST}
     shift
   elif [ ! -s "${server_csr}" -o x"${IS_NEW_CRT}" = "x-new" ]; then
-    createCSR self ${IS_NEW_CRT} -keysize ${KEYSIZE}
+    createCSR self ${IS_NEW_CRT} -keysize ${KEYSIZE} -digest ${DIGEST}
   fi
 
   tmpfile=`mktemp -t zmcertmgr.XXXXXX 2> /dev/null` || (echo "Failed to create tmpfile" && exit 1)
@@ -1027,6 +1053,7 @@ createCert() {
   ${openssl} ca -out ${server_crt} -notext \
     -config ${zimbra_ca_ssl_conf} \
     -days ${validation_days} \
+    -md ${DIGEST} \
     -in ${server_csr} -keyfile ${zimbra_ca_key} \
     -extensions v3_req -extfile ${zimbra_ca_ssl_conf} \
     -cert ${zimbra_ca_crt} -batch > ${tmpfile} 2>&1
@@ -1162,27 +1189,29 @@ checkCertExpiration() {
   if [ $VIEW = "all" -o $VIEW = "mailboxd" ]; then
     service_der=/opt/zimbra/mailboxd/etc/mailboxd.der
     service_crt=/opt/zimbra/mailboxd/etc/mailboxd.pem
+    if [ -f ${mailboxd_keystore} -a -d "/opt/zimbra/mailboxd" ]; then
     #echo "::service mailboxd::"
-    tmpfile=`mktemp -t zmcertmgr.XXXXXX 2> /dev/null` || (echo "${ERROR_PREFIX} Failed to create tmpfile" && exit 1)
-    ${zimbra_java_home}/bin/keytool -export -file ${service_der} -alias ${mailboxd_server} \
-      -keystore ${mailboxd_keystore} -storepass ${mailboxd_keystore_password} > ${tmpfile} 2>&1
-    if [ $? != 0 ]; then
-      echo "${ERROR_PREFIX} failed to export ${service_crt} from keystore."
-      echo
-      cat $tmpfile
-      echo
-    fi
-    rm -f $tmpfile 2>/dev/null
-    if [ -f "${service_der}" ]; then
-      ${openssl} x509  -inform DER -outform PEM -in ${service_der} -out ${service_crt}
-      ${openssl} x509  -in ${service_crt} -noout -checkend ${exp_thres_secs}
+      tmpfile=`mktemp -t zmcertmgr.XXXXXX 2> /dev/null` || (echo "${ERROR_PREFIX} Failed to create tmpfile" && exit 1)
+      ${zimbra_java_home}/bin/keytool -export -file ${service_der} -alias ${mailboxd_server} \
+        -keystore ${mailboxd_keystore} -storepass ${mailboxd_keystore_password} > ${tmpfile} 2>&1
       if [ $? != 0 ]; then
-        status=1
-        echo "${service_crt} is expiring within ${exp_thres_days} days."
-        ${openssl} x509  -in ${service_crt} -enddate -noout 
+        echo "${ERROR_PREFIX} failed to export ${service_crt} from keystore."
+        echo
+        cat $tmpfile
+        echo
       fi
-    else 
-      echo "${ERROR_PREFIX} ${service_crt} does not exist"
+      rm -f $tmpfile 2>/dev/null
+      if [ -f "${service_der}" ]; then
+        ${openssl} x509  -inform DER -outform PEM -in ${service_der} -out ${service_crt}
+        ${openssl} x509  -in ${service_crt} -noout -checkend ${exp_thres_secs}
+        if [ $? != 0 ]; then
+          status=1
+          echo "${service_crt} is expiring within ${exp_thres_days} days."
+          ${openssl} x509  -in ${service_crt} -enddate -noout 
+        fi
+      else 
+        echo "${ERROR_PREFIX} ${service_crt} does not exist"
+      fi
     fi
   fi
 
@@ -1239,23 +1268,25 @@ viewdeployedcrt() {
   if [ $VIEW = "all" -o $VIEW = "mailboxd" ]; then
     service_der=/opt/zimbra/mailboxd/etc/mailboxd.der
     service_crt=/opt/zimbra/mailboxd/etc/mailboxd.pem
-    echo "::service mailboxd::"
-    tmpfile=`mktemp -t zmcertmgr.XXXXXX 2> /dev/null` || (echo "${ERROR_PREFIX} Failed to create tmpfile" && exit 1)
-    ${zimbra_java_home}/bin/keytool -export -file ${service_der} -alias ${mailboxd_server} \
-      -keystore ${mailboxd_keystore} -storepass ${mailboxd_keystore_password} > ${tmpfile} 2>&1
-    if [ $? != 0 ]; then
-      echo "${ERROR_PREFIX} failed to export ${service_crt} from keystore."
-      echo
-      cat $tmpfile
-      echo
-    fi
-    rm -f $tmpfile 2>/dev/null
-    if [ -f "${service_der}" ]; then
-      ${openssl} x509  -inform DER -outform PEM -in ${service_der} -out ${service_crt}
-      ${openssl} x509  -in ${service_crt} -dates -subject -issuer -noout
-      getsubjectaltnames $service_crt crt
-    else 
-      echo "${ERROR_PREFIX} ${service_crt} does not exist"
+    if [ -f ${mailboxd_keystore} -a -d "/opt/zimbra/mailboxd" ]; then
+      echo "::service mailboxd::"
+      tmpfile=`mktemp -t zmcertmgr.XXXXXX 2> /dev/null` || (echo "${ERROR_PREFIX} Failed to create tmpfile" && exit 1)
+      ${zimbra_java_home}/bin/keytool -export -file ${service_der} -alias ${mailboxd_server} \
+        -keystore ${mailboxd_keystore} -storepass ${mailboxd_keystore_password} > ${tmpfile} 2>&1
+      if [ $? != 0 ]; then
+        echo "${ERROR_PREFIX} failed to export ${service_crt} from keystore."
+        echo
+        cat $tmpfile
+        echo
+      fi
+      rm -f $tmpfile 2>/dev/null
+      if [ -f "${service_der}" ]; then
+        ${openssl} x509  -inform DER -outform PEM -in ${service_der} -out ${service_crt}
+        ${openssl} x509  -in ${service_crt} -dates -subject -issuer -noout
+        getsubjectaltnames $service_crt crt
+      else 
+        echo "${ERROR_PREFIX} ${service_der} does not exist"
+      fi
     fi
   fi
 
@@ -1306,7 +1337,7 @@ createCSR() {
   else
     type=$1
     if [ x"$type" != "xself" -a x"$type" != "xcomm" ]; then
-      echo "$ERROR_PREFIX certificate type most be one of self or comm"
+      echo "$ERROR_PREFIX certificate type must be one of self or comm"
       usage
     fi
     shift
@@ -1324,6 +1355,14 @@ createCSR() {
   else 
     KEYSIZE=1024
   fi
+  
+  if [ x"${1}" = "x-digest" ]; then
+    shift
+    DIGEST="$1"
+    shift
+    checkDigest
+  fi
+
   #echo "CreateCSR: RSA keysize: $KEYSIZE"
 
   if [ "x${1}" != "x" ]; then 
@@ -1363,7 +1402,7 @@ createCSR() {
   
   backupSSLDirs ${zimbra_ssl_directory}
   initSSLDirs
-  createCA -keysize ${KEYSIZE}
+  createCA -keysize ${KEYSIZE} -digest ${DIGEST}
   createServerCertReq $type
   
   if [ x"$type" = "xcomm" ]; then 
@@ -1565,10 +1604,10 @@ migrate () {
 usage () {
   echo "Usage: "
   echo "  $0 -help"
-  echo "  $0 createca [-new] [-keysize 1024] [-subject subject]"
+  echo "  $0 createca [-new] [-keysize 1024] [-digest digest] [-subject subject]"
   echo "  $0 deployca"
-  echo "  $0 createcsr <self|comm> [-new] [-keysize 1024] [-subject subject] [-subjectAltNames \"host1,host2\"]"
-  echo "  $0 createcrt [-new] [-days validation days] [-keysize 1024] [-subject subject] [-subjectAltNames \"host1,host2\"]"
+  echo "  $0 createcsr <self|comm> [-new] [-digest digest] [-keysize 1024] [-subject subject] [-subjectAltNames \"host1,host2\"]"
+  echo "  $0 createcrt [-new] [-days validation days] [-digest digest] [-keysize 1024] [-subject subject] [-subjectAltNames \"host1,host2\"]"
   echo "  $0 deploycrt <self>"
   echo "  $0 deploycrt <comm> [certfile] [ca_chain_file]"
   echo "  $0 savecrt"
@@ -1599,8 +1638,9 @@ usage () {
   echo "-  migrate moves certs/keys from ZCS installs prior to version 5.0.x"
   echo "-  addcacert appends an otherwise untrusted ssl certificate to the cacerts file."
   echo "     This is primarily for allowance of untrusted ssl certificates in external data sources."
-
-  echo
+  echo "-  Default digest mode is sha1.  Other digest mechansims are:"
+  echo "     md4, md5, mdc2, ripemd160, sha, sha224, sha256, sha384, sha512"
+  echo ""
   
   exit 1;
 }

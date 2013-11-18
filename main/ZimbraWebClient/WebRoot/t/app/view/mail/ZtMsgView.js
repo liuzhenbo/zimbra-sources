@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -15,6 +15,8 @@
 
 /**
  * This class displays a mail message using two components: a header and a body.
+ * Note that Sencha Touch reuses ListItem views, so no correspondence between
+ * message and view can be assumed.
  *
  * @author Conrad Damon <cdamon@zimbra.com>
  */
@@ -37,6 +39,54 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 				xtype: 'msgheader'
 			}, {
 				xtype: 'msgbody'
+			}, {
+				xtype: 'button',
+				cls: 'zcs-btn-msg-details'
+			}, {
+				xtype: 'container',
+				docked: 'bottom',
+				hidden: true,
+				itemId: 'toolbarContainer',
+				items: [{
+					xtype: 'toolbar',
+					hidden: true,
+					height: 40,
+					cls: 'zcs-msg-actions-toolbar',
+					showAnimation: {
+						type: 'slide',
+						direction: 'down'
+					},
+					hideAnimation: {
+						type: 'slideOut',
+						direction: 'up'
+					},
+					listeners: {
+						hide: function () {
+							var parentContainer = this.up('#toolbarContainer');
+							if (parentContainer) {
+								parentContainer.hide();
+							}
+						}
+					},
+					items: [{
+						xtype: 'button',
+						text: 'Cancel',
+						action: 'cancel'
+					}, {
+						xtype: 'spacer'
+					}, {
+						xtype: 'button',
+						iconCls: 'reply',
+						menuName: ZCS.constant.MENU_MSG_REPLY
+					}, {
+						xtype: 'button',
+						iconCls: 'trash'
+					}, {
+						xtype: 'button',
+						iconCls: 'arrow_down',
+						menuName: ZCS.constant.MENU_MSG
+					}]
+				}]
 			}
 		],
 
@@ -48,7 +98,7 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 
 		listeners: {
 
-			// In general, we manually render a msg view as needed, without using this event. Sometimes,
+			// In general, we manually render a msg view when a record is bound to it. Sometimes,
 			// we need to catch this event and do some rendering (eg when the store removes a record),
 			// since the support for a component-based List within Sencha Touch isn't great. Template-based
 			// Lists do a much better job of keeping the view sync'ed with the store.
@@ -62,24 +112,55 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 
 				if (msgView && msgData && controller.getHandleUpdateDataEvent()) {
 
-					var msgId = msgData.id,
-						msg = ZCS.cache.get(msgId),
-						oldMsgView = controller.getMsgViewById(msgId);
+					var msgId = msgData.id;
 
-					//<debug>
-					Ext.Logger.info('updatedata for msg ' + msgId + ' ("' + msg.get('fragment') + '") from msg view ' + oldMsgView.getId() + ' into msg view ' + msgView.getId());
-					//</debug>
-
-					// maintain the msg's display state - it's just getting moved to a different msg view
-					if (msg) {
-						msgView.setMsg(msg);
-						msgView.setExpanded(oldMsgView.getExpanded());
-						msgView.setState(oldMsgView.getState());
-						msgView.refreshView();
-						controller.setMsgViewById(msgId, msgView);
-					}
+					this.doMsgViewUpdate(msgView, msgId, false);
 				}
 			}
+		}
+	},
+
+	/**
+	 * Instead of doing a full message render for every message, or when the message is brought into view,
+	 * only do a full render when the record is assigned to the view.
+	 *
+	 */
+	applyRecord: function (record, oldRecord) {
+		if (record) {
+			var msgId = record.get('id');
+			this.doMsgViewUpdate(this, msgId, true);
+		}
+
+		return this.callParent(arguments);
+	},
+
+	doMsgViewUpdate: function (msgView, msgId, renderBody) {
+
+		var controller = ZCS.app.getConvController(),
+			msg = ZCS.cache.get(msgId),
+			oldMsgView = controller.getMsgViewById(msgId),
+			shouldBeExpanded, modelState;
+
+		//<debug>
+		if (oldMsgView) {
+			Ext.Logger.info('updatedata for msg ' + msgId + ' ("' + msg.get('fragment') + '") from msg view ' + oldMsgView.getId() + ' into msg view ' + msgView.getId());
+		}
+		//</debug>
+
+		// don't force any full list height recalcs.  Let individual iframe events do this if necessary,
+		// otherwise we should receive the proper height during the list's rendering phase.
+		if (msg) {
+			shouldBeExpanded = !!msg.get('isLoaded'),
+			msgView.setMsg(msg);
+			modelState = shouldBeExpanded ? ZCS.constant.HDR_EXPANDED : ZCS.constant.HDR_COLLAPSED;
+			msgView.setExpanded(shouldBeExpanded);
+			msgView.setState(modelState);
+			this.updateExpansion();
+			this.renderHeader();
+			if (renderBody && msgView.getExpanded()) {
+				msgView.renderBody();
+			}
+			controller.setMsgViewById(msgId, msgView);
 		}
 	},
 
@@ -96,7 +177,6 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 			this.setMsg(msg);
 			this.setExpanded(loaded);
 			this.setState(this.getExpanded() ? ZCS.constant.HDR_EXPANDED : ZCS.constant.HDR_COLLAPSED);
-
 			this.renderHeader();
 			if (loaded) {
 				this.renderBody();
@@ -132,12 +212,10 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 	},
 
 	/**
-	 * Makes sure components are rendered correctly as expanded or collapsed.
+	 * @returns {boolean} If the message body is using an iframe or not.
 	 */
-	refreshView: function() {
-		this.updateExpansion();
-		this.renderHeader();
-		this.updateHeight();
+	usingIframe: function () {
+		return this.down('msgbody').getUsingIframe();
 	},
 
 	/**
@@ -161,6 +239,7 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 		if (!isReadOnly) {
 			this.updateExpansion();
 		}
+		this.down('msgheader').setReadOnly(isReadOnly);
 	},
 
 	/**
@@ -179,9 +258,11 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 		if (!doNotRecomputeHeights) {
 			var listRef = this.up('.list');
 			// Let the list know this item got updated.
-			listRef.updatedItems.push(this);
-			listRef.updateItemHeights();
-			listRef.refreshScroller(listRef.getScrollable().getScroller());
+			if (listRef.getInfinite() && listRef.itemsCount) {
+				listRef.updatedItems.push(this);
+				listRef.handleItemHeights();
+				listRef.refreshScroller(listRef.getScrollable().getScroller());
+			}
 		}
 	},
 
@@ -192,14 +273,8 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 	 * give it absolute positoning.
 	 *
 	 */
-	translate: function(x, y, animation) {
-        if (animation) {
-            return this.translateAnimated(x, y, animation);
-        }
+	translate: function(x, y) {
 
-        if (this.isAnimating) {
-            this.stopAnimation();
-        }
 
         if (!isNaN(x) && typeof x == 'number') {
             this.x = x;
@@ -217,13 +292,14 @@ Ext.define('ZCS.view.mail.ZtMsgView', {
 
         if (this.element.forceAbsolutePositioning) {
             //In case the element was not forced before.
+            this.element.dom.style.position = "absolute";
             this.element.dom.style.webkitTransform = 'translate3d(0px, 0px, 0px)';
             this.element.dom.style.top = this.y + 'px';
         } else {
         	if (this.element.dom.style.top) {
         		this.element.dom.style.top = '0px';
         	}
-            this.element.dom.style.webkitTransform = 'translate3d(' + this.x + 'px, ' + this.y + 'px, 0px)';
+        	this.element.translate(x, y);
         }
     }
 

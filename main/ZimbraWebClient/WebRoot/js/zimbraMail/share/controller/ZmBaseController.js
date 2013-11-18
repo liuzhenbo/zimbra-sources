@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -168,11 +168,6 @@ function(actionCode, ev) {
 
 	switch (actionCode) {
 
-		case ZmKeyMap.FLAG:
-            if (isExternalAccount) { break; }
-			this._doFlag(this.getItems());
-			break;
-
 		case ZmKeyMap.MOVE:
             if (isExternalAccount) { break; }
 			if (!appCtxt.isChildWindow) {
@@ -221,7 +216,7 @@ function() {
 
 ZmBaseController.prototype.supportsDnD =
 function() {
-	return !(this.isSearchResults || appCtxt.isExternalAccount());
+	return !appCtxt.isExternalAccount();
 };
 
 // abstract protected methods
@@ -509,6 +504,13 @@ function(ev, items) {
 		var tagEvent = menuItem.getData(ZmTagMenu.KEY_TAG_EVENT);
 		var tagAdded = menuItem.getData(ZmTagMenu.KEY_TAG_ADDED);
 		items = items || this.getItems();
+
+		for (var i=0; i<items.length; i++) {
+			if (items[i].cloneOf) {
+				items[i] = items[i].cloneOf;
+			}
+		}
+
 		if (tagEvent == ZmEvent.E_TAGS && tagAdded) {
 			this._doTag(items, menuItem.getData(Dwt.KEY_OBJECT), true);
 		} else if (tagEvent == ZmEvent.E_CREATE) {
@@ -637,6 +639,7 @@ function(dlg) {
 		title:			this._getMoveDialogTitle(this._pendingActionData.length, this._pendingActionData),
 		description:	ZmMsg.targetFolder,
 		treeStyle:		DwtTree.SINGLE_STYLE,
+		noRootSelect: 	true, //I don't think you can ever use the "move" dialog to move anything to a root folder... am I wrong?
 		appName:		this._app._name
 	};
 };
@@ -763,12 +766,13 @@ function(items, on) {
 	}
 
 	var params = {items:items1, op:"flag", value:on};
-    params.actionText = on ? ZmMsg.actionFlag : ZmMsg.actionUnflag;
+    params.actionTextKey = on ? 'actionFlag' : 'actionUnflag';
 	var list = params.list = this._getList(params.items);
 	this._setupContinuation(this._doFlag, [on], params);
 	list.flagItems(params);
 };
 
+// TODO: shouldn't this be in ZmMailItemController?
 ZmBaseController.prototype._doMsgPriority = 
 function(items, on) {
 	items = AjxUtil.toArray(items);
@@ -789,7 +793,7 @@ function(items, on) {
 	}
 
 	var params = {items:items1, op:"priority", value:on};
-    params.actionText = on ? ZmMsg.actionMsgPriority : ZmMsg.actionUnMsgPriority; 
+    params.actionTextKey = on ? 'actionMsgPriority' : 'actionUnMsgPriority';
 	var list = params.list = this._getList(params.items);
 	this._setupContinuation(this._doMsgPriority, [on], params);
 	list.flagItems(params);	
@@ -1078,6 +1082,12 @@ function(parent, items) {
 
 		// dynamically build tag menu add/remove lists
 		items = items || AjxUtil.toArray(this.getItems());
+
+		for (var i=0; i<items.length; i++) {
+			if (items[i].cloneOf) {
+				items[i] = items[i].cloneOf;
+			}
+		}
 
 		var account = (appCtxt.multiAccounts && items.length == 1) ? items[0].getAccount() : null;
 

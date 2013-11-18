@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.framework.util;
@@ -35,9 +33,6 @@ import org.apache.log4j.Logger;
 
 import com.zimbra.common.util.tar.TarEntry;
 import com.zimbra.common.util.tar.TarInputStream;
-import com.zimbra.qa.selenium.framework.util.ZimbraAccount.SOAP_DESTINATION_HOST_TYPE;
-import com.zimbra.qa.selenium.framework.util.ZimbraSeleniumProperties.AppType;
-import com.zimbra.qa.selenium.framework.util.staf.Stafpostqueue;
 
 /**
  * This class contains general utilities methods that can be used across the framework
@@ -306,41 +301,6 @@ public class GeneralUtility {
 	   }
 	   
 	   
-   }
-
-   /**
-    * Synchronizing ZD client to ZCS through SOAP for the same email address in provided account
-    * @param account Account
-    * @throws HarnessException
-    */
-   public static void syncDesktopToZcsWithSoap(ZimbraAccount account)
-   throws HarnessException {
-      syncDesktopToZcsWithSoap(account, account.EmailAddress);
-   }
-
-   /**
-    * Synchronizing ZD client to ZCS through SOAP for the specified email address
-    * @param account Account
-    * @param emailAddressToBeSynced Email address to be synced
-    * @throws HarnessException
-    */
-   public static void syncDesktopToZcsWithSoap(ZimbraAccount account,
-         String emailAddressToBeSynced)
-   throws HarnessException {
-      if (ZimbraSeleniumProperties.getAppType() == AppType.DESKTOP) {
-         Stafpostqueue sp = new Stafpostqueue();
-         sp.waitForPostqueue();
-
-         String request =
-               "<SyncRequest xmlns=\"urn:zimbraOffline\"/>";
-
-         account.soapSend(request,
-               SOAP_DESTINATION_HOST_TYPE.CLIENT,
-               emailAddressToBeSynced);
-
-         sp.waitForPostqueue();
-
-      }
    }
 
    /**

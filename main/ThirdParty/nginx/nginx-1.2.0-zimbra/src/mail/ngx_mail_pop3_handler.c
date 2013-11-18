@@ -5,7 +5,7 @@
  */
 
 /*
- * Portions Copyright (c) VMware, Inc. [1998-2011]. All Rights Reserved.
+ * Portions Copyright (c) Zimbra Software, LLC. [1998-2011]. All Rights Reserved.
  */
 
 
@@ -132,9 +132,9 @@ ngx_mail_pop3_init_protocol(ngx_event_t *rev)
 void
 ngx_mail_pop3_auth_state(ngx_event_t *rev)
 {
-    ngx_int_t                  rc;
-    ngx_connection_t          *c;
-    ngx_mail_session_t        *s;
+    ngx_int_t            rc;
+    ngx_connection_t    *c;
+    ngx_mail_session_t  *s;
 
     c = rev->data;
     s = c->data;

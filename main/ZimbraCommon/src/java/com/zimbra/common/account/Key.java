@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
- * 
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -91,7 +91,7 @@ public class Key {
             }
         }
     }
-    
+
     public static enum UCServiceBy {
 
         // case must match protocol
@@ -155,20 +155,6 @@ public class Key {
         }
     }
 
-    public static enum GranteeBy {
-
-        // case must match protocol
-        id, name;
-
-        public static GranteeBy fromString(String s) throws ServiceException {
-            try {
-                return GranteeBy.valueOf(s);
-            } catch (IllegalArgumentException e) {
-                throw ServiceException.INVALID_REQUEST("unknown key: "+s, e);
-            }
-        }
-    }
-
     public static enum CalendarResourceBy {
 
         // case must match protocol
@@ -218,6 +204,19 @@ public class Key {
         public static ShareLocatorBy fromString(String s) throws ServiceException {
             try {
                 return ShareLocatorBy.valueOf(s);
+            } catch (IllegalArgumentException e) {
+                throw ServiceException.INVALID_REQUEST("unknown key: "+s, e);
+            }
+        }
+    }
+
+    public static enum AlwaysOnClusterBy {
+
+        id, name;
+
+        public static AlwaysOnClusterBy fromString(String s) throws ServiceException {
+            try {
+                return AlwaysOnClusterBy.valueOf(s);
             } catch (IllegalArgumentException e) {
                 throw ServiceException.INVALID_REQUEST("unknown key: "+s, e);
             }

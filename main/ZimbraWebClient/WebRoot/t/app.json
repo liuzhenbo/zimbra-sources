@@ -43,6 +43,36 @@
             "path": "app.js",
             "bundle": true,  /* Indicates that all class dependencies are concatenated into this file when build */
             "update": "full"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendar.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarView.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarEventsBase.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarEvents.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarSimpleEvents.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarDayEvents.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarMonthEvents.js"
+        },
+        {
+            "path": "app/view/ux/Ext.ux.TouchCalendarWeekEvents.js"
+        },
+        {
+            "path": "app/view/ux/DateTimePicker.js"
+        },
+        {
+            "path": "app/view/ux/DateTime.js"
         }
     ],
 
@@ -62,15 +92,14 @@
      *
      *      }
      */
-    "css": [
-        {
+    "css": [{
             "path": "resources/css/app.css",
+            "update": "full",
+            "platform": ["android","safari","chrome","ie10","firefox","ios","blackberry"]
+        }, {
+            "path": "resources/css/msgbody.css",
             "update": "full"
-        },
-	{
-	    "path": "resources/css/msgbody.css",
- 	    "update": "full"
-	}
+        }
     ],
 
     /**

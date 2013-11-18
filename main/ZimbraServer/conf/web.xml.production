@@ -15,6 +15,7 @@
   <filter>
     <filter-name>DoSFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.DoSFilter</filter-class>
+    <async-supported>true</async-supported>
 
     <init-param>
      <param-name>delayMs</param-name>
@@ -46,6 +47,7 @@
   <filter>
     <filter-name>ZimbraQoSFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.ZimbraQoSFilter</filter-class>
+    <async-supported>true</async-supported>
   </filter>
   
   <filter-mapping>
@@ -56,6 +58,7 @@
   <filter>
     <filter-name>ThrottlingFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.ThrottlingFilter</filter-class>
+    <async-supported>true</async-supported>
   </filter>
   <filter-mapping>
     <filter-name>ThrottlingFilter</filter-name>
@@ -65,6 +68,7 @@
   <filter>
     <filter-name>ETagHeaderFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.ETagHeaderFilter</filter-class>
+    <async-supported>true</async-supported>
   </filter>
   <filter-mapping>
     <filter-name>ETagHeaderFilter</filter-name>
@@ -74,6 +78,7 @@
   <filter>
     <filter-name>SpnegoFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.SpnegoFilter</filter-class>
+    <async-supported>true</async-supported>
     
     <init-param>
       <param-name>passThruOnFailureUri</param-name>
@@ -86,10 +91,12 @@
     <filter-name>SpnegoFilter</filter-name>
     <url-pattern>/spnego/*</url-pattern>
   </filter-mapping>
-  
+
+  <!-- HTTPCOMPRESSIONBEGIN %%comment VAR:zimbraHttpCompressionEnabled,-->%%
   <filter>
     <filter-name>GzipFilter</filter-name>
     <filter-class>org.eclipse.jetty.servlets.IncludableGzipFilter</filter-class>
+    <async-supported>true</async-supported>
 
     <init-param>
       <param-name>mimeTypes</param-name>
@@ -121,10 +128,12 @@
     <filter-name>GzipFilter</filter-name>
     <url-pattern>/*</url-pattern>
   </filter-mapping>
+  %%comment VAR:zimbraHttpCompressionEnabled,<!--%% HTTPCOMPRESSIONEND -->
 
   <filter>
     <filter-name>SetHeaderFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.SetHeaderFilter</filter-class>
+    <async-supported>true</async-supported>
   </filter>
   <filter-mapping>
     <filter-name>SetHeaderFilter</filter-name>
@@ -134,6 +143,7 @@
   <filter>
     <filter-name>ZimletFilter</filter-name>
     <filter-class>com.zimbra.cs.zimlet.ZimletFilter</filter-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -147,6 +157,7 @@
   <filter>
     <filter-name>Base64Filter</filter-name>
     <filter-class>com.zimbra.common.filters.Base64Filter</filter-class>
+    <async-supported>true</async-supported>
   </filter>
   <filter-mapping>
     <filter-name>Base64Filter</filter-name>
@@ -160,21 +171,46 @@
   <filter>
     <filter-name>RequestStringFilter</filter-name>
     <filter-class>com.zimbra.cs.servlet.RequestStringFilter</filter-class>
+    <async-supported>true</async-supported>
   </filter>
   <filter-mapping>
     <filter-name>RequestStringFilter</filter-name>
     <url-pattern>/*</url-pattern>
-  </filter-mapping>  
+  </filter-mapping> 
+   
+  <filter>
+    <filter-name>CsrfFilter</filter-name>
+    <filter-class>com.zimbra.cs.servlet.CsrfFilter</filter-class>
+    <async-supported>true</async-supported>
+    <init-param>
+        <param-name>csrf.req.check</param-name>
+        <param-value>true</param-value>
+    </init-param>
+    <init-param>
+        <!-- A comma separated list like www.abc.com, www.xyz.com -->
+        <param-name>allowed.referrer.host</param-name>
+        <param-value />
+    </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>CsrfFilter</filter-name>
+        <url-pattern>/soap/*</url-pattern>
+        <url-pattern>/user/*</url-pattern>
+        <url-pattern>/home/*</url-pattern>
+        <url-pattern>/upload</url-pattern>
+    </filter-mapping>
 
   <servlet>
     <servlet-name>FirstServlet</servlet-name>
     <servlet-class>com.zimbra.cs.servlet.FirstServlet</servlet-class>
     <load-on-startup>1</load-on-startup>
+    <async-supported>true</async-supported>
   </servlet>
 
   <servlet>
     <servlet-name>ExtensionDispatcherServlet</servlet-name>
     <servlet-class>com.zimbra.cs.extension.ExtensionDispatcherServlet</servlet-class>
+    <async-supported>true</async-supported>
     <load-on-startup>2</load-on-startup>
     <init-param>
       <param-name>allowed.ports</param-name>
@@ -185,6 +221,7 @@
   <servlet>
     <servlet-name>SoapServlet</servlet-name>
     <servlet-class>com.zimbra.soap.SoapServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, 7070, 7443</param-value>
@@ -204,6 +241,7 @@
   <servlet>
     <servlet-name>AdminServlet</servlet-name>
     <servlet-class>com.zimbra.soap.SoapServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraAdminPort%%, 7071</param-value>
@@ -227,6 +265,7 @@
   <servlet>
     <servlet-name>WsdlServlet</servlet-name>
     <servlet-class>com.zimbra.soap.WsdlServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -236,6 +275,7 @@
   <servlet>
     <servlet-name>ContentServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.ContentServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -250,6 +290,7 @@
   <servlet>
     <servlet-name>UserServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.UserServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -264,6 +305,7 @@
   <servlet>
     <servlet-name>PreAuthServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.PreAuthServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -274,6 +316,7 @@
   <servlet>
     <servlet-name>ExternalUserProvServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.ExternalUserProvServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -285,6 +328,7 @@
   <servlet>
     <servlet-name>CertAuthServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.CertAuthServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailSSLClientCertPort%%, 9443</param-value>
@@ -300,6 +344,7 @@
   <servlet>
     <servlet-name>SpnegoAuthServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.SpnegoAuthServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -310,6 +355,7 @@
   <servlet>
     <servlet-name>PublicICalServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.PublicICalServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -320,6 +366,7 @@
   <servlet>
     <servlet-name>FileUploadServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.FileUploadServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -330,6 +377,7 @@
   <servlet>
     <servlet-name>StatsImageServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.admin.StatsImageServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraAdminPort%%, 7071</param-value>
@@ -340,6 +388,7 @@
   <servlet>
     <servlet-name>ProxyServlet</servlet-name>
     <servlet-class>com.zimbra.cs.zimlet.ProxyServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, 7070</param-value>
@@ -350,6 +399,7 @@
   <servlet>
     <servlet-name>DavServlet</servlet-name>
     <servlet-class>com.zimbra.cs.dav.service.DavServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, 7070</param-value>
@@ -360,6 +410,7 @@
   <servlet>
     <servlet-name>DavWellKnownServlet</servlet-name>
     <servlet-class>com.zimbra.cs.dav.service.DavWellKnownServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, 7070</param-value>
@@ -370,6 +421,7 @@
   <servlet>
     <servlet-name>CollectLDAPConfigZimbra</servlet-name>
     <servlet-class>com.zimbra.cs.service.admin.CollectLDAPConfigZimbra</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraAdminPort%%, 7071</param-value>
@@ -379,6 +431,7 @@
    <servlet>
     <servlet-name>AdminFileDownload</servlet-name>
     <servlet-class>com.zimbra.cs.service.admin.AdminFileDownload</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraAdminPort%%, 7071</param-value>
@@ -388,6 +441,7 @@
   <servlet>
     <servlet-name>CollectConfigFiles</servlet-name>
     <servlet-class>com.zimbra.cs.service.admin.CollectConfigFiles</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraAdminPort%%, 7071</param-value>
@@ -397,6 +451,7 @@
   <servlet>
     <servlet-name>ZimletResources</servlet-name>
     <servlet-class>com.zimbra.cs.zimlet.ZimletResources</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443, 7071</param-value>
@@ -420,17 +475,23 @@
     <param-name>resource-cache-dir</param-name>
     <param-value>${webapp}/../../work/resource-cache</param-value>
   </init-param>
+  <init-param>
+    <param-name>shouldSupportGzip</param-name>
+    <param-value>%%zimbraWebGzipEnabled%%</param-value>
+  </init-param>
   </servlet>
 
   <servlet>
     <servlet-name>RobotsServlet</servlet-name>
     <servlet-class>com.zimbra.cs.servlet.RobotsServlet</servlet-class>
     <load-on-startup>11</load-on-startup>
+    <async-supported>true</async-supported>
   </servlet>
   
   <servlet>
     <servlet-name>AutoDiscoverServlet</servlet-name>
     <servlet-class>com.zimbra.cs.service.AutoDiscoverServlet</servlet-class>
+    <async-supported>true</async-supported>
     <init-param>
       <param-name>allowed.ports</param-name>
       <param-value>%%zimbraMailPort%%, %%zimbraMailSSLPort%%, %%zimbraAdminPort%%, 7070, 7443</param-value>

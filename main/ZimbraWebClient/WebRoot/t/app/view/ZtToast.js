@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- *
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -46,7 +46,11 @@ Ext.define('ZCS.view.ZtToast', {
 			if (event.target.className === 'zcs-toast-undo-action') {
 				me.fireEvent('undo');
 			}
-		}
+		};
+
+		ZCS.app.on('orientationChange', function () {
+			me.reposition();
+		});
 
 		this.callParent(arguments);
 	},
@@ -54,19 +58,25 @@ Ext.define('ZCS.view.ZtToast', {
 	showMessage: function (message) {
 		var me = this,
 			formattedTemplate = ZCS.view.ZtToast.toastTpl.apply({ text: message }),
-			viewportBox = Ext.Viewport.element.getBox(),
-			left = (viewportBox.width / 2) - (me.getWidth() / 2),
 			toast = me.down('component');
-
-		toast.element.un('tap', me.handleTap);
 
 		toast.setHtml(formattedTemplate);
 
 		toast.element.on('tap', me.handleTap);
 
+		me.doShow();
+
+		Ext.defer(me.hide, me.getMilliSecondsUntilHide(), me);
+	},
+
+	doShow: function () {
+		var me = this,
+			viewportBox = Ext.Viewport.element.getBox(),
+			left = (viewportBox.width / 2) - (me.getWidth() / 2);
+
 		me.element.applyStyles({
 			position: 'absolute',
-			"z-index": 1000
+			"zIndex": 10000	
 		});
 
 		me.show({
@@ -82,11 +92,16 @@ Ext.define('ZCS.view.ZtToast', {
 			},
 			duration: 500
 		});
+	},
 
-		Ext.defer(me.hide, me.getMilliSecondsUntilHide(), me);
+	reposition: function () {
+		var me = this,
+			viewportBox = Ext.Viewport.element.getBox(),
+			left = (viewportBox.width / 2) - (me.getWidth() / 2);
+
+		me.setLeft(left);
 	}
-},
-	function (thisClass) {
+}, function (thisClass) {
 		thisClass.toastTpl = Ext.create('Ext.XTemplate', ZCS.template.Toast);
 	}
 );

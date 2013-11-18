@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -513,6 +513,7 @@ function(){
 
     this._headerEl = document.getElementById(htmlElId+"_header");
     this._bodyEl   = document.getElementById(htmlElId+"_body");
+    this._containerEl   = document.getElementById(htmlElId+"_container");
 
     //Create DWT IFrame
     var params = {
@@ -554,6 +555,9 @@ function(){
     Dwt.setHandler(this._headerExpand, DwtEvent.ONCLICK, AjxCallback.simpleClosure(this._toggleExpand, this));
 
     this._iframePreview.getIframe().onload = AjxCallback.simpleClosure(this._updatePreview, this);
+
+    DwtShell.getShell(window).addControlListener(new AjxListener(this, function() { return this._onResize.apply(this, arguments); }));
+    this.addControlListener(new AjxListener(this, function() { return this._onResize.apply(this, arguments); }));
 };
 
 ZmPreviewView._errorCallback =
@@ -788,7 +792,7 @@ function(item){
         this._headerCreator.innerHTML = item.creator;
 
     if(this._lockStatus)
-        this._lockStatus.innerHTML = AjxImg.getImageHtml(item.locked ? "PadLock" : "Blank_16");
+        this._lockStatus.innerHTML = AjxImg.getImageHtml(item.locked ? "Padlock" : "Blank_16");
 
     if(this._headerLockTime){
         if(item.locked){
@@ -804,6 +808,8 @@ function(item){
     }
 
     this.setNotes(item);
+
+    this._onResize();
 };
 
 ZmPreviewView.prototype.setNotes =
@@ -865,5 +871,14 @@ function(enabled){
     }
 };
 
+ZmPreviewView.prototype._onResize =
+function() {
+    if (this._containerEl && this._bodyEl) {
+        // in order to adapt to decreasing sizes in IE, make the body
+        // very small before getting its parent's size
+        Dwt.setSize(this._bodyEl, 1, 1);
 
-
+        var size = Dwt.getSize(this._containerEl);
+        Dwt.setSize(this._bodyEl, size.x, size.y);
+    }
+};

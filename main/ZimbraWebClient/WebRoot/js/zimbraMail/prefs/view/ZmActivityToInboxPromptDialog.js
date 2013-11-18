@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -183,7 +183,7 @@ function () {
 	this.popdown(); //popdown existing 
 	var filterRuleDialog = appCtxt.getFilterRuleDialog();
 	this._setConditions(this._activityExceptionsRule);
-	filterRuleDialog.popup(this._activityExceptionsRule, true);
+	filterRuleDialog.popup(this._activityExceptionsRule, this._ruleExists);
 };
 
 /**

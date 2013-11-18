@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.briefcase.file;
@@ -25,7 +23,7 @@ import com.zimbra.qa.selenium.framework.items.FolderItem;
 import com.zimbra.qa.selenium.framework.items.FolderItem.SystemFolder;
 import com.zimbra.qa.selenium.framework.ui.Action;
 import com.zimbra.qa.selenium.framework.ui.Button;
-import com.zimbra.qa.selenium.framework.util.GeneralUtility;
+
 import com.zimbra.qa.selenium.framework.util.HarnessException;
 import com.zimbra.qa.selenium.framework.util.SleepUtil;
 import com.zimbra.qa.selenium.framework.util.ZAssert;
@@ -42,9 +40,9 @@ public class UploadFile extends FeatureBriefcaseTest {
 
 		super.startingPage = app.zPageBriefcase;
 
-		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains("FOSS")){
+		//if(ZimbraSeleniumProperties.zimbraGetVersionString().contains("FOSS")){
 		    super.startingAccountPreferences.put("zimbraPrefShowSelectionCheckbox","TRUE");
-		}			    
+		//}			    
 	}
 
 	@Test(description = "Upload file through RestUtil - verify through SOAP", groups = { "smoke" })
@@ -56,7 +54,7 @@ public class UploadFile extends FeatureBriefcaseTest {
 
 		// Create file item
 		String filePath = ZimbraSeleniumProperties.getBaseDirectory()
-		+ "/data/public/other/testsoundfile.wav";
+		+ "/data/public/other/testtextfile.txt";
 		
 		FileItem file = new FileItem(filePath);
 
@@ -104,7 +102,7 @@ public class UploadFile extends FeatureBriefcaseTest {
 
 		// Create file item
 		String filePath = ZimbraSeleniumProperties.getBaseDirectory()
-		+ "/data/public/other/putty.log";
+		+ "/data/public/other/testtextfile.txt";
 		
 		FileItem fileItem = new FileItem(filePath);
 
@@ -118,7 +116,7 @@ public class UploadFile extends FeatureBriefcaseTest {
 				+ "<doc l='" + briefcaseFolder.getId() + "'><upload id='"
 				+ attachmentId + "'/></doc></SaveDocumentRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		// refresh briefcase page
 		app.zTreeBriefcase.zTreeItem(Action.A_LEFTCLICK, briefcaseFolder, true);
@@ -183,6 +181,8 @@ public class UploadFile extends FeatureBriefcaseTest {
 		SleepUtil.sleepSmall();
 		
 		// Click on created File
+		app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
+		/*
 		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains(
     			"FOSS")){
 		    app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
@@ -190,7 +190,7 @@ public class UploadFile extends FeatureBriefcaseTest {
 		}else{
 		    app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, fileItem);
 		}
-		
+		*/
 		// Verify file is uploaded
 		String name = app.zPageBriefcase.getItemNameFromListView(fileName);
 		ZAssert.assertStringContains(name, fileName, "Verify file name through GUI");

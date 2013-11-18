@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -38,6 +38,7 @@ import com.zimbra.common.account.ProvisioningConstants;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.cs.account.AccessManager;
 import com.zimbra.cs.account.Account;
+import com.zimbra.cs.account.AlwaysOnCluster;
 import com.zimbra.cs.account.AuthToken;
 import com.zimbra.cs.account.CalendarResource;
 import com.zimbra.cs.account.Config;
@@ -75,6 +76,7 @@ import com.zimbra.cs.account.auth.AuthMechanism.AuthMech;
 import com.zimbra.cs.account.ldap.LdapProv;
 import com.zimbra.cs.account.ldap.entry.LdapDomain;
 import com.zimbra.qa.unittest.prov.ProvTestUtil;
+import com.zimbra.soap.admin.type.GranteeSelector.GranteeBy;
 import com.zimbra.soap.type.TargetBy;
 
 public class TestACLAll extends LdapTest {
@@ -99,7 +101,7 @@ public class TestACLAll extends LdapTest {
             }
         }
 
-        private Object granteeType;
+        private final Object granteeType;
 
         static TestGranteeType get(GranteeType gt) {
             for (TestGranteeType testGranteeType : TEST_GRANTEE_TYPES) {
@@ -283,6 +285,10 @@ public class TestACLAll extends LdapTest {
         return "server-" + nextSeq();
     }
 
+    private String alwaysOnClusterName() {
+        return "alwaysOnCluster-" + nextSeq();
+    }
+
     private String ucServiceName() {
         return "ucservice-" + nextSeq();
     }
@@ -424,6 +430,10 @@ public class TestACLAll extends LdapTest {
         return provUtil.createServer(serverName());
     }
 
+    private AlwaysOnCluster createAlwaysOnCluster() throws Exception {
+        return provUtil.createAlwaysOnCluster(alwaysOnClusterName());
+    }
+
     private UCService createUCService() throws Exception {
         return provUtil.createUCService(ucServiceName());
     }
@@ -494,6 +504,7 @@ public class TestACLAll extends LdapTest {
             }
         case group:
         case server:
+        case alwaysoncluster:
         case ucservice:
         case xmppcomponent:
         case zimlet:
@@ -541,6 +552,10 @@ public class TestACLAll extends LdapTest {
                 break;
             case server:
                 validTypes.add(TargetType.server);
+                validTypes.add(TargetType.global);
+                break;
+            case alwaysoncluster:
+                validTypes.add(TargetType.alwaysoncluster);
                 validTypes.add(TargetType.global);
                 break;
             case ucservice:
@@ -894,6 +909,10 @@ public class TestACLAll extends LdapTest {
             grantedOnTarget = createServer();
             targetName = ((Server)grantedOnTarget).getName();
             break;
+        case alwaysoncluster:
+            grantedOnTarget = createAlwaysOnCluster();
+            targetName = ((AlwaysOnCluster)grantedOnTarget).getName();
+            break;
         case ucservice:
             grantedOnTarget = createUCService();
             targetName = ((UCService)grantedOnTarget).getName();
@@ -928,7 +947,7 @@ public class TestACLAll extends LdapTest {
             RightCommand.grantRight(
                     prov, grantingAccount,
                     grantedOnTargetType.getCode(), TargetBy.name, targetName,
-                    granteeType.getCode(), Key.GranteeBy.name, granteeName, secret,
+                    granteeType.getCode(), GranteeBy.name, granteeName, secret,
                     right.getName(), null);
 
         } catch (ServiceException e) {
@@ -1008,6 +1027,9 @@ public class TestACLAll extends LdapTest {
                 inheritableTypes.add(TargetType.global);
                 break;
             case server:
+                inheritableTypes.add(TargetType.global);
+                break;
+            case alwaysoncluster:
                 inheritableTypes.add(TargetType.global);
                 break;
             case ucservice:
@@ -1274,6 +1296,16 @@ public class TestACLAll extends LdapTest {
                 badTargets.add(grantedOnTarget);
             }
             break;
+        case alwaysoncluster:
+            if (grantedOnTargetType == TargetType.alwaysoncluster) {
+                goodTargets.add(grantedOnTarget);
+                badTargets.add(createAlwaysOnCluster());
+            } else if (grantedOnTargetType == TargetType.global) {
+                goodTargets.add(createAlwaysOnCluster());
+            } else {
+                badTargets.add(grantedOnTarget);
+            }
+            break;
         case ucservice:
             if (grantedOnTargetType == TargetType.ucservice) {
                 goodTargets.add(grantedOnTarget);
@@ -1329,7 +1361,7 @@ public class TestACLAll extends LdapTest {
                     prov,
                     TargetType.getTargetType(target).getCode(),
                     TargetBy.name, target.getLabel(),
-                    Key.GranteeBy.name, grantee.getName(),
+                    GranteeBy.name, grantee.getName(),
                     false, false);
         } catch (ServiceException e) {
             // getEffectiveRights should not throw in the normal case.
@@ -1354,7 +1386,7 @@ public class TestACLAll extends LdapTest {
         try {
             allEffRights = RightCommand.getAllEffectiveRights(
                     prov,
-                    GranteeType.GT_USER.getCode(), Key.GranteeBy.name, grantee.getName(),
+                    GranteeType.GT_USER.getCode(), GranteeBy.name, grantee.getName(),
                     false, false);
         } catch (ServiceException e) {
             // getEffectiveRights should not throw in the normal case.
@@ -1390,7 +1422,7 @@ public class TestACLAll extends LdapTest {
                 TargetType.getTargetType(target).getCode(),
                 Key.DomainBy.name, domainName,
                 null, null,
-                Key.GranteeBy.name, grantee.getName());
+                GranteeBy.name, grantee.getName());
 
         } catch (ServiceException e) {
             if (!expectFailure) {
@@ -1786,7 +1818,7 @@ public class TestACLAll extends LdapTest {
             RightCommand.revokeRight(prov,
                 globalAdmin,
                 ace.targetType(), TargetBy.id, ace.targetId(),
-                ace.granteeType(), Key.GranteeBy.id, ace.granteeId(),
+                ace.granteeType(), GranteeBy.id, ace.granteeId(),
                 ace.right(), ace.rightModifier());
         }
     }

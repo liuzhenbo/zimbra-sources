@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2010, 2011 Zimbra, Inc.
- *
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -22,7 +22,10 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import com.google.common.io.ByteStreams;
+import com.zimbra.common.util.L10nUtil;
 import com.zimbra.common.util.Pair;
+import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.cs.account.MockProvisioning;
 import com.zimbra.cs.account.Provisioning;
 import com.zimbra.cs.index.IndexDocument;
@@ -130,4 +133,21 @@ public final class ParsedMessageTest {
         Assert.assertEquals("[NORMALIZE] " + description, expected, ParsedMessage.normalize(raw));
     }
 
+
+    @Test
+    public void encryptedFragment() throws Exception {
+        String msgWasEncrypted = L10nUtil.getMessage(L10nUtil.MsgKey.encryptedMessageFragment);
+        if (msgWasEncrypted == null) {
+            ZimbraLog.misc.error("'encryptedMessageFragment' key missing from ZsMsg.properties");
+            msgWasEncrypted = "";
+        }
+
+        byte[] raw = ByteStreams.toByteArray(getClass().getResourceAsStream("smime-encrypted.txt"));
+        ParsedMessage pm = new ParsedMessage(raw, false);
+        Assert.assertEquals("encrypted-message fragment", msgWasEncrypted, pm.getFragment(null));
+
+        raw = ByteStreams.toByteArray(getClass().getResourceAsStream("smime-signed.txt"));
+        pm = new ParsedMessage(raw, false);
+        Assert.assertFalse("normal message fragment", pm.getFragment(null).equals(msgWasEncrypted));
+    }
 }

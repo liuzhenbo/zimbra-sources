@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -379,9 +379,12 @@ function (hoverImageInfo) {
 DwtButton.prototype.setMenu =
 function(params) {
 	
-	params = Dwt.getParams(arguments, DwtButton.setMenuParams, (arguments.length == 1 && !arguments[0].menu));
-	
-	this._menu = params.menu;
+	params = Dwt.getParams(arguments, DwtButton.setMenuParams, (arguments.length == 1 && arguments[0] && !arguments[0].menu));
+
+    if (params){
+	    this._menu = params.menu;
+    }
+
 	if (this._menu) {
 		// if menu is a callback, wait until it's created to set menu-related properties
 		if (this._menu.isDwtMenu) {
@@ -646,7 +649,7 @@ function() {
 	var p = Dwt.toWindow(htmlEl);
 	var mev = new DwtMouseEvent();
 	this._setMouseEvent(mev, {dwtObj:this, target:htmlEl, button:DwtMouseEvent.LEFT, docX:p.x, docY:p.y});
-	DwtButton._dropDownCellMouseDownHdlr(mev);
+	DwtButton._dropDownCellMouseUpHdlr(mev);
 };
 
 /**

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011 VMware, Inc.
+ * Copyright (C) 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -63,7 +63,7 @@ DwtOutsideMouseEventMgr = function() {
 DwtOutsideMouseEventMgr.prototype.isDwtOutsideMouseEventMgr = true;
 DwtOutsideMouseEventMgr.prototype.toString = function() { return "DwtOutsideMouseEventMgr"; };
 
-DwtOutsideMouseEventMgr.EVENTS = [DwtEvent.ONMOUSEDOWN, DwtEvent.ONMOUSEWHEEL];
+DwtOutsideMouseEventMgr.EVENTS = [DwtEvent.ONMOUSEDOWN];
 DwtOutsideMouseEventMgr.EVENTS_HASH = AjxUtil.arrayAsHash(DwtOutsideMouseEventMgr.EVENTS);
 
 /**
@@ -89,8 +89,7 @@ function(params) {
 		var mecParams = {
 			id:				this.id,
 			hardCapture:	false,
-			mouseDownHdlr:	DwtOutsideMouseEventMgr._mouseEventHdlr,
-			mouseWheelHdlr:	DwtOutsideMouseEventMgr._mouseEventHdlr
+			mouseDownHdlr:	DwtOutsideMouseEventMgr._mouseEventHdlr
 		}
 		this._menuCapObj = new DwtMouseEventCapture(mecParams);
 	}

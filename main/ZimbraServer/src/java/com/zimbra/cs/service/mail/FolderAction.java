@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -88,12 +88,13 @@ public class FolderAction extends ItemAction {
     public static final String OP_RETENTIONPOLICY = "retentionpolicy";
     public static final String OP_DISABLE_ACTIVESYNC = "disableactivesync";
     public static final String OP_ENABLE_ACTIVESYNC = '!' + OP_DISABLE_ACTIVESYNC;
-    
+    public static final String OP_WEBOFFLINESYNCDAYS = "webofflinesyncdays";
+
 
     private static final Set<String> FOLDER_OPS = ImmutableSet.of(
         OP_EMPTY, OP_REFRESH, OP_SET_URL, OP_IMPORT, OP_FREEBUSY, OP_CHECK, OP_UNCHECK, OP_GRANT,
         OP_REVOKE, OP_REVOKEORPHANGRANTS, OP_UPDATE, OP_SYNCON, OP_SYNCOFF, OP_RETENTIONPOLICY,
-        OP_DISABLE_ACTIVESYNC, OP_ENABLE_ACTIVESYNC
+        OP_DISABLE_ACTIVESYNC, OP_ENABLE_ACTIVESYNC, OP_WEBOFFLINESYNCDAYS
     );
 
     @Override public Element handle(Element request, Map<String, Object> context) throws ServiceException {
@@ -291,6 +292,9 @@ public class FolderAction extends ItemAction {
                 new RetentionPolicy(action.getElement(MailConstants.E_RETENTION_POLICY)));
         } else if (operation.equals(OP_DISABLE_ACTIVESYNC) || operation.equals(OP_ENABLE_ACTIVESYNC)) {
             mbox.setActiveSyncDisabled(octxt, iid.getId(), operation.equals(OP_DISABLE_ACTIVESYNC));
+        } else if (operation.equals(OP_WEBOFFLINESYNCDAYS)) {
+            mbox.setFolderWebOfflineSyncDays(octxt, iid.getId(),
+                    action.getAttributeInt(MailConstants.A_NUM_DAYS));
         } else {
             throw ServiceException.INVALID_REQUEST("unknown operation: " + operation, null);
         }

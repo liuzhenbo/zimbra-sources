@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -109,7 +109,7 @@ function() {
 	ZmOperation.registerOp(ZmId.OP_CLEAR_ALL, {textKey:"clearAll", image:"Cancel"});
 	ZmOperation.registerOp(ZmId.OP_CLOSE, {textKey:"close", tooltipKey:"closeTooltip", image:"Close", shortcut:ZmKeyMap.CANCEL});
 	ZmOperation.registerOp(ZmId.OP_COMPOSE_FORMAT, {textKey:"format", tooltipKey:"formatTooltip", image:"SwitchFormat", shortcut:ZmKeyMap.HTML_FORMAT}, ZmSetting.HTML_COMPOSE_ENABLED);
-	ZmOperation.registerOp(ZmId.OP_CONTACTGROUP_MENU, {textKey: "AB_CONTACT_GROUP", tooltipKey:"contactGroupTooltip", image:"Group"}, ZmSetting.TAGGING_ENABLED,
+	ZmOperation.registerOp(ZmId.OP_CONTACTGROUP_MENU, {textKey: "AB_CONTACT_GROUP", tooltipKey:"contactGroupTooltip", image:"Group"}, null,
 		AjxCallback.simpleClosure(function(parent) {
 			ZmOperation.addDeferredMenu(ZmOperation.addContactGroupMenu, parent, true);
 	}));
@@ -157,6 +157,8 @@ function() {
 	ZmOperation.registerOp(ZmId.OP_PAGE_FORWARD, {image:"RightArrow", shortcut:ZmKeyMap.NEXT_PAGE});
 	ZmOperation.registerOp(ZmId.OP_PRINT, {textKey:"print", tooltipKey:"printTooltip", image:"Print", shortcut:ZmKeyMap.PRINT, textPrecedence:30, showImageInToolbar: true}, ZmSetting.PRINT_ENABLED);
     ZmOperation.registerOp(ZmId.OP_PRIORITY_FILTER, {image:"Priority", textKey:"activityStream"}, ZmSetting.PRIORITY_INBOX_ENABLED);
+	ZmOperation.registerOp(ZmId.OP_FIND_SHARES, {image:"Group", textKey:"findShares"}, ZmSetting.SHARING_ENABLED);
+
 	//ZmOperation.registerOp(ZmId.OP_QUICK_COMMANDS, {textKey:"quickCommands", image:"QuickCommand"});
 	ZmOperation.registerOp(ZmId.OP_RECOVER_DELETED_ITEMS, {textKey:"recoverDeletedItems", image:"Trash", tooltipKey:"recoverDeletedItems"}, ZmSetting.DUMPSTER_ENABLED);
     ZmOperation.registerOp(ZmId.OP_REFRESH, {textKey:"refresh", tooltipKey:"refreshTooltip"});

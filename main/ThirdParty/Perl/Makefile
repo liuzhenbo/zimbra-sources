@@ -12,6 +12,7 @@ BUILD_PLATFORM ?= $(shell sh $(P4_ROOT)/ZimbraBuild/rpmconf/Build/get_plat_tag.s
 PERL_TGZ_DEST_DIR := $(P4_ROOT)/ThirdPartyBuilds/$(BUILD_PLATFORM)/perl
 PERL_BIN_TGZ_DEST := $(PERL_TGZ_DEST_DIR)/perlbin.tgz
 PERL_TGZ_DEST	:= $(PERL_TGZ_DEST_DIR)/perllib.tgz
+PERL_SA_RULES	:= $(PERL_TGZ_DEST_DIR)/perl-sa-rules.tgz
 
 ifeq ($(BUILD_PLATFORM), )
         BUILD_PLATFORM := "UNKNOWN"
@@ -59,20 +60,20 @@ SASL_INCLUDE	:= $(ZIMBRA_HOME)/cyrus-sasl/include
 
 # Order is important here
 PRE_PERL_LIBS	:= \
-	Test::Requires \
 	Try::Tiny \
-	Test::Fatal \
 	Test::Simple \
+	Test::Fatal \
 	ExtUtils::MakeMaker \
+	T/TO/TOKUHIROM/Test-Requires-0.06.tar.gz \
 	CPAN::Meta::YAML \
 	JSON::PP \
 	Parse::CPAN::Meta \
-	Version::Requirements \
+	CPAN::Meta::Requirements \
 	ExtUtils::Manifest \
 	JSON::PP::Compat5006 \
 	File::Copy::Recursive \
+	parent \
 	version \
-	CPAN::Meta::Requirements \
 	CPAN::Meta \
 	ExtUtils::MakeMaker \
 	Params::Util \
@@ -85,27 +86,37 @@ PRE_PERL_LIBS	:= \
 	MRO::Compat \
 	Task::Weaken \
 	Eval::Closure \
-	Dist::CheckConflicts \
-	Package::Stash \
 	Module::Runtime \
+	Dist::CheckConflicts \
 	Module::Implementation \
+	Package::Stash \
 	Class::Load \
 	Perl::OSType \
 	Module::Metadata \
 	ExtUtils::CBuilder \
 	ExtUtils::ParseXS \
 	Test::Harness \
+	Pod::Simple \
+	Pod::Man \
 	Module::Build \
 	Class::Load::XS \
 	Sub::Name \
 	Carp \
 	Sub::Exporter::Progressive \
+	Devel::GlobalDestruction::XS \
 	Devel::GlobalDestruction \
-	Moose \
 	Test::Tester \
 	Test::NoWarnings \
+	Test::Deep \
+	CPAN::Meta::Check \
+	Test::CheckDeps \
+	Moose \
 	Array::Compare \
 	Test::Pod \
+	File::Path \
+	File::Temp \
+	File::Spec \
+	File::Slurp \
 	Tree::DAG_Node \
 	Sub::Uplevel \
 	Test::Exception \
@@ -149,6 +160,7 @@ PERL_LIBS 	:= \
 	LWP::UserAgent \
 	LWP::Protocol::https \
 	IO::Stringy \
+	Date::Parse \
 	Mail::Mailer \
 	MIME::Types \
 	MIME::Lite \
@@ -158,14 +170,20 @@ PERL_LIBS 	:= \
 	Module::CoreList \
 	Module::Load::Conditional \
 	IPC::Cmd \
-	Date::Parse \
 	Pod::Escapes \
-	Pod::Simple \
+	Class::Data::Inheritable \
+	Devel::StackTrace \
+	Exception::Class \
+	Data::Dumper \
+	Algorithm::Diff \
+	Text::Diff \
+	Test::Differences \
+	Test::Most \
+	autodie \
 	Convert::BinHex \
-	Test::Deep \
-	File::Temp \
 	MIME::Tools \
 	Class::Inspector \
+	IO::SessionData \
 	SOAP::Lite \
 	Net::Telnet \
 	Config::IniFiles \
@@ -213,16 +231,18 @@ PERL_LIBS 	:= \
 	Geography::Countries \
 	IP::Country \
 	DBD::SQLite \
-	Filesys::Df
+	Filesys::Df \
+	LMDB_File \
+	Data::Validate::IP
 
 NET_SSLeay := \
-	Net-SSLeay-1.52
+	Net-SSLeay-1.55
 
 CRYPT_SSLeay := \
 	Crypt-SSLeay-0.64
 
 CRYPT_RANDOM := \
-	Crypt-OpenSSL-Random-0.04
+	Crypt-OpenSSL-Random-0.06
 
 CRYPT_RSA := \
 	Crypt-OpenSSL-RSA-0.27
@@ -234,13 +254,19 @@ BDB_PERL_LIBS := \
 	BerkeleyDB-0.51
 
 MAIL_SPF := \
-	Mail-SPF-v2.8.0
+	Mail-SPF-v2.9.0
 
 SA_PERL_LIBS := \
 	Mail-SpamAssassin-$(SA_VERSION)
 
 SWATCH := \
 	swatch-3.2.3
+
+TERM_READKEY := \
+	TermReadKey-2.30.02
+	
+INNOTOP := \
+	innotop-1.9.1
 
 LDAPAPI := \
 	Net-LDAPapi-3.0.3
@@ -255,13 +281,13 @@ PERL_LDAP := \
 	perl-ldap-0.53
 
 DBD_PERL_LIBS 	:= \
-	DBD-mysql-4.022
+	DBD-mysql-4.024
 
 ZMQ_CONSTANTS	:= \
-	ZMQ-Constants-1.01
+	ZMQ-Constants-1.03
 
 ZMQ_LIB	:= \
-	ZMQ-LibZMQ3-1.01
+	ZMQ-LibZMQ3-1.13
 
 PERL_MM_USE_DEFAULT	:= 1
 export PERL_MM_USE_DEFAULT
@@ -272,6 +298,7 @@ CLEAN_TARGETS	:=	\
 		$(TMPDIR) \
 		$(DEST_DIR) \
 		$(PERL_TGZ_DEST) \
+		$(PERL_SA_RULES) \
 		$(PERL_BIN_TGZ_DEST)
 
 all: allclean setup $(DEST_LIB_DIR) $(DEST_BIN_DIR) $(PERL_TGZ_DEST_DIR) build check tarball
@@ -346,7 +373,7 @@ build:
 		echo -n "Compiling perl lib $$lib ..."; \
 		cp $(PERL_ROOT)/$$lib.tar.gz $(TMPDIR); \
 		(cd $(TMPDIR); tar xfz $$lib.tar.gz; cd $$lib; \
-		$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR) $(EXPAT_LIB) $(EXPAT_INCLUDE); \
+		$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR); \
 		$(MAKE); $(MAKE) install;) >>$(LOGFILE) 2>&1; \
 		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
 	done
@@ -407,15 +434,15 @@ build:
 		cp $(PERL_ROOT)/$$lib.tar.gz $(TMPDIR); \
 		(cd $(TMPDIR); tar xfz $$lib.tar.gz; cd $$lib; \
 		$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR) --ssl --nocatchstderr \
-			--libs="-L$(ZIMBRA_HOME)/mysql/lib -L/opt/zimbra/openssl/lib -lmysqlclient -lpthread -lz -lm -lrt -lssl -lcrypto -ldl" \
-			--mysql_config="$(ZIMBRA_HOME)/mysql/bin/mysql_config"; \
+			--libs="-L$(ZIMBRA_HOME)/mariadb/lib -L/opt/zimbra/openssl/lib -lmysqlclient -lpthread -lz -lm -lrt -lssl -lcrypto -ldl" \
+			--mysql_config="$(ZIMBRA_HOME)/mariadb/bin/mysql_config"; \
 		$(SED) -i .bak -e 's#-arch x86_64 -arch i386 -arch ppc -bundle -undefined dynamic_lookup -L/usr/local/lib#-arch x86_64 -bundle -undefined dynamic_lookup#' Makefile; \
 		$(SED) -i .bak -e 's#-arch x86_64 -arch i386 -arch ppc -L/usr/local/lib#-arch x86_64#' Makefile; \
 		$(SED) -i .bak -e 's#-arch x86_64 -arch i386 -arch ppc -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -I/usr/local/include#-arch x86_64 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing#' Makefile; \
 		$(SED) -i .bak -e 's#-arch x86_64 -arch i386 -bundle -undefined dynamic_lookup -L/usr/local/lib -fstack-protector#-arch x86_64 -bundle -undefined dynamic_lookup -fstack-protector#' Makefile; \
 		$(SED) -i .bak -e 's#-arch x86_64 -arch i386 -fstack-protector -L/usr/local/lib#-arch x86_64 -fstack-protector#' Makefile; \
 		$(SED) -i .bak -e 's#-arch x86_64 -arch i386 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -fstack-protector -I/usr/local/include#-arch x86_64 -g -pipe -fno-common -DPERL_DARWIN -fno-strict-aliasing -fstack-protector#' Makefile; \
-		LD_RUN_PATH=/opt/zimbra/lib:/opt/zimbra/mysql/lib:/opt/zimbra/openssl/lib $(MAKE); $(MAKE) install;) >> $(LOGFILE) 2>&1; \
+		LD_RUN_PATH=/opt/zimbra/lib:/opt/zimbra/mariadb/lib:/opt/zimbra/openssl/lib $(MAKE); $(MAKE) install;) >> $(LOGFILE) 2>&1; \
 		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
 	done
 
@@ -436,7 +463,17 @@ build:
 			$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(ZIMBRA_HOME)/zimbramon LIB=$(ZIMBRA_HOME)/zimbramon/lib DATADIR=$(ZIMBRA_HOME)/conf/spamassassin CONFDIR=/opt/zimbra/conf/spamassassin LOCALSTATEDIR=$(ZIMBRA_HOME)/data/spamassassin; \
 			$(MAKE); $(MAKE) install DESTDIR=$(DEST_DIR); \
 			cp -R $(DEST_DIR)/opt/zimbra/zimbramon/* $(DEST_DIR); \
-			rm -rf $(DEST_DIR)/opt;) >> $(LOGFILE) 2>&1; \
+			rm -rf $(DEST_DIR)/opt; \
+			rm -rf /opt/zimbra/conf/spamassassin; \
+			rm -rf ../../spamassassin; \
+			rm -rf ../../sa-rules; \
+			mkdir -p /opt/zimbra/conf/spamassassin; \
+			cp -pfR rules/* /opt/zimbra/conf/spamassassin; \
+			perl -T -I ../../zimbramon/lib ../../zimbramon/bin/sa-update --updatedir=../../sa-rules; \
+			mkdir -p ../../spamassassin; \
+			cp -pfR rules/* ../../spamassassin; \
+			cp -pfR ../../sa-rules/updates_spamassassin_org/* ../../spamassassin; \
+			rm -rf /opt/zimbra/conf/spamassassin;) >> $(LOGFILE) 2>&1; \
 		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
 	done
 
@@ -446,6 +483,24 @@ build:
 		(cd $(TMPDIR); tar xzf $$lib.tar.gz; cd $$lib; \
 			$(SED) -i .bak -e 's#/usr/lib/sendmail /usr/sbin/sendmail#/usr/lib/sendmail /usr/sbin/sendmail /opt/zimbra/postfix/sbin/sendmail#' lib/Swatch/Actions.pm; \
 			rm -f lib/Swatch/Actions.pm.bak; \
+			$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR); \
+			$(MAKE); $(MAKE) install;) >> $(LOGFILE) 2>&1; \
+		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
+	done
+
+	@for lib in $(TERM_READKEY); do \
+		echo -n "Compiling perl lib $$lib ..."; \
+		cp $(PERL_ROOT)/$$lib.tar.gz $(TMPDIR); \
+		(cd $(TMPDIR); tar xzf $$lib.tar.gz; cd $$lib; \
+			$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR); \
+			$(MAKE); $(MAKE) install;) >> $(LOGFILE) 2>&1; \
+		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
+	done
+
+	@for lib in $(INNOTOP); do \
+		echo -n "Compiling perl lib $$lib ..."; \
+		cp $(PERL_ROOT)/$$lib.tar.gz $(TMPDIR); \
+		(cd $(TMPDIR); tar xzf $$lib.tar.gz; cd $$lib; \
 			$(PERL) -I$(DEST_LIB_DIR) Makefile.PL PREFIX=$(DEST_DIR) LIB=$(DEST_LIB_DIR); \
 			$(MAKE); $(MAKE) install;) >> $(LOGFILE) 2>&1; \
 		if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi \
@@ -462,8 +517,13 @@ tarball:
 	if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi
 	@echo -n "Creating $(PERL_BIN_TGZ_DEST)..."; \
 	(cd $(DEST_BIN_DIR); \
-	tar cfz $(PERL_BIN_TGZ_DEST) sa-compile sa-learn sa-update spamassassin spamc spamd); \
+	tar cfz $(PERL_BIN_TGZ_DEST) sa-compile sa-learn sa-update spamassassin spamc spamd innotop); \
 	if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi
+	@echo -n "Creating $(PERL_SA_RULES)..."; \
+	(tar cfz $(PERL_SA_RULES) spamassassin); \
+	if [ $$? -ne 0 ]; then  echo "FAILED.";  else  echo "done.";  fi
+	rm -rf spamassassin;
+	rm -rf sa-rules;
 	chmod -R a+w $(PERL_TGZ_DEST_DIR)/*
 
 $(PERL_TGZ_DEST_DIR):

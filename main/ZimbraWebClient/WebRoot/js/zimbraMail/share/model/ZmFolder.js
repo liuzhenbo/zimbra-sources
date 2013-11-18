@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -314,7 +314,7 @@ function(newParent, noUndo, actionText, batchCmd) {
 	if (origName != name) {
 		this.rename(name);
 	}
-	ZmOrganizer.prototype.move.call(this, newParent, noUndo, actionText, batchCmd);
+	ZmOrganizer.prototype.move.call(this, newParent, noUndo, batchCmd);
 };
 
 /**
@@ -740,14 +740,22 @@ function(){
 ZmFolder.prototype._remoteMoveOk =
 function(folder) {
 	if (!this.isRemote() && folder.isMountpoint && folder.rid) { return true; }
-	if (!this.link || !folder.link || this.zid != folder.zid) { return false; }
-	if (this.id.split(":")[0] != folder.id.split(":")[0]) { return false; }
-	var share = this.shares && this.shares[0];
-	if (!(share && share.isInsert())) { return false; }
-	share = folder.shares && folder.shares[0];
-    return (share && share.isDelete());
+	if (!this.link || !folder.link || this.getOwner() !== folder.getOwner()) { return false; }
+	if (!this._folderActionOk(this, "isInsert")) {
+		return false;
+	}
+	return this._folderActionOk(folder, "isDelete");
 };
 
+ZmFolder.prototype._folderActionOk =
+function(folder, func) {
+	var share = folder.shares && folder.shares[0];
+	if (!share) {
+		//if shares is not set, default to readOnly.
+		return !folder.isReadOnly();
+	}
+	return share[func]();
+};
 /**
  * Returns true if this folder is for outbound mail.
  */

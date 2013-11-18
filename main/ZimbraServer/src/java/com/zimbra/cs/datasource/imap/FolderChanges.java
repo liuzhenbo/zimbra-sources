@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2009, 2010, 2011 VMware, Inc.
+ * Copyright (C) 2009, 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -14,16 +14,16 @@
  */
 package com.zimbra.cs.datasource.imap;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.cs.account.DataSource;
 import com.zimbra.cs.mailbox.Folder;
 import com.zimbra.cs.mailbox.MailItem;
 import com.zimbra.cs.mailbox.MailServiceException;
 import com.zimbra.cs.mailbox.Mailbox;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 class FolderChanges {
     private final DataSource ds;
@@ -45,7 +45,7 @@ class FolderChanges {
         List<Integer> tombstones;
         List<Folder> modifiedFolders;
 
-        mbox.lock.lock();
+        mbox.lock.lock(false);
         try {
             lastChangeId = mbox.getLastChangeID();
             if (lastChangeId <= lastSync) {

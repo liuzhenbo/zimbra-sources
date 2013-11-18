@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -350,16 +350,20 @@ function(resetLeft) {
 	ZmCalColView._inSyncScroll = true;
 
 	try {
-		var bodyElement = document.getElementById(this._bodyDivId);
-		var hourElement = document.getElementById(this._hoursScrollDivId);
-		var alldayElement = document.getElementById(this._allDayScrollDivId);
-		var unionGridScrollElement = document.getElementById(this._unionGridScrollDivId);
-		var alldayApptElement = document.getElementById(this._allDayApptScrollDivId);
+		var bodyElement = document.getElementById(this._bodyDivId),
+		    hourElement = document.getElementById(this._hoursScrollDivId),
+		    alldayElement = document.getElementById(this._allDayScrollDivId),
+		    unionGridScrollElement = document.getElementById(this._unionGridScrollDivId),
+		    alldayApptElement = document.getElementById(this._allDayApptScrollDivId),
+            allDayHeadingDivId = document.getElementById(this._tabsContainerDivId); // Fix for bug: 66603. Assign this a scroll handler
+
 		hourElement.scrollTop = bodyElement.scrollTop;
 		hourElement.scrollLeft = bodyElement.scrollLeft;
 		if (resetLeft) bodyElement.scrollLeft = 0;
 		alldayElement.scrollLeft = bodyElement.scrollLeft;
 		alldayApptElement.scrollLeft = bodyElement.scrollLeft;
+        // Fix for bug: 66603. Assign this a scroll handler
+        bodyElement.scrollLeft = allDayHeadingDivId.scrollLeft;
 		if (unionGridScrollElement) unionGridScrollElement.scrollTop = bodyElement.scrollTop;
         this._checkForOffscreenAppt(bodyElement);
 
@@ -819,6 +823,8 @@ function(abook) {
     this._hourColDivId = Dwt.getNextId();
     this._startLimitIndicatorDivId = Dwt.getNextId();
     this._endLimitIndicatorDivId = Dwt.getNextId();
+    // Fix for bug: 66603. Reference to parent container of _allDayHeadingDivId
+    this._tabsContainerDivId = Dwt.getNextId();
 
 
 	if (this._scheduleMode) {
@@ -888,6 +894,8 @@ function(abook) {
 	html.append("<div id='", this._allDayScrollDivId, "' style='position:absolute; overflow:hidden;'>");
 
 	// all day headings
+    // Fix for bug: 66603. Adding a container to calendar headings
+    html.append("<div id='", this._tabsContainerDivId, "' name='_tabsContainerDivId' style='position:absolute;height:25px;bottom:0px;top:0px'>");
 	html.append("<div id='", this._allDayHeadingDivId, "' class='calendar_heading' style='", headerStyle,	"'>");
 	if (!this._scheduleMode) {
 		for (var i =0; i < this.numDays; i++) {
@@ -895,6 +903,8 @@ function(abook) {
 		}
 	}
 	html.append("</div>");
+    // Fix for bug: 66603
+    html.append("</div>");
 
 	// divs to separate day headings
 	if (!this._scheduleMode) {
@@ -962,6 +972,8 @@ function(abook) {
     var func = AjxCallback.simpleClosure(ZmCalColView.__onScroll, ZmCalColView, this);
 	document.getElementById(this._bodyDivId).onscroll = func;
 	document.getElementById(this._allDayApptScrollDivId).onscroll = func;
+    // Fix for bug: 66603. Adding a handler to enable scrolling.
+    document.getElementById(this._tabsContainerDivId).onscroll = func;
 
 	var ids = [this._apptBodyDivId, this._bodyHourDivId, this._allDayDivId, this._allDaySepDivId];
 	var types = [ZmCalBaseView.TYPE_APPTS_DAYGRID, ZmCalBaseView.TYPE_HOURS_COL, ZmCalBaseView.TYPE_ALL_DAY, ZmCalBaseView.TYPE_DAY_SEP];
@@ -977,16 +989,13 @@ ZmCalColView.prototype.updateTimeIndicator=function(force){
     var min = curDate.getMinutes();
     var curHourDiv = document.getElementById(this._hourColDivId+"_"+hr);
     var curTimeHourIndicator = document.getElementById(this._curTimeIndicatorHourDivId);
-    curTimeHourIndicator.style.left=curHourDiv.offsetParent.offsetLeft;
     var currentTopPosition = Math.round((ZmCalColView._HOUR_HEIGHT/60)*min)+parseInt(curHourDiv.offsetParent.offsetTop);
-    curTimeHourIndicator.style.top=(currentTopPosition+3)+"px";
+    Dwt.setLocation(curTimeHourIndicator, curHourDiv.offsetParent.offsetLeft, currentTopPosition+3);
     var calendarStrip = document.getElementById(this._curTimeIndicatorGridDivId);
     Dwt.setVisibility(calendarStrip,true);
     var todayColDiv = document.getElementById(this._calendarTodayHeaderDivId);
     if (todayColDiv && (force || this._isValidIndicatorDuration)){
-     calendarStrip.style.left=todayColDiv.offsetLeft;
-     calendarStrip.style.top=currentTopPosition+"px";
-     calendarStrip.style.width=todayColDiv.offsetWidth;
+        Dwt.setBounds(calendarStrip, todayColDiv.offsetLeft, currentTopPosition, todayColDiv.offsetWidth, null);
     }
     else{Dwt.setVisibility(calendarStrip,false);}
     return this.setTimer(1);

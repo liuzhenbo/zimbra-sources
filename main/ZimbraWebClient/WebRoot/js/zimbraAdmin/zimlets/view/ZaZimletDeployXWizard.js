@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -356,7 +356,7 @@ ZaZimletDeployXWizard.myXFormModifier = function(xFormObject) {
 		]
 	};
 	xFormObject.items = [
-			{type:_OUTPUT_, colSpan:2, align:_CENTER_, valign:_TOP_, ref:ZaModel.currentStep, choices:this.stepChoices},
+			{type:_OUTPUT_, colSpan:2, valign:_TOP_, ref:ZaModel.currentStep, choices:this.stepChoices, cssStyle: "white-space: normal"},
 			{type:_SEPARATOR_, align:_CENTER_, valign:_TOP_},
 			{type:_SPACER_,  align:_CENTER_, valign:_TOP_},
 			{type:_SWITCH_, width:450, align:_LEFT_, valign:_TOP_, items:[case1,case2]}

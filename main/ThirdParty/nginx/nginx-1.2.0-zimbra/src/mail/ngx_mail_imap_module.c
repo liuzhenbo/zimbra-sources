@@ -5,7 +5,7 @@
  */
 
 /*
- * Portions Copyright (c) VMware, Inc. [1998-2011]. All Rights Reserved.
+ * Portions Copyright (c) Zimbra Software, LLC. [1998-2011]. All Rights Reserved.
  */
 
 
@@ -189,9 +189,9 @@ ngx_mail_imap_merge_srv_conf(ngx_conf_t *cf, void *parent, void *child)
                               (size_t) 4 * ngx_pagesize);
 
     ngx_conf_merge_bitmask_value(conf->auth_methods,
-                                 prev->auth_methods,
-                                 (NGX_CONF_BITMASK_SET
-                                  |NGX_MAIL_AUTH_PLAIN_ENABLED));
+                              prev->auth_methods,
+                              (NGX_CONF_BITMASK_SET
+                               |NGX_MAIL_AUTH_PLAIN_ENABLED));
 
 
     if (conf->id_params.nelts == 0) {

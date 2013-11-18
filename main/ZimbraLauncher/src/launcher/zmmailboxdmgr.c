@@ -2,10 +2,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -564,7 +564,7 @@ Start(int nextArg, int argc, char *argv[])
     AddArgFmt("-DSTART=%s/etc/start.config", MAILBOXD_HOME);
     AddArg("-jar");
     AddArgFmt("%s/start.jar", MAILBOXD_HOME);
-    AddArg("OPTIONS=Server,jsp,jmx,resources,websocket,ext,jta,plus,rewrite,setuid");
+    AddArg("OPTIONS=Server,servlet,servlets,jsp,jmx,resources,websocket,ext,plus,rewrite,setuid");
     AddArgFmt("%s/etc/jetty.properties", MAILBOXD_HOME);
     AddArgFmt("%s/etc/jetty-setuid.xml", MAILBOXD_HOME);
     AddArgFmt("%s/etc/jetty.xml", MAILBOXD_HOME);

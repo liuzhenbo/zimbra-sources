@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -107,11 +107,13 @@ function(parent, type, id) {
             isShareVisible = !folder.getAccount().isMain && folder.getAccount().isZimbraAccount;
         }
 		parent.enableAll(true);
+		var isSubFolderOfReadOnly = folder.parent && folder.parent.isReadOnly();
+		parent.enable([ZmOperation.DELETE_WITHOUT_SHORTCUT, ZmOperation.MOVE, ZmOperation.EDIT_PROPS], !isSubFolderOfReadOnly);
 		parent.enable(ZmOperation.SYNC, folder.isFeed()/* || folder.hasFeeds()*/);
 		parent.enable(ZmOperation.SYNC_ALL, folder.isFeed() || folder.hasFeeds());
 		parent.enable(ZmOperation.SHARE_FOLDER, isShareVisible);
 		parent.enable(ZmOperation.EMPTY_FOLDER, ((hasContent || folder.link) && isEmptyFolderAllowed && !appCtxt.isExternalAccount()));	// numTotal is not set for shared folders
-		parent.enable(ZmOperation.RENAME_FOLDER, !(folder.isDataSource() || appCtxt.isExternalAccount()));		// dont allow datasource'd folder to be renamed via overview
+		parent.enable(ZmOperation.RENAME_FOLDER, !(isSubFolderOfReadOnly || folder.isDataSource() || appCtxt.isExternalAccount()));		// dont allow datasource'd folder to be renamed via overview
 		parent.enable(ZmOperation.NEW_FOLDER, !(folder.disallowSubFolder || appCtxt.isExternalAccount()));
 
 		if (folder.isRemote() && folder.isReadOnly()) {
@@ -261,7 +263,8 @@ function() {
 		ZmOperation.SEP,
 		ZmOperation.PRIORITY_FILTER,
 		ZmOperation.EXPAND_ALL,
-		ZmOperation.SYNC
+		ZmOperation.SYNC,
+		ZmOperation.FIND_SHARES
 	];
 };
 

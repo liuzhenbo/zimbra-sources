@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -481,10 +479,19 @@ ZaTaskAuthConfigWizard.myXFormModifier = function(xFormObject) {
     };
 
 	xFormObject.items = [
-			{type:_OUTPUT_, colSpan:2, align:_CENTER_, valign:_TOP_, ref:ZaModel.currentStep, choices:this.stepChoices,valueChangeEventSources:[ZaModel.currentStep], labelVisibility:labelVisibility},
+        {
+            type: _OUTPUT_,
+            colSpan: 2,
+            valign: _TOP_,
+            cssStyle: "white-space: normal",
+            ref: ZaModel.currentStep,
+            choices: this.stepChoices,
+            valueChangeEventSources: [ZaModel.currentStep],
+            labelVisibility: labelVisibility
+        },
 			{type:_SEPARATOR_, align:_CENTER_, valign:_TOP_},
 			{type:_SPACER_,  align:_CENTER_, valign:_TOP_},
-			{type:_SWITCH_,width:580, valign:_TOP_,
+			{type:_SWITCH_,width:580, valign:_TOP_, cssStyle: "white-space: normal",
 				items:[
 					{type:_CASE_, numCols:2,colSizes:["60px","430px"],	caseKey:ZaTaskAuthConfigWizard.AUTH_CONFIG_CHOOSE_MODE_STEP,
 						items:[

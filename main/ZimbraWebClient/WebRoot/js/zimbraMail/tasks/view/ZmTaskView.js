@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010 Zimbra, Inc.
- *
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -34,6 +34,7 @@ ZmTaskView = function(parent, posStyle, controller) {
 
 ZmTaskView.prototype = new ZmCalItemView;
 ZmTaskView.prototype.constructor = ZmTaskView;
+ZmTaskView.prototype.isZmTaskView = true;
 
 // Public methods
 
@@ -97,7 +98,9 @@ function(calItem) {
         remindTime: remindTime,
         alarm: alarm,
 		folder: appCtxt.getTree(ZmOrganizer.TASKS).getById(calItem.folderId),
-		folderLabel: ZmMsg.folder
+		folderLabel: ZmMsg.folder,
+        isTask:true,
+        _infoBarId:this._infoBarId
 	};
 };
 
@@ -106,7 +109,7 @@ function(calItem) {
 ZmTaskView.prototype._renderCalItem =
 function(calItem) {
 
-   if(this._controller.isReadingPaneOn()) {
+   if(this._controller.isReadingPaneOn() && !this._newTab) {
 	this._lazyCreateObjectManager();
 
 	var subs = this._getSubs(calItem);
@@ -115,6 +118,7 @@ function(calItem) {
 
     var el = this.getHtmlElement();
 	el.innerHTML = AjxTemplate.expand("tasks.Tasks#ReadOnlyView", subs);
+    this._setTags(calItem);
 
 	// content/body
 	var hasHtmlPart = (calItem.notesTopPart && calItem.notesTopPart.getContentType() == ZmMimeTable.MULTI_ALT);
@@ -122,6 +126,11 @@ function(calItem) {
 		? ZmMimeTable.TEXT_HTML : ZmMimeTable.TEXT_PLAIN;
 
 	var bodyPart = calItem.getNotesPart(mode);
+
+    if (!bodyPart && calItem.message){
+        bodyPart = calItem.message.getInviteDescriptionContentValue(ZmMimeTable.TEXT_PLAIN);
+    }
+
 	if (bodyPart) {
 		this._msg = this._msg || this._calItem._currentlyLoaded;
         if (mode === ZmMimeTable.TEXT_PLAIN) {
@@ -133,4 +142,14 @@ function(calItem) {
      ZmCalItemView.prototype._renderCalItem.call(this, calItem);
    }
    Dwt.setLoadedTime("ZmTaskItem");
+   calItem.addChangeListener(this._taskChangeListener.bind(this));
+
 };
+
+ZmTaskView.prototype._taskChangeListener =
+function(ev){
+    if(ev.event == ZmEvent.E_TAGS || ev.type == ZmEvent.S_TAG) {
+        this._setTags(this._calItem);
+    }
+};
+

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -78,7 +78,8 @@ function(results, mailList, callback, markRead) {
 	// if search was run as a result of a <refresh> block rather than by the user, preserve
 	// what's in the reading pane as long as it's still in the list of results
 	var s = results && results.search;
-	var refreshSelItem = (s && s.isRefresh && mlv && mlv.hasItem(s.selectedItem) && s.selectedItem);
+	var isRefresh = s && (s.isRefresh || s.isRedo);
+	var refreshSelItem = (isRefresh && mlv && mlv.hasItem(s.selectedItem) && s.selectedItem);
 	if (this._doublePaneView) {
 		if (!refreshSelItem) {
 			this._doublePaneView._itemView.reset();
@@ -93,6 +94,7 @@ function(results, mailList, callback, markRead) {
 
 	if (refreshSelItem) {
 		mlv.setSelection(refreshSelItem, true);
+		this._resetOperations(this._toolbar[this._currentViewId], 1)
 	}
 	else {
 		var dpv = this._doublePaneView;
@@ -238,29 +240,23 @@ function() {
 
 ZmDoublePaneController.prototype._getActionMenuOps =
 function() {
-	var list = this._flagOps();
-	list.push(ZmOperation.SEP);
+	var list = [];
 	list = list.concat(this._msgOps());
     list.push(ZmOperation.REDIRECT);
     list.push(ZmOperation.EDIT_AS_NEW);		// bug #28717
 	list.push(ZmOperation.SEP);
+	list = list.concat(this._deleteOps());
+	list.push(ZmOperation.SEP);
 	list = list.concat(this._standardActionMenuOps());
-	if (!appCtxt.isChildWindow && appCtxt.get(ZmSetting.DETACH_MAILVIEW_ENABLED)) {
-		list.push(ZmOperation.SEP, ZmOperation.DETACH);
-	}
-	list.push(ZmOperation.SHOW_ORIG);
+	list.push(ZmOperation.SEP);
+	list = list.concat(this._flagOps());
+	list.push(ZmOperation.SEP);
+	list = list.concat(this._createOps());
+	list.push(ZmOperation.SEP);
+	list = list.concat(this._otherOps());
 	if (this.getCurrentViewType() == ZmId.VIEW_TRAD) {
 		list.push(ZmOperation.SHOW_CONV);
 	}
-	if (appCtxt.get(ZmSetting.FILTERS_ENABLED)) {
-		list.push(ZmOperation.ADD_FILTER_RULE);
-	}
-    if(appCtxt.get(ZmSetting.CALENDAR_ENABLED)) {
-        list.push(ZmOperation.CREATE_APPT);
-    }
-    if(appCtxt.get(ZmSetting.TASKS_ENABLED)) {
-        list.push(ZmOperation.CREATE_TASK);        
-    }
     //list.push(ZmOperation.QUICK_COMMANDS);
 	return list;
 };
@@ -480,7 +476,7 @@ function(parent, num) {
 
 ZmDoublePaneController.prototype._resetOperation = 
 function(parent, op, num) {
-	if (op == ZmOperation.KEEP_READING) {
+	if (parent && op == ZmOperation.KEEP_READING) {
 		parent.enable(ZmOperation.KEEP_READING, this._keepReading(true));
 	}
 };

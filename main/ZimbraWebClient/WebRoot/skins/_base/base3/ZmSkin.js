@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011 VMware, Inc.
+ * Copyright (C) 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -35,9 +35,9 @@ ZmSkin.hints = {
 	searchResultsToolbar:	{ containers: ["skin_tr_search_results_toolbar"] },
 
 	newButton:		{ containers: ["skin_td_new_button"] },
-	tree:			{ minWidth:parseInt("@TreeMinWidth@"), maxWidth:parseInt("@TreeMaxWidth@"), 
+	tree:			{ minWidth: "@TreeMinWidth@", maxWidth: "@TreeMaxWidth@",
 					  containers: ["skin_td_tree","skin_td_tree_app_sash"],
-					  resizeContainers : ["skin_td_tree"]
+					  resizeContainers : ["skin_td_tree", "skin_container_app_new_button"]
 					},
 	
 	topToolbar:	 	{ containers: "skin_spacing_app_top_toolbar" },
@@ -70,7 +70,14 @@ ZmSkin.hints = {
 
 	hideSearchInCompose:	true,
 
-	notificationBanner:		"@NotificationBanner@"
+	notificationBanner:		"@NotificationBanner@",
+
+	socialfox:	{
+		iconURL: 		"@SocialfoxIconURL@",
+		icon32URL: 		"@SocialfoxIcon32URL@",
+		icon64URL: 		"@SocialfoxIcon64URL@",
+		mailIconURL: 	"@SocialfoxMailIconURL@"
+	}
 
 };
 
@@ -179,7 +186,7 @@ ZmSkin.prototype = {
 	
 	showSidebarAd : function(width) {
 		var id = "skin_td_sidebar_ad";
-		if (width != null) skin._setSize(id, width);
+		if (width != null) Dwt.setSize(id, width);
 		if (skin._showEl(id)) {
 			skin._reflowApp();
 		}
@@ -222,8 +229,8 @@ ZmSkin.prototype = {
 		}
 		else {
 			var tagName = el.tagName;
-			if (tagName == "TD" && !document.all)		value = "table-cell";
-			else if (tagName == "TR" && !document.all) 	value = "table-row";
+			if (tagName == "TD")		value = "table-cell";
+			else if (tagName == "TR") 	value = "table-row";
 			else value = "block";
 		}
 		if (value != el.style.display) {
@@ -247,17 +254,10 @@ ZmSkin.prototype = {
 		}
 	},
 	
-	_setSize : function(id, width, height) {
-		var el = this._getEl(id);
-		if (!el) return;
-		if (width != null) el.style.width = width;
-		if (height != null) el.style.height = height;
-	},
-	
 	_setContainerSizes : function(containerName, width, height) {
 		var containers = this.hints[containerName].resizeContainers || this.hints[containerName].containers;
 		for (var i = 0; i < containers.length; i++) {
-			this._setSize(containers[i], width, null);
+			Dwt.setSize(containers[i], width, null);
 		}
 	},
 	

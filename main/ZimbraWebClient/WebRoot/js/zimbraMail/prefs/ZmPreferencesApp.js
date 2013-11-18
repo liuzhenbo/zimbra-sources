@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -250,6 +250,7 @@ function(settings) {
 	settings.registerSetting("PREF_SECTIONS",				{type:ZmSetting.T_PSEUDO, dataType:ZmSetting.D_HASH, isGlobal:true});
 	settings.registerSetting("SIGNATURE_MAX_LENGTH",		{name:"zimbraMailSignatureMaxLength", type:ZmSetting.T_COS, dataType:ZmSetting.D_INT, defaultValue:1024});
 	settings.registerSetting("DISCARD_IN_FILTER_ENABLED",	{name:"zimbraFeatureDiscardInFiltersEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
+	settings.registerSetting("FROM_DISPLAY_ENABLED",		{name: "zimbraFeatureFromDisplayEnabled", type: ZmSetting.T_COS, dataType: ZmSetting.D_BOOLEAN, defaultValue: true});
     //settings.registerSetting("QUICK_COMMAND_LIST",			{name:"zimbraPrefQuickCommand", type: ZmSetting.T_COS, dataType: ZmSetting.D_LIST});
 };
 
@@ -281,6 +282,7 @@ function() {
                 ZmSetting.COMPOSE_INIT_DIRECTION,
                 ZmSetting.SHOW_COMPOSE_DIRECTION_BUTTONS,
 				ZmSetting.FONT_NAME,
+				ZmSetting.FONT_SIZE,
 				ZmSetting.PASSWORD,
 				ZmSetting.SEARCH_INCLUDES_SHARED,
 				ZmSetting.SEARCH_INCLUDES_SPAM,
@@ -688,6 +690,11 @@ function() {
 		displayContainer:	ZmPref.TYPE_FONT
 	});
 
+	ZmPref.registerPref("FONT_SIZE", {
+		displayName:		ZmMsg.selectFontSize, //this was never defined in ZmMsg in the above case (font_name) and see the typo there too. So not sure what's this for.
+		displayContainer:	ZmPref.TYPE_FONT_SIZE
+	});
+
 	var markReadTime = AjxMessageFormat.format(ZmMsg.messageReadTime, DwtId.makeId(ZmId.WIDGET_INPUT, ZmId.OP_MARK_READ));
 	ZmPref.registerPref("MARK_MSG_READ", {
 		displayName:		ZmMsg.messageReadLabel,
@@ -986,7 +993,7 @@ function() {
 	var params = ZmApp.prototype._getOverviewParams.call(this);
 	params.omit = {};
 	params.omit[ZmOrganizer.ID_ZIMLET] = true;
-
+	params.actionSupported = false;
 	return params;
 };
 

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -39,7 +39,9 @@
  * @param {boolean}      params.singleClickAction		if <code>true</code>, an action is performed in single click
  * @param {AjxCallback}      params.dndScrollCallback	the callback triggered when scrolling of a drop area for an object being dragged
  * @param {string}      params.dndScrollId			the id
- *        
+ * @param {boolean}    params.arrowDisabled
+ * @param {boolean}     params.dynamicWidth		if <code>true</code>, the table should be width auto instead of the default fixed
+ *
  * @extends		DwtComposite		
  */
 DwtTreeItem = function(params) {
@@ -65,6 +67,8 @@ DwtTreeItem = function(params) {
     this._treeItemTextClass = "DwtTreeItem-Text";
     this._treeItemExtraImgClass = "DwtTreeItem-ExtraImg";
 
+	this._dynamicWidth = params.dynamicWidth;
+
 	params.deferred = (params.deferred !== false);
 	params.className = null;
 	DwtComposite.call(this, params);
@@ -83,7 +87,7 @@ DwtTreeItem = function(params) {
 	this._forceNotifyAction = Boolean(params.forceNotifyAction);
 	this._dndScrollCallback = params.dndScrollCallback;
 	this._dndScrollId = params.dndScrollId;
-    this._contextEnabled = (!(!(parent._optButton)) || parent._contextEnabled) && this._selectionEnabled;
+	this._arrowDisabled = params.arrowDisabled;
 
 	if (params.singleClickAction) {
 		this._singleClickAction = true;
@@ -125,6 +129,7 @@ DwtTreeItem._processedMouseDown = false;
 
 DwtTreeItem.prototype.dispose =
 function() {
+    DwtComposite.prototype.dispose.call(this);
 	this._itemDiv = null;
 	this._nodeCell = null;
 	this._checkBoxCell = null;
@@ -133,7 +138,7 @@ function() {
 	this._imageCell = null;
 	this._textCell = null;
 	this._childDiv = null;
-	DwtComposite.prototype.dispose.call(this);
+	this._initialized = false;
 };
 
 /**
@@ -317,7 +322,7 @@ function() {
  */
 DwtTreeItem.prototype.setText =
 function(text) {
-	if (this._initialized) {
+	if (this._initialized && this._textCell) {
 		if (!text) text = "";
 		this._text = this._textCell.innerHTML = text;
 	} else {
@@ -371,9 +376,14 @@ function(enable) {
 	this._selectedClassName = enable
 		? this._origClassName + "-" + DwtCssStyle.SELECTED
 		: this._origClassName;
-    this._contextEnabled = !(!(this.parent._optButton)) && this._selectionEnabled;
 
 };
+
+DwtTreeItem.prototype.isSelectionEnabled =
+function() {
+	return this._selectionEnabled;
+};
+
 
 DwtTreeItem.prototype.enableAction =
 function(enable) {
@@ -541,10 +551,12 @@ function(index, realizeDeferred, forceNode) {
 	this._textCell = document.getElementById(data.id + "_textCell");
 	this._extraCell = document.getElementById(data.id + "_extraCell");
 
-    if (!this._contextEnabled){
-        var tableNode = document.getElementById(data.id + "_table");
-        tableNode.style.tableLayout = "auto";
-    }
+	if (this._dynamicWidth){
+		var tableNode = document.getElementById(data.id + "_table");
+		tableNode.style.tableLayout = "auto";
+	}
+
+
 	// If we have deferred children, then make sure we set up accordingly
 	if (this._nodeCell) {
 		this._nodeCell.style.width = this._nodeCell.style.height = DwtTreeItem._NODECELL_DIM;
@@ -858,7 +870,7 @@ function(item) {
 
 DwtTreeItem.prototype._setTreeElementStyles =
 function(img, focused) {
-   if (!this._contextEnabled || this._draghovering) {
+   if (this._arrowDisabled || this._draghovering) {
         return;
    }
    var selected = focused ? "-focused" : "";
@@ -872,13 +884,13 @@ function(img, focused) {
 
 DwtTreeItem.prototype._setSelected =
 function(selected, noFocus) {
-	if (this._selected != selected) {
+	if (this._selected != selected && !this._disposed) {
 		this._selected = selected;
 		if (!this._initialized) {
 			this._initialize();
 		}
 		if (!this._itemDiv) { return; }
-		if (selected && (this._selectionEnabled || this._forceNotifySelection || this._checkBoxVisible) /*&& this._origClassName == "DwtTreeItem"*/) {
+		if (selected && (this._selectionEnabled || this._forceNotifySelection) /*&& this._origClassName == "DwtTreeItem"*/) {
 			this._itemDiv.className = this._selectedClassName;
 			this._setTreeElementStyles("DownArrowSmall", true);
             if (!noFocus) {
@@ -886,6 +898,7 @@ function(selected, noFocus) {
 			}
 			return true;
 		} else {
+			this.blur();
 			this._setTreeElementStyles("Blank_16", false);
 			this._itemDiv.className = this._origClassName;;
 			return false;

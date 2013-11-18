@@ -2,10 +2,10 @@
 # 
 # ***** BEGIN LICENSE BLOCK *****
 # Zimbra Collaboration Suite Server
-# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012 VMware, Inc.
+# Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012, 2013 Zimbra Software, LLC.
 # 
 # The contents of this file are subject to the Zimbra Public License
-# Version 1.3 ("License"); you may not use this file except in
+# Version 1.4 ("License"); you may not use this file except in
 # compliance with the License.  You may obtain a copy of the License at
 # http://www.zimbra.com/license.
 # 
@@ -84,7 +84,7 @@ trainAccountFolder() {
     fi
 
     ${zimbra_home}/dspam/bin/dspam --user zimbra --class=${MODE} --source=corpus --mode=teft \
-      --feature=chained,noise --stdout
+      --feature=noise --stdout
 
     ${zimbra_home}/dspam/bin/dspam_clean -p0 $USER
     timestampit  "Finished dspam $MODE training for $USER using folder $FOLDER"
@@ -118,12 +118,12 @@ source `dirname $0`/zmshutil || exit 1
 zmsetvars \
   zimbra_home \
   zimbra_server_hostname \
-  amavis_dspam_enabled \
   antispam_mysql_enabled \
   zimbra_spam_externalIsSpamAccount \
   zimbra_spam_externalIsNotSpamAccount \
   zmtrainsa_cleanup_host 
 
+amavis_dspam_enabled=`${zimbra_home}/bin/zmprov -l gs ${zimbra_server_hostname} zimbraAmavisDSPAMEnabled | grep zimbraAmavisDSPAMEnabled: | awk '{print $2}'`
 amavis_dspam_enabled=$(echo $amavis_dspam_enabled | tr A-Z a-z)
 antispam_mysql_enabled=$(echo $antispam_mysql_enabled | tr A-Z a-z)
 zmtrainsa_cleanup_host=$(echo $zmtrainsa_cleanup_host | tr A-Z a-z)

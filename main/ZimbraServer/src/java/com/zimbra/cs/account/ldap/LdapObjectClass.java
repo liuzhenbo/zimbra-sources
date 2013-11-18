@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -16,7 +16,6 @@ package com.zimbra.cs.account.ldap;
 
 // use LinkedHashSet to preserve the order and uniqueness of entries,
 // not that order/uniqueness matters to LDAP server, just cleaner this way
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -146,6 +145,13 @@ public class LdapObjectClass {
         ocs.add(AttributeClass.OC_zimbraServer);
 
         addExtraObjectClasses(ocs, prov, Provisioning.A_zimbraServerExtraObjectClass);
+        return ocs;
+    }
+
+    public static Set<String> getAlwaysOnClusterObjectClasses(Provisioning prov)
+    throws ServiceException {
+        Set<String> ocs = new LinkedHashSet<String>();
+        ocs.add(AttributeClass.OC_zimbraAlwaysOnCluster);
         return ocs;
     }
 

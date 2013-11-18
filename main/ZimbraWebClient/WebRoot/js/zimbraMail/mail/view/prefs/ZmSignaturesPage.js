@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -675,6 +675,16 @@ function(ev) {
 	this._resetOperations();
 };
 
+ZmSignaturesPage.prototype._insertImagesListener =
+function(ev) {
+	AjxDispatcher.require("BriefcaseCore");
+	appCtxt.getApp(ZmApp.BRIEFCASE)._createDeferredFolders();
+	var callback = this._sigEditor._imageUploaded.bind(this._sigEditor);
+	var cFolder = appCtxt.getById(ZmOrganizer.ID_BRIEFCASE);
+	var dialog = appCtxt.getUploadDialog();
+	dialog.popup(cFolder,callback, ZmMsg.uploadImage, null, true);
+};
+
 // Updates name and format of selected sig based on form fields
 ZmSignaturesPage.prototype._updateSignature =
 function(select) {
@@ -837,7 +847,7 @@ function() {
 			var dfsrc = img.getAttribute("dfsrc");
 			if (dfsrc && dfsrc.indexOf("doc:") == 0) {
 				var url = [path, dfsrc.substring(4)].join('');
-				img.src = AjxStringUtil.fixCrossDomainReference(url);
+				img.src = AjxStringUtil.fixCrossDomainReference(url, false, true);
 			}
 		}
 	}
@@ -1197,7 +1207,7 @@ function(tb) {
 	var button = new DwtToolBarButton({parent:tb});
 	button.setImage("InsertImage");
 	button.setToolTipContent(ZmMsg.insertImage);
-	button.addSelectionListener(new AjxListener(this, this._insertImagesListener));
+	button.addSelectionListener(new AjxListener(this.parent, this.parent._insertImagesListener));
 };
 
 ZmSignatureEditor.prototype._createUrlImageButton =
@@ -1211,16 +1221,6 @@ function(tb) {
 ZmSignatureEditor.prototype._insertUrlImagesListener =
 function(ev) {
 	this._getImgSelDlg().popup();
-};
-
-ZmSignatureEditor.prototype._insertImagesListener =
-function(ev) {
-	AjxDispatcher.require("BriefcaseCore");
-    appCtxt.getApp(ZmApp.BRIEFCASE)._createDeferredFolders();
-	var callback = new AjxCallback(this, this._imageUploaded);
-	var cFolder = appCtxt.getById(ZmOrganizer.ID_BRIEFCASE);
-	var dialog = appCtxt.getUploadDialog();
-	dialog.popup(cFolder,callback, ZmMsg.uploadImage, null, true);
 };
 
 ZmSignatureEditor.prototype._imageUploaded =

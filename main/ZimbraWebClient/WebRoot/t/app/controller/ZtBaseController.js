@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
- *
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -26,6 +26,10 @@ Ext.define('ZCS.controller.ZtBaseController', {
 		menuable: 'ZCS.common.ZtMenuable'
 	},
 
+	config: {
+		app: null       // the app this controller is part of
+	},
+
 	/**
 	 * Returns the store that holds the data this controller is managing.
 	 *
@@ -36,17 +40,20 @@ Ext.define('ZCS.controller.ZtBaseController', {
 	},
 
 	/**
-	 * Returns a string that represents he name of the current organizer.
+	 * Returns a string that represents the name of the current organizer, or just
+	 * "Search Results" if there is none.
 	 *
 	 * @param {String}      defaultText     text to use if there is no name
 	 * @param {Boolean}     showCount       if true, show number of items
+	 * @param {String}      app             app
+	 *
 	 * @return {String} organizer title
 	 */
-	getOrganizerTitle: function(defaultText, showCount) {
+	getOrganizerTitle: function(defaultText, showCount, app) {
 
-		defaultText = defaultText || ZtMsg.searchResults;
-		var	organizer = ZCS.session.getCurrentSearchOrganizer();
-		return organizer ? organizer.getTitle(defaultText, showCount !== false) : defaultText;
+		defaultText = defaultText || ZCS.constant.DEFAULT_OVERVIEW_TITLE;
+		var	organizer = ZCS.session.getCurrentSearchOrganizer(app);
+		return organizer ? organizer.getTitle(defaultText, showCount) : defaultText;
 	},
 
 
@@ -80,12 +87,11 @@ Ext.define('ZCS.controller.ZtBaseController', {
 	},
 
 	/**
-	 * Folder change notification: let the folder handle it.
+	 * Folder change notification: these are mostly handled by ZtOverview and ZtUserSession
 	 *
 	 * @param {ZtOrganizer} folder         folder that was changed
 	 * @param {Object}      notification   JSON detailing the changes (each changed field and its new value)
 	 */
 	handleFolderChange: function(folder, notification) {
-		folder.handleModifyNotification(notification);
 	}
 });

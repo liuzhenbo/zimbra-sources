@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -22,11 +22,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.zimbra.common.account.Key;
+import com.zimbra.common.account.Key.AccountBy;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.util.SetUtil;
-
 import com.zimbra.cs.account.Account;
 import com.zimbra.cs.account.AccountServiceException;
+import com.zimbra.cs.account.AlwaysOnCluster;
 import com.zimbra.cs.account.AttributeClass;
 import com.zimbra.cs.account.AttributeManager;
 import com.zimbra.cs.account.CalendarResource;
@@ -39,14 +41,13 @@ import com.zimbra.cs.account.Entry;
 import com.zimbra.cs.account.GlobalGrant;
 import com.zimbra.cs.account.NamedEntry;
 import com.zimbra.cs.account.Provisioning;
-import com.zimbra.cs.account.UCService;
-import com.zimbra.common.account.Key;
-import com.zimbra.common.account.Key.AccountBy;
-import com.zimbra.cs.account.ldap.LdapDIT;
-import com.zimbra.cs.account.ldap.LdapProv;
 import com.zimbra.cs.account.Server;
+import com.zimbra.cs.account.UCService;
 import com.zimbra.cs.account.XMPPComponent;
 import com.zimbra.cs.account.Zimlet;
+import com.zimbra.cs.account.ldap.LdapDIT;
+import com.zimbra.cs.account.ldap.LdapProv;
+import com.zimbra.soap.admin.type.EffectiveRightsTargetSelector;
 import com.zimbra.soap.type.TargetBy;
 
 /**
@@ -60,6 +61,7 @@ public enum TargetType {
     group(true,         true,    AttributeClass.group,            com.zimbra.soap.type.TargetType.group,         "DynamicGroup"),     // dynamic group
     domain(true,        false,   AttributeClass.domain,           com.zimbra.soap.type.TargetType.domain,        "Domain"),
     server(true,        false,   AttributeClass.server,           com.zimbra.soap.type.TargetType.server,        "Server"),
+    alwaysoncluster(true, false, AttributeClass.alwaysOnCluster, com.zimbra.soap.type.TargetType.alwaysoncluster,"AlwaysOnCluster"),
     ucservice(true,     false,   AttributeClass.ucService,        com.zimbra.soap.type.TargetType.ucservice,     "UCService"),
     xmppcomponent(true, false,   AttributeClass.xmppComponent,    com.zimbra.soap.type.TargetType.xmppcomponent, "XMPPComponent"),
     zimlet(true,        false,   AttributeClass.zimletEntry,      com.zimbra.soap.type.TargetType.zimlet,        "Zimlet"),
@@ -147,6 +149,9 @@ public enum TargetType {
         TargetType.server.setInheritedByTargetTypes(
                 new TargetType[]{server});
 
+        TargetType.alwaysoncluster.setInheritedByTargetTypes(
+                new TargetType[]{alwaysoncluster});
+
         TargetType.ucservice.setInheritedByTargetTypes(
                 new TargetType[]{ucservice});
 
@@ -167,6 +172,7 @@ public enum TargetType {
                                  group,
                                  domain,
                                  server,
+                                 alwaysoncluster,
                                  ucservice,
                                  xmppcomponent,
                                  zimlet,
@@ -284,6 +290,16 @@ public enum TargetType {
         return mAttrClass;
     }
 
+    public static Entry lookupTarget(Provisioning prov, EffectiveRightsTargetSelector targSel)
+    throws ServiceException {
+        return lookupTarget(prov, targSel, true);
+    }
+
+    public static Entry lookupTarget(Provisioning prov, EffectiveRightsTargetSelector targSel, boolean mustFind)
+            throws ServiceException {
+        return lookupTarget(prov, fromJaxb(targSel.getType()), targSel.getBy(), targSel.getValue(), mustFind);
+    }
+
     public static Entry lookupTarget(Provisioning prov, TargetType targetType,
             TargetBy targetBy, String target) throws ServiceException {
         return lookupTarget(prov, targetType, targetBy, target, true);
@@ -357,6 +373,12 @@ public enum TargetType {
                 throw AccountServiceException.NO_SUCH_SERVER(target);
             }
             break;
+        case alwaysoncluster:
+            targetEntry = prov.get(Key.AlwaysOnClusterBy.fromString(targetBy.name()), target);
+            if (targetEntry == null && mustFind) {
+                throw AccountServiceException.NO_SUCH_ALWAYSONCLUSTER(target);
+            }
+            break;
         case ucservice:
             targetEntry = prov.get(Key.UCServiceBy.fromString(targetBy.name()), target);
             if (targetEntry == null && mustFind) {
@@ -417,6 +439,8 @@ public enum TargetType {
             return TargetType.group;
         else if (target instanceof Server)
             return TargetType.server;
+        else if (target instanceof AlwaysOnCluster)
+            return TargetType.alwaysoncluster;
         else if (target instanceof UCService)
             return TargetType.ucservice;
         else if (target instanceof Config)
@@ -504,6 +528,9 @@ public enum TargetType {
             break;
         case server:
             base = dit.serverBaseDN();
+            break;
+        case alwaysoncluster:
+            base = dit.alwaysOnClusterBaseDN();
             break;
         case ucservice:
             base = dit.ucServiceBaseDN();

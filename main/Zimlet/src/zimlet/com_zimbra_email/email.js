@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Zimlets
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -206,6 +206,11 @@ function() {
 	this._createBubbles();
 };
 
+EmailTooltipZimlet.prototype.onApptView =
+function() {
+	this._createBubbles();
+};
+
 EmailTooltipZimlet.prototype._createBubbles =
 function() {
 	DBG.println(AjxDebug.DBG3, "EmailTooltipZimlet._createBubble");
@@ -386,7 +391,8 @@ function(object, context, span, spanId) {
     }
 
 	this._hoverOver =  false;
-	this.tooltip._poppedUp = false;//makes the tooltip sticky
+	this.tooltip.setSticky(true);
+	return;
 	setTimeout(AjxCallback.simpleClosure(this.popDownIfMouseNotOnSlide, this), 700);
 	//override to ignore hoverout. 
 };
@@ -401,7 +407,7 @@ function() {
 		return;
 	} else if(this.tooltip) {
         //console.log("Popping down tooltip");
-		this.tooltip._poppedUp = true;//makes the tooltip non-sticky
+		this.tooltip.setSticky(false);
 		this.tooltip.popdown();
 	}
 };
@@ -411,7 +417,7 @@ function() {
 	this._hoverOver =  false;
 	
 	if(this.tooltip) {
-		this.tooltip._poppedUp = true;
+		this.tooltip.setSticky(false);
 		this.tooltip.popdown();
 	}
 };
@@ -504,7 +510,7 @@ function(object, context, x, y, span) {
 	this.y = y;
 	this.tooltip = tooltip;
 	//this is used by mail/conv list
-    Dwt.setHandler(tooltip._div, DwtEvent.ONMOUSEOUT, AjxCallback.simpleClosure(this.hoverOut, this));
+    tooltip.setListener(DwtEvent.ONMOUSEOUT, new AjxListener(this, this.hoverOut));
 
 	var addr = (object instanceof AjxEmailAddress) ? object.address : object;
 	var isMailTo = this.isMailToLink(addr);
@@ -817,7 +823,7 @@ function(itemId, item, ev) {
 		case "SEARCHBUILDER":	this._browseListener();		break;
 		case "NEWEMAIL":		this._composeListener(ev);	break;
 		case "NEWIM":			this._newImListener(ev);	break;
-		case "NEWCONTACT":		this._contactListener(true);	break;
+		case "NEWCONTACT":		this._contactListener();	break;
 		case "ADDTOFILTER":		this._filterListener();		break;
 		case "GOTOURL":			this._goToUrlListener();	break;
 	}
@@ -841,9 +847,9 @@ function(obj) {
 };
 
 EmailTooltipZimlet.prototype._contactListener =
-function(isDirty) {
+function() {
 	this.popdown();
-	var loadCallback = new AjxCallback(this, this._handleLoadContact, [isDirty]);
+	var loadCallback = new AjxCallback(this, this._handleLoadContact);
 	AjxDispatcher.require(["ContactsCore", "Contacts"], false, loadCallback, null, true);
 };
 
@@ -858,7 +864,7 @@ function(create) {
 	var contact;
 	var addr = this._actionObject;
 	if (this._actionObject) {
-		if (this._actionObject.toString() == "ZmContact") {
+		if (this._actionObject.isZmContact) {
 			contact = this._actionObject;
 		} else if (AjxUtil.isString(this._actionObject)) {
 			addr = this._getAddress(this._actionObject);
@@ -870,7 +876,9 @@ function(create) {
 			contact = AjxDispatcher.run("GetContacts").getContactByEmail(this._actionObject.address);
 		}
 	}
+	this._isNewContact = false;
 	if (contact == null && create) {
+		this._isNewContact = true;
 		contact = new ZmContact(null);
 		contact.initFromEmail(addr);
 	}
@@ -878,8 +886,10 @@ function(create) {
 };
 
 EmailTooltipZimlet.prototype._handleLoadContact =
-function(isDirty) {
+function() {
 	var contact = this._getActionedContact(true);
+
+	var isDirty = this._isNewContact;
 
 	if (window.parentAppCtxt) {
 		var capp = window.parentAppCtxt.getApp(ZmApp.CONTACTS);

@@ -6,13 +6,17 @@
 <%@ taglib prefix="fmt" uri="com.zimbra.i18n" %>
 <%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%
+    // Prevent IE from ever going into compatibility/quirks mode.
+    response.setHeader("X-UA-Compatible", "IE=edge");
+%><!DOCTYPE html>
 <!--
 ***** BEGIN LICENSE BLOCK *****
 Zimbra Collaboration Suite Web Client
-Copyright (C) 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 
 The contents of this file are subject to the Zimbra Public License
-Version 1.3 ("License"); you may not use this file except in
+Version 1.4 ("License"); you may not use this file except in
 compliance with the License.  You may obtain a copy of the License at
 http://www.zimbra.com/license.
 
@@ -115,7 +119,6 @@ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
     pageContext.setAttribute("isLeakDetectorOn", isLeakDetectorOn);
     boolean runSlideShow = getParameter(request, "run", "0").equals("1");
 %>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
     <title>Zimbra Presentations</title>

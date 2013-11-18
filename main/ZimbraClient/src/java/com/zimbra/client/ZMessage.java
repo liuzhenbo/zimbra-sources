@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -330,7 +330,7 @@ public class ZMessage implements ZItem, ToZJSONObject {
             mPartName = e.getAttribute(MailConstants.A_PART);
             mName = e.getAttribute(MailConstants.A_NAME, null);
             mContentType = e.getAttribute(MailConstants.A_CONTENT_TYPE, null);
-            mContentDisposition = e.getAttribute(MailConstants.A_CONTENT_DISPOSTION, null);
+            mContentDisposition = e.getAttribute(MailConstants.A_CONTENT_DISPOSITION, null);
             mFileName = e.getAttribute(MailConstants.A_CONTENT_FILENAME, null);
             mContentId = e.getAttribute(MailConstants.A_CONTENT_ID, null);
             mContentDescription = e.getAttribute(MailConstants.A_CONTENT_DESCRIPTION, null);
@@ -392,7 +392,7 @@ public class ZMessage implements ZItem, ToZJSONObject {
         }
 
         /** MIME Content-Disposition */
-        public String getContentDispostion() {
+        public String getContentDisposition() {
             return mContentDisposition;
         }
 

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -14,13 +14,15 @@
  */
 
 /**
- * This class respresents a store of contacts.
+ * This class respresents a store of contacts. It is used by the list panel.
+ * The contacts in here will have only a few attributes populated. Contact
+ * groups are included.
  *
  * @author Conrad Damon <cdamon@zimbra.com>
  */
 Ext.define('ZCS.store.contacts.ZtContactStore', {
 
-	extend: 'Ext.data.Store',
+	extend: 'ZCS.store.ZtItemStore',
 
 	config: {
 		model: 'ZCS.model.contacts.ZtContact',

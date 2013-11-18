@@ -1,3 +1,19 @@
+/*
+ * ***** BEGIN LICENSE BLOCK *****
+ * 
+ * Zimbra Collaboration Suite Server
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
+ * The contents of this file are subject to the Zimbra Public License
+ * Version 1.4 ("License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * http://www.zimbra.com/license.
+ * 
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ * 
+ * ***** END LICENSE BLOCK *****
+ */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.singleday.create;
 
 import java.awt.event.KeyEvent;
@@ -87,7 +103,7 @@ public class CreateMeetingWithEquipmentConflict extends CalendarWorkWeekTest {
 		ZAssert.assertEquals(actual.getSubject(), apptSubject2, "Subject: Verify the appointment data");
 		ZAssert.assertEquals(actual.getEquipment().trim(), apptEquipment, "equipment: Verify the Equipment is present in the appointment");
 		
-		// Verify Equipment free/busy status shows as psts=DE
+		// Verify Equipment free/busy status shows as ptst=DE
 		String equipmentStatus = app.zGetActiveAccount().soapSelectValue("//mail:at[@a='"+ apptEquipment +"']", "ptst");
 		ZAssert.assertEquals(equipmentStatus, "DE", "Verify that the Equipment status shows as 'DECLINED'");
 		
@@ -168,7 +184,7 @@ public class CreateMeetingWithEquipmentConflict extends CalendarWorkWeekTest {
 		ZAssert.assertEquals(actual.getEquipment().trim(), apptEquipment, "equipment: Verify the equipment is present in the appointment");
 		SleepUtil.sleepVeryLong();
 		
-		// Verify Equipment free/busy status shows as psts=NE	
+		// Verify Equipment free/busy status shows as ptst=NE	
 		String equipmentStatus = app.zGetActiveAccount().soapSelectValue("//mail:at[@a='"+ apptEquipment +"']", "ptst");
 		ZAssert.assertEquals(equipmentStatus, "NE", "Verify that the Equipment status shows as 'NEEDS ACTION'");
 		

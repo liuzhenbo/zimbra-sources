@@ -1,23 +1,22 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite CSharp Client
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 #include "common.h"
 #include "Exchange.h"
 #include "MAPIAccessAPI.h"
 #include "Logger.h"
+#include "edk/edkmapi.h"
 
 Zimbra::MAPI::MAPISession *MAPIAccessAPI::m_zmmapisession = NULL;
 Zimbra::MAPI::MAPIStore *MAPIAccessAPI::m_defaultStore = NULL;
@@ -27,7 +26,8 @@ bool MAPIAccessAPI::m_bSingleMailBoxMigration = false;
 bool MAPIAccessAPI::m_bHasJoinedDomain = false;
 
 // Initialize with Exchange Sever hostname, Outlook Admin profile name, Exchange mailbox name to be migrated
-MAPIAccessAPI::MAPIAccessAPI(wstring strUserName, wstring strUserAccount): m_userStore(NULL), m_rootFolder(NULL)
+MAPIAccessAPI::MAPIAccessAPI(wstring strUserName, wstring strUserAccount): m_userStore(NULL), m_rootFolder(NULL),
+	m_publicStore(NULL)
 {
     if (strUserName.empty())
         m_bSingleMailBoxMigration = true;
@@ -46,6 +46,8 @@ MAPIAccessAPI::~MAPIAccessAPI()
 {
 	if ((m_userStore) && (!m_bSingleMailBoxMigration))
         delete m_userStore;
+	//if(m_publicStore)
+	//	delete m_publicStore;
     m_userStore = NULL;
     if (m_rootFolder != NULL)
     {
@@ -126,6 +128,7 @@ LPCWSTR MAPIAccessAPI::_InitGlobalSessionAndStore(LPCWSTR lpcwstrMigTarget)
 {
     LPWSTR lpwstrStatus = NULL;
 	LPWSTR lpwstrRetVal= NULL;
+	bool bPublicFolder= false;
 	// If part of domain, get domain name
     m_bHasJoinedDomain = Zimbra::MAPI::Util::GetDomainName(m_strExchangeHostName);
 	try
@@ -178,6 +181,12 @@ LPCWSTR MAPIAccessAPI::_InitGlobalSessionAndStore(LPCWSTR lpcwstrMigTarget)
             m_strTargetProfileName = wstrProfileName;
             SafeDelete(wstrProfileName);
         }
+		else if (strMigTarget.find(L".PUBLIC") != std::wstring::npos)
+		{
+			bPublicFolder = true;
+			m_strTargetProfileName = lpcwstrMigTarget;
+			m_strTargetProfileName=m_strTargetProfileName.substr(0,strMigTarget.find(L".PUBLIC"));
+		}
         else
         {
             m_strTargetProfileName = lpcwstrMigTarget;
@@ -263,6 +272,139 @@ wstring GetCNName(LPWSTR pstrUserDN)
 		strUserDN=L"";
 	return strUserDN;
 }
+
+LPCWSTR MAPIAccessAPI::OpenPublicStore()
+{
+	LPWSTR lpwstrRetVal=NULL;
+	LPWSTR lpwstrStatus = NULL;
+	HRESULT hr = S_OK;
+	try
+	{
+		// user store
+		m_publicStore = new Zimbra::MAPI::MAPIStore();
+		hr=m_zmmapisession->OpenPublicStore(*m_publicStore);
+		if (hr != S_OK)
+		{
+			lpwstrStatus = FormatExceptionInfo(hr, L"MAPIAccessAPI::OpenPublicStore() Failed",
+				__FILE__, __LINE__);
+			dloge(lpwstrStatus);
+			Zimbra::Util::CopyString(lpwstrRetVal, lpwstrStatus);
+		}
+		else
+		{
+			m_userStore = m_publicStore;
+		}
+	}
+	catch (MAPISessionException &msse)
+    {
+        lpwstrStatus = FormatExceptionInfo(msse.ErrCode(), (LPWSTR)msse.Description().c_str(),
+            (LPSTR)msse.SrcFile().c_str(), msse.SrcLine());
+		dloge(lpwstrStatus);
+		Zimbra::Util::CopyString(lpwstrRetVal, msse.ShortDescription().c_str());
+    }
+    catch (MAPIStoreException &mste)
+    {
+        lpwstrStatus = FormatExceptionInfo(mste.ErrCode(), (LPWSTR)mste.Description().c_str(),
+            (LPSTR)mste.SrcFile().c_str(), mste.SrcLine());
+		dloge(lpwstrStatus);
+		Zimbra::Util::CopyString(lpwstrRetVal, mste.ShortDescription().c_str());
+    }
+	if(lpwstrStatus)
+		Zimbra::Util::FreeString(lpwstrStatus);
+    return lpwstrRetVal;
+}
+
+HRESULT MAPIAccessAPI::EnumeratePublicFolders(std::vector<std::string> &pubFldrList)
+{
+    HRESULT hr = S_OK;
+    LPMAPITABLE pTable = NULL;
+    LPSRowSet pRowSet = NULL;
+    ULONG ulRows = 0;
+
+	hr=m_publicStore->GetPublicFolderTable(&pTable);
+    if (FAILED(hr))
+        return E_FAIL;
+
+    hr = pTable->GetRowCount(0, &ulRows);
+    if (FAILED(hr))
+    {
+        pTable->Release();
+        return E_FAIL;
+    }
+    if (ulRows > 0)
+    {
+        SPropTagArray columns;
+
+        columns.cValues = 1;
+        columns.aulPropTag[0] = PR_DISPLAY_NAME;
+        hr = pTable->SetColumns(&columns, 0);
+        if (FAILED(hr))
+            pTable->Release();
+        hr = pTable->QueryRows(ulRows, 0, &pRowSet);
+        if (FAILED(hr))
+            pTable->Release();
+
+        for (unsigned int i = 0; i < pRowSet->cRows; i++)
+        {
+            std::string strPubFldr;
+            bool bwstrConv = false;
+            LPWSTR lpwstrPubFldrName = pRowSet->aRow[i].lpProps[0].Value.lpszW;
+            int bsz = WideCharToMultiByte(CP_ACP, 0, lpwstrPubFldrName, -1, 0, 0, 0, 0);
+
+            if (bsz > 0)
+            {
+                char *p = new char[bsz];
+                int rc = WideCharToMultiByte(CP_ACP, 0, lpwstrPubFldrName, -1, p, bsz, 0, 0);
+
+                if (rc != 0)
+                {
+                    p[bsz - 1] = 0;
+                    strPubFldr = p;
+                    bwstrConv = true;
+                }
+                delete[] p;
+            }
+            if (bwstrConv)
+                pubFldrList.push_back(strPubFldr);
+        }
+    }
+    
+    pTable->Release();
+    return hr;
+}
+
+
+LPCWSTR MAPIAccessAPI::InitializePublicFolders()
+{
+	LPWSTR lpwstrRetVal=NULL;
+	LPWSTR lpwstrStatus = NULL;
+    HRESULT hr = S_OK;
+
+	try
+	{
+		lpwstrStatus=(LPWSTR)OpenPublicStore();
+		// Get root folder from user store
+		m_rootFolder = new Zimbra::MAPI::MAPIFolder(*m_zmmapisession, *m_publicStore);
+		if (FAILED(hr = m_publicStore->GetRootFolder(*m_rootFolder)))
+		{
+			lpwstrStatus = FormatExceptionInfo(hr, L"MAPIAccessAPI::InitializePublicFolders() Failed",
+				__FILE__, __LINE__);
+			Zimbra::Util::CopyString(lpwstrRetVal, L"MAPIAccessAPI::InitializePublicFolders() Failed");
+		}
+		Zimbra::Mapi::NamedPropsManager::SetNamedProps(m_publicStore->GetInternalMAPIStore());
+	}
+	catch (GenericException &ge)
+    {
+        lpwstrStatus = FormatExceptionInfo(ge.ErrCode(), (LPWSTR)ge.Description().c_str(),
+            (LPSTR)ge.SrcFile().c_str(), ge.SrcLine());
+		dloge(lpwstrStatus);
+		Zimbra::Util::CopyString(lpwstrRetVal,ge.ShortDescription().c_str());
+    }
+	if(lpwstrStatus)
+		Zimbra::Util::FreeString(lpwstrStatus);
+	return lpwstrRetVal;
+}
+
 
 // Open MAPI sessiona and Open Stores
 LPCWSTR MAPIAccessAPI::OpenUserStore()
@@ -927,7 +1069,8 @@ LPCWSTR MAPIAccessAPI::_GetItem(SBinary sbItemEID, BaseItemData &itemData)
 			cd->OtherStreet = mapicontact.OtherStreet();
 			cd->OtherURL = mapicontact.OtherURL();
 			cd->Pager = mapicontact.Pager();
-			cd->pDList = mapicontact.DList();   
+			cd->PrimaryPhone = mapicontact.PrimaryPhone();
+			cd->pDList = mapicontact.DList();
 			cd->PictureID = mapicontact.Picture();
 			cd->Type = mapicontact.Type();
 			cd->UserField1 = mapicontact.UserField1();

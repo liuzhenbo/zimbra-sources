@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.briefcase.file;
@@ -35,9 +33,9 @@ public class TagFile extends FeatureBriefcaseTest {
 		// All tests start at the Briefcase page
 		super.startingPage = app.zPageBriefcase;
 
-		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains("FOSS")){
+		//if(ZimbraSeleniumProperties.zimbraGetVersionString().contains("FOSS")){
 		    super.startingAccountPreferences.put("zimbraPrefShowSelectionCheckbox","TRUE");
-		}
+		//}
 			    
 		super.startingAccountPreferences.put("zimbraPrefBriefcaseReadingPaneLocation", "bottom");
 	}
@@ -51,7 +49,7 @@ public class TagFile extends FeatureBriefcaseTest {
 
 		// Create file item
 		String filePath = ZimbraSeleniumProperties.getBaseDirectory()
-				+ "/data/public/other/testpptfile.ppt";
+				+ "/data/public/other/testtextfile.txt";
 
 		FileItem fileItem = new FileItem(filePath);
 
@@ -68,9 +66,11 @@ public class TagFile extends FeatureBriefcaseTest {
 		// refresh briefcase page
 		app.zTreeBriefcase.zTreeItem(Action.A_LEFTCLICK, briefcaseFolder, true);
 
-		SleepUtil.sleepVerySmall();
+		SleepUtil.sleepSmall();
 
 		// Click on created File
+		app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
+		/*
 		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains(
     			"FOSS")){
 		    app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
@@ -78,7 +78,7 @@ public class TagFile extends FeatureBriefcaseTest {
 		}else{
 		    app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, fileItem);
 		}
-
+		*/
 		// Click on header check box
 		// app.zPageBriefcase.zHeader(Action.A_BRIEFCASE_HEADER_CHECKBOX);
 
@@ -93,7 +93,7 @@ public class TagFile extends FeatureBriefcaseTest {
 		dialogTag.zSetTagName(tagName);
 		dialogTag.zClickButton(Button.B_OK);
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		// Make sure the tag was created on the server (get the tag ID)
 		account.soapSend("<GetTagRequest xmlns='urn:zimbraMail'/>");
@@ -154,7 +154,7 @@ public class TagFile extends FeatureBriefcaseTest {
 
 		// Create file item
 		String filePath = ZimbraSeleniumProperties.getBaseDirectory()
-				+ "/data/public/other/testexcelfile.xls";
+				+ "/data/public/other/testtextfile.txt";
 
 		FileItem fileItem = new FileItem(filePath);
 
@@ -183,9 +183,11 @@ public class TagFile extends FeatureBriefcaseTest {
 		// refresh briefcase page
 		app.zTreeBriefcase.zTreeItem(Action.A_LEFTCLICK, briefcaseFolder, true);
 
-		SleepUtil.sleepVerySmall();
+		SleepUtil.sleepSmall();
 
 		// Click on uploaded file
+		app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
+		/*
 		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains(
     			"FOSS")){
 		    app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
@@ -193,7 +195,7 @@ public class TagFile extends FeatureBriefcaseTest {
 		}else{
 		    app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, fileItem);
 		}
-
+		*/
 		// Click on header check box
 		// app.zPageBriefcase.zHeader(Action.A_BRIEFCASE_HEADER_CHECKBOX);
 
@@ -230,7 +232,7 @@ public class TagFile extends FeatureBriefcaseTest {
 
 		// Create file item
 		String filePath = ZimbraSeleniumProperties.getBaseDirectory()
-				+ "/data/public/other/testwordfile.doc";
+				+ "/data/public/other/testtextfile.txt";
 
 		FileItem fileItem = new FileItem(filePath);
 
@@ -260,9 +262,11 @@ public class TagFile extends FeatureBriefcaseTest {
 		// refresh briefcase page
 		app.zTreeBriefcase.zTreeItem(Action.A_LEFTCLICK, briefcaseFolder, true);
 
-		SleepUtil.sleepVerySmall();
+		SleepUtil.sleepSmall();
 
 		// Click on uploaded file
+		app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
+		/*
 		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains(
     			"FOSS")){
 		    app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
@@ -270,6 +274,7 @@ public class TagFile extends FeatureBriefcaseTest {
 		}else{
 		    app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, fileItem);
 		}
+		*/
 
 		// Click on header check box
 		// app.zPageBriefcase.zHeader(Action.A_BRIEFCASE_HEADER_CHECKBOX);

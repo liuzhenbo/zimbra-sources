@@ -1,3 +1,19 @@
+/*
+ * ***** BEGIN LICENSE BLOCK *****
+ * 
+ * Zimbra Collaboration Suite Server
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
+ * The contents of this file are subject to the Zimbra Public License
+ * Version 1.4 ("License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * http://www.zimbra.com/license.
+ * 
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ * 
+ * ***** END LICENSE BLOCK *****
+ */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.recurring.create;
 
 import java.util.Calendar;
@@ -77,7 +93,7 @@ public class WeeklyEveryXdayEndByY extends CalendarWorkWeekTest {
 		ZAssert.assertEquals(weekday, "TU", "Weekday: Verify the appointment data");
 		ZAssert.assertEquals(actual.getContent(), appt.getContent(), "Content: Verify the appointment data");
 		
-		// Verify location free/busy status shows as psts=AC
+		// Verify location free/busy status shows as ptst=AC
 		String locationStatus = app.zGetActiveAccount().soapSelectValue("//mail:at[@a='"+ apptLocation +"']", "ptst");
 		ZAssert.assertEquals(locationStatus, "AC", "Verify that the location status shows as 'ACCEPTED'");
 		

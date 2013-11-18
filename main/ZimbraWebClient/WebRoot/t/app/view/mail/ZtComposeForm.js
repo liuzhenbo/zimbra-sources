@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
- * 
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -38,7 +38,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 
 	config: {
 		layout: 'fit',
-		width: '80%',
+		width: Ext.os.deviceType === "Phone" ? '100%' : '80%',
 		height: '100%',
 		scrollable: false,
 		hidden: true,
@@ -49,23 +49,24 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 	initialize: function() {
 
 		var composeForm = this,
+			isPhone = Ext.os.deviceType === "Phone",
 			toolbar = {
 				xtype: 'titlebar',
+				cls: 'zcs-item-titlebar',
 				docked: 'top',
 				title: ZtMsg.compose,
 				items: [
 					{
 						xtype: 'button',
 						text: ZtMsg.cancel,
-						ui: 'neutral',
 						handler: function() {
 							this.up('composepanel').fireEvent('cancel');
 						}
 					}, {
 						xtype: 'button',
 						text: ZtMsg.saveDraft,
+						hidden: isPhone,
 						align: 'right',
-						ui: 'neutral',
 						handler: function() {
 							this.up('composepanel').fireEvent('saveDraft');
 						}
@@ -73,8 +74,7 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 						xtype: 'button',
 						text: ZtMsg.send,
 						align: 'right',
-						ui: 'green',
-						padding: '0 2em',
+						minWidth: '6em',
 						handler: function() {
 							this.up('composepanel').fireEvent('send');
 						}
@@ -84,9 +84,10 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 			form = {
 				xtype: 'formpanel',
 				scrollable: false,
+				scrollable: false,
 				defaults: {
-					labelWidth: '100px',
-					inputCls: 'zcs-form-input'
+					inputCls: 'zcs-form-input',
+					labelWidth: '5.5em'
 				},
 				layout: {
 					type: 'vbox'
@@ -97,132 +98,142 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 						type: 'hbox'
 					},
 					items: [{
+						xtype: 'button',
+						itemId: 'showcc',
+						cls: 'zcs-show-cc-btn',
+						iconCls: 'collapsed',
+						handler: function () {
+							composeForm.showCcBcc(composeForm.down('#cc').isHidden());
+						}
+					}, {
 						xtype: 'contactfield',
 						name: ZCS.constant.TO,
-						labelWidth: '4.5em',
+						addressType: ZCS.constant.TO,
 						flex: 1,
 						label: ZtMsg.toHdr,
-						addressType: ZCS.constant.TO
-					}, {
-						width: '4.5em',
-						height: '2.5em',
-						xtype: 'component',
-						html: ZtMsg.ccOrBcc,
-						itemId: 'ccToggle',
-						cls: 'x-form-label x-form-label-nowrap x-field zcs-toggle-field',
-						listeners: {
-							painted: function () {
-								this.element.on('tap', function() {
-									composeForm.showCc();
-								});
-							}
-						}
+						labelWidth: '3em'
 					}]
 				}, {
 					xtype: 'contactfield',
 					name: ZCS.constant.CC,
-					height: '2.5em',
-					labelWidth: '4.5em',
-					hidden: true,
 					itemId: 'cc',
+					addressType: ZCS.constant.CC,
+					height: '2.5em',
+					hidden: true,
 					label: ZtMsg.ccHdr,
-					addressType: ZCS.constant.CC
+					labelWidth: '5.5em'
 				}, {
 					xtype: 'contactfield',
 					name: ZCS.constant.BCC,
 					itemId: 'bcc',
+					addressType: ZCS.constant.BCC,
 					height: '2.5em',
-					labelWidth: '4.5em',
 					hidden: true,
 					label: ZtMsg.bccHdr,
-					addressType: ZCS.constant.BCC
+					labelWidth: '5.5em'
 				}, {
+					cls: 'zcs-subjectline',
 					height: '2.5em',
 					layout: {
 						type: 'hbox'
 					},
 					items: [{
 						xtype: 'textfield',
+						cls: 'zcs-subject',
 						name: 'subject',
-						height: '2.5em',
-						labelWidth: '4.5em',
 						flex: 1,
+						height: '2.5em',
+						label: ZtMsg.subjectHdr,
+						labelWidth: '5.5em',
 						listeners: {
 							blur: function () {
 								//Because this panel is floating, and a keystroke may have forced the whole window to scroll,
 								//when we blur, reset the scroll.
 								ZCS.htmlutil.resetWindowScroll();
 							}
-						},
-						label: ZtMsg.subjectHdr
+						}
 					}]
 				}, {
-					xtype: 'component',
-					height: '2.5em',
-					cls: 'zcs-attachments',
-					hidden: true,
-					itemId: 'attachments',
-					listeners: {
-						painted: function () {
-							this.element.on('tap', function(e) {
-								var el = Ext.fly(e.target);
-								if (el.hasCls('zcs-link')) {
-									composeForm.fireEvent('showOriginalAttachments');
-								}
-								if (el.hasCls('zcs-attachment-bubble')) {
-									var idParams = ZCS.util.getIdParams(el.dom.id) || {};
-									composeForm.fireEvent('originalAttachmentTap', el, {
-										menuName:   ZCS.constant.MENU_ORIG_ATT,
-										bubbleId:   el.dom.id
-									});
-								}
-							});
-						}
-					}
-				}, {
 					xtype: 'container',
-					scrollable: {
-					    direction: 'vertical',
-					    directionLock: true
-					},
-					padding: 0,
 					flex: 1,
+					scrollable: {
+						direction: 'both',
+						directionLock: true
+					},
 					items: [{
 						xtype: 'component',
-						html: '<div contenteditable="true" class="zcs-editable zcs-body-field"></div>',
-						itemId: 'body',
+						cls: 'zcs-attachments',
+						itemId: 'attachments',
+						hidden: true,
 						listeners: {
-							painted: function () {
-								var heightToSet = Math.max(this.up('container').element.getHeight(), this.element.down('.zcs-body-field').dom.scrollHeight),
-									bodyField = this.element.down('.zcs-body-field');
-
-								this.setHeight(heightToSet);
-
-								bodyField.setHeight(heightToSet);
-
-								bodyField.dom.addEventListener('blur', function () {
-									ZCS.htmlutil.resetWindowScroll();
-								});
-
-								bodyField.dom.addEventListener('focus', function () {
-									setTimeout(ZCS.htmlutil.resetWindowScroll, 0);
+							initialize: function () {
+								this.element.on('tap', function(e) {
+									var el = Ext.fly(e.target);
+									if (el.hasCls('zcs-link')) {
+										composeForm.fireEvent('showOriginalAttachments');
+									}
+									if (el.hasCls('zcs-attachment-bubble')) {
+										var idParams = ZCS.util.getIdParams(el.dom.id) || {};
+										composeForm.fireEvent('originalAttachmentTap', el, {
+											menuName:   ZCS.constant.MENU_ORIG_ATT,
+											bubbleId:   el.dom.id
+										});
+									}
 								});
 							}
 						}
+					}, {
+						xtype: 'filefield',
+						height: '2.5em',
+						hidden: true,
+						listeners: {
+							change: function (field, newValue, oldValue) {
+								//When the value of this field is reset, newValue is null.
+								if (newValue) {
+									composeForm.fireEvent('attachmentAdded', field, newValue, oldValue);
+								}
+							}
+						}
+					}, {
+						xtype: 'container',
+						padding: 0,
+						flex: 1,
+						items: [{
+							xtype: 'component',
+							itemId: 'body',
+							html: '<div contenteditable="true" class="zcs-editable zcs-body-field"></div>',
+							listeners: {
+								painted: function () {
+									var heightToSet = Math.max(this.up('container').element.getHeight(), this.element.down('.zcs-body-field').dom.scrollHeight),
+										bodyField = this.element.down('.zcs-body-field');
+
+									this.setHeight(heightToSet);
+
+									bodyField.setHeight(heightToSet);
+
+									bodyField.dom.addEventListener('blur', function () {
+										ZCS.htmlutil.resetWindowScroll();
+									});
+
+									bodyField.dom.addEventListener('focus', function () {
+										setTimeout(ZCS.htmlutil.resetWindowScroll, 0);
+									});
+								}
+							}
+						}]
 					}]
 				}]
 			};
 
-		if (ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_ADD_ATTACHMENT]) {
+		if (ZCS.constant.IS_ENABLED[ZCS.constant.FEATURE_ADD_ATTACHMENT] && Ext.feature.has.XHR2) {
 			form.items[3].items.push({
-				width: 80,
-				height: '2.5em',
 				xtype: 'component',
-				html: ZtMsg.attach,
-				itemId: 'attach',
 				cls: 'x-form-label x-form-label-nowrap x-field zcs-toggle-field',
+				itemId: 'attach',
+				html: ZtMsg.attach,
+				width: 80,
 				listeners: {
-					painted: function () {
+					initialize: function () {
 						var comp = this;
 						this.element.on('tap', function () {
 							composeForm.doAttach();
@@ -238,20 +249,33 @@ Ext.define('ZCS.view.mail.ZtComposeForm', {
 		]);
 	},
 
-	showCc: function () {
-		this.down('#ccToggle').hide();
-		this.down('#cc').show();
-		this.down('#bcc').show();
+	// TODO: Separate toggles for CC and BCC
+	showCcBcc: function(show) {
+		if (show) {
+			this.down('#cc').show();
+			this.down('#bcc').show();
+			this.down('#showcc').setIconCls('expanded');
+		}
+		else {
+			this.down('#cc').hide();
+			this.down('#bcc').hide();
+			this.down('#showcc').setIconCls('collapsed');
+		}
 	},
 
 	doAttach: function () {
-		this.fireEvent('doAttachment');
+		this.down('filefield').show();
 	},
 
 	resetForm: function () {
 		this.down('.formpanel').reset();
-		this.down('#ccToggle').show();
 		this.down('#cc').hide();
 		this.down('#bcc').hide();
+		this.down('#showcc').setIconCls('collapsed');
+		//This is necessary to reset the file input inside of the form.
+		this.down('.formpanel').element.dom.reset();
+		//Reset this so we don't parse out old attachment info next time we come to the form.
+		this.down('#attachments').setHtml('');
+		this.down('.filefield').hide();
 	}
 });

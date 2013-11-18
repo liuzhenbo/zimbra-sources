@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 //@tag foundation,core
 //@define Ext.Object
 //@require Ext.Number
@@ -308,7 +292,10 @@ var ExtObject = Ext.Object = {
 
     /**
      * Iterate through an object and invoke the given callback function for each iteration. The iteration can be stop
-     * by returning `false` in the callback function. For example:
+     * by returning `false` in the callback function. This method iterates over properties within the current object,
+     * not properties from its prototype. To iterate over a prototype, iterate over obj.proto instead of obj.
+     * In the next example, use Ext.Object.each(Person.proto ....) and so on.
+     * For example:
      *
      *     var person = {
      *         name: 'Jacky',
@@ -413,8 +400,7 @@ var ExtObject = Ext.Object = {
     },
 
     /**
-     * @private
-     * @param source
+     * @param {Object} source
      */
     mergeIf: function(source) {
         var i = 1,
@@ -588,6 +574,39 @@ var ExtObject = Ext.Object = {
         return objectClass;
     },
 
+    equals: function(origin, target) {
+        var originType = typeof origin,
+            targetType = typeof target,
+            key;
+
+        if (targetType === targetType) {
+            if (originType === 'object') {
+                for (key in origin) {
+                    if (!(key in target)) {
+                        return false;
+                    }
+
+                    if (!ExtObject.equals(origin[key], target[key])) {
+                        return false;
+                    }
+                }
+
+                for (key in target) {
+                    if (!(key in origin)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+            else {
+                return origin === target;
+            }
+        }
+
+        return false;
+    },
+
     defineProperty: ('defineProperty' in Object) ? Object.defineProperty : function(object, name, descriptor) {
         if (descriptor.get) {
             object.__defineGetter__(name, descriptor.get);
@@ -617,7 +636,7 @@ Ext.mergeIf = Ext.Object.mergeIf;
  *
  * @member Ext
  * @method urlEncode
- * @deprecated 4.0.0 Please use `{@link Ext.Object#toQueryString Ext.Object.toQueryString}` instead
+ * @deprecated 2.0.0 Please use `{@link Ext.Object#toQueryString Ext.Object.toQueryString}` instead
  */
 Ext.urlEncode = function() {
     var args = Ext.Array.from(arguments),
@@ -637,7 +656,7 @@ Ext.urlEncode = function() {
  *
  * @member Ext
  * @method urlDecode
- * @deprecated 4.0.0 Please use {@link Ext.Object#fromQueryString Ext.Object.fromQueryString} instead
+ * @deprecated 2.0.0 Please use {@link Ext.Object#fromQueryString Ext.Object.fromQueryString} instead
  */
 Ext.urlDecode = function() {
     return ExtObject.fromQueryString.apply(ExtObject, arguments);

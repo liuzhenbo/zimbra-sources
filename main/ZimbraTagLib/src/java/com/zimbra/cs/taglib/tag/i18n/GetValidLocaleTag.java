@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -53,9 +53,9 @@ public class GetValidLocaleTag extends ZimbraSimpleTag {
             return;
         }
         ZAuthToken authToken = ZJspSession.getAuthToken((PageContext)ctxt);
-        String soapUri = ZJspSession.getSoapURL((PageContext)ctxt);
         SoapHttpTransport transport = null;
         try {
+            String soapUri = ZJspSession.getSoapURL((PageContext)ctxt);
         	transport = new SoapHttpTransport(soapUri);
      		transport.setAuthToken(authToken);
         	XMLElement req = new XMLElement(AccountConstants.GET_AVAILABLE_LOCALES_REQUEST);

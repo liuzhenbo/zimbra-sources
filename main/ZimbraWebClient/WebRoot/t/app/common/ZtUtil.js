@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
- * 
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -28,6 +28,15 @@ Ext.define('ZCS.common.ZtUtil', {
 	idSeq: 0,
 
 	idParams: {},
+
+
+	/**
+	 * TODO: Conrad to fill this in from web client
+	 *
+	 */
+	getDisplayForBytes: function (bytes) {
+		return (parseInt(bytes, 10) / 1025) + "Kb"
+	},
 
 	/**
 	 * Returns a "reversed" map, with the keys and values switched.
@@ -142,7 +151,7 @@ Ext.define('ZCS.common.ZtUtil', {
 	/**
 	 * Converts an array of scalar values into a lookup hash where each value is a key.
 	 *
-	 * @param {array}       array to convert
+	 * @param {Array}       array to convert
 	 * @return {object}     lookup hash
 	 */
 	arrayAsLookupHash: function(array) {
@@ -173,8 +182,15 @@ Ext.define('ZCS.common.ZtUtil', {
 			return result;
 		}
 
+		// handle ID that was made unique to satisfy ST, eg "mail-folder-3"
+		var parts;
+		if (id.indexOf('-') > 0) {
+			parts = id.split('-');
+			id = parts[parts.length - 1];
+		}
+
 		if (id.indexOf(':') > 0) {
-			var parts = id.split(':');
+			parts = id.split(':');
 			result.accountId = parts[0];
 			result.localId = parts[1];
 			result.isRemote = true;
@@ -207,8 +223,11 @@ Ext.define('ZCS.common.ZtUtil', {
 	 * @return {Boolean}    true if folder matches given folder ID
 	 */
 	folderIs: function(folder, folderId) {
-		folder = Ext.isString(folder) ? ZCS.cache.get(folder) : folder;
-		return folder ? this.localId(folder.get('itemId')) === folderId : false;
+
+		if (Ext.isString(folder)) {
+			folder = ZCS.cache.get(folder);
+		}
+		return folder ? this.localId(folder.get('zcsId')) === folderId : false;
 	},
 
 	/**
@@ -218,7 +237,7 @@ Ext.define('ZCS.common.ZtUtil', {
 	 */
 	curFolderLocalId: function() {
 		var curFolder = ZCS.session.getCurrentSearchOrganizer();
-		return curFolder ? this.localId(curFolder.get('itemId')) : '';
+		return curFolder ? this.localId(curFolder.get('zcsId')) : '';
 	},
 
 	/**
@@ -229,6 +248,18 @@ Ext.define('ZCS.common.ZtUtil', {
 	 */
 	curFolderIs: function(folderId) {
 		return this.curFolderLocalId() === folderId;
+	},
+
+	/**
+	 * Returns true if the given folder ID is for a folder that typically stores
+	 * outbound messages.
+	 *
+	 * @param {String}      folderId        folder ID to check
+	 * @return {Boolean}    true if folder is outbound
+	 */
+	isOutboundFolderId: function(folderId) {
+		var localId = this.localId(folderId);
+		return localId === ZCS.constant.ID_SENT || localId === ZCS.constant.ID_DRAFTS;
 	},
 
 	/**
@@ -253,58 +284,27 @@ Ext.define('ZCS.common.ZtUtil', {
 
 		if (dateDiff < ZCS.constant.MSEC_PER_MINUTE) {
 			dateStr = ZtMsg.receivedNow;
-		}
-		else if (dateDiff < ZCS.constant.MSEC_PER_DAY) {
+		} else {
 			if (dateDiff < ZCS.constant.MSEC_PER_HOUR) {
 				num = Math.round(dateDiff / ZCS.constant.MSEC_PER_MINUTE);
 				unit = num > 1 ? ZtMsg.minutes : ZtMsg.minute;
-			}
-			else {
+			} else if (dateDiff < ZCS.constant.MSEC_PER_DAY) {
 				num = Math.round(dateDiff / ZCS.constant.MSEC_PER_HOUR);
 				unit = num > 1 ? ZtMsg.hours : ZtMsg.hour;
+			} else if (dateDiff < ZCS.constant.MSEC_PER_WEEK) {
+				num = Math.round(dateDiff / ZCS.constant.MSEC_PER_DAY);
+				unit = num > 1 ? ZtMsg.days : ZtMsg.day;
+			} else if (dateDiff < ZCS.constant.MSEC_PER_YEAR) {
+				num = Math.round(dateDiff / ZCS.constant.MSEC_PER_WEEK);
+				unit = num > 1 ? ZtMsg.weeks : ZtMsg.week;
+			} else {
+				num = Math.round(dateDiff / ZCS.constant.MSEC_PER_YEAR);
+				unit = num > 1 ? ZtMsg.years : ZtMsg.year;
 			}
 			dateStr = Ext.String.format(ZtMsg.receivedRecently, num, unit);
 		}
-		else {
-			dateStr = Ext.Date.format(then, 'M j');
-		}
 
 		return dateStr;
-	},
-
-	compareOrganizers: function(organizer1, organizer2) {
-
-		if (!organizer1 || !organizer2) {
-			return !organizer1 && !organizer2 ? 0 : organizer1 ? 1 : -1;
-		}
-
-		var orgType1 = organizer1.type,
-			orgType2 = organizer2.type,
-			id1 = organizer1.itemId,
-			id2 = organizer2.itemId,
-			name1 = organizer1.name,
-			name2 = organizer2.name,
-			isSystem1 = (orgType1 !== ZCS.constant.ORG_SAVED_SEARCH && orgType1 !== ZCS.constant.ORG_TAG && id1 <= ZCS.constant.MAX_SYSTEM_ID),
-			isSystem2 = (orgType2 !== ZCS.constant.ORG_SAVED_SEARCH && orgType2 !== ZCS.constant.ORG_TAG && id2 <= ZCS.constant.MAX_SYSTEM_ID),
-			sortField1, sortField2;
-
-		if (orgType1 !== orgType2) {
-			sortField1 = ZCS.constant.ORG_SORT_VALUE[orgType1];
-			sortField2 = ZCS.constant.ORG_SORT_VALUE[orgType2];
-		}
-		else if (isSystem1 !== isSystem2) {
-			return isSystem1 ? -1 : 1;
-		}
-		else if (isSystem1 && isSystem2) {
-			sortField1 = ZCS.constant.FOLDER_SORT_VALUE[id1];
-			sortField2 = ZCS.constant.FOLDER_SORT_VALUE[id2];
-		}
-		else {
-			sortField1 = name1 ? name1.toLowerCase() : '';
-			sortField2 = name2 ? name2.toLowerCase() : '';
-		}
-
-		return sortField1 > sortField2 ? 1 : (sortField1 === sortField2 ? 0 : -1);
 	},
 
 	/**
@@ -380,32 +380,217 @@ Ext.define('ZCS.common.ZtUtil', {
 		return name.substr(0, len) + '...' + name.substr(-len) + '.' + ext;
 	},
 
-    /**
-     * Get the image URL.
-     *
-     * contact {Object} contact details
-     * maxWidth {int} max pixel width (optional - default 48)
-     * @return	{String}	the image URL
-     */
-    getImageUrl: function(contact, maxWidth) {
-        var image = contact && contact.data.image;
-        var imagePart  = (image && image.part) || contact.data.imagepart;
+	/**
+	 * Copies fields from a model instance into a data hash suitable for passing
+	 * to a template.
+	 *
+	 * @param {Model}   model       source model
+	 * @param {Array}   fields      list of fields to copy
+	 *
+	 * @return {Object}     hash of data
+	 */
+	getFields: function(model, fields) {
 
-        if (!imagePart) {
-            return contact.data.zimletImage || null;  //return zimlet populated image only if user-uploaded image is not there.
-        }
+		var data = {};
 
-        maxWidth = maxWidth || 48;
+		Ext.each(fields, function(field) {
+			data[field] = model.get(field);
+		}, this);
 
-        return ZCS.htmlutil.buildUrl({
-            path: ZCS.constant.PATH_MSG_FETCH,
-            qsArgs: {
-                auth: 'co',
-                id: contact.data.id,
-                part: imagePart,
-                max_width:maxWidth,
-                t:(new Date()).getTime()
-            }
-        });
-    }
+		return data;
+	},
+
+	/**
+	 * Copies fields from a hash of data into a model instance.
+	 *
+	 * @param {Object}  data        hash of data
+	 * @param {Model}   model       target model
+	 * @param {Array}   fields      list of fields to copy
+	 */
+	setFields: function(data, model, fields) {
+
+		Ext.each(fields, function(field) {
+			model.set(field, data[field]);
+		}, this);
+	},
+
+	/**
+	 * Returns the position of item in an array.
+	 *
+	 * @param {Array} array
+	 * @param {Object} object
+	 * @param {String} strict
+	 * @return {Number}
+	 */
+	indexOf: function(array, object, strict) {
+
+		if (array) {
+			var i,
+				item;
+
+			for (i = 0; i < array.length; i++) {
+				item = array[i];
+
+				if ((strict && item === object) || (!strict && item == object)) {
+					return i;
+				}
+			}
+		}
+		return -1;
+	},
+
+	/**
+	 * Returns server date time object.
+	 *
+	 * @param {String} serverStr
+	 * @param {String} noSpecialUtcCase
+	 * @return {Date}
+	 */
+	parseServerDateTime: function(serverStr, noSpecialUtcCase) {
+		if (serverStr == null) {
+			return null;
+		}
+
+		var d = new Date(),
+			yyyy = parseInt(serverStr.substr(0,4), 10),
+			MM = parseInt(serverStr.substr(4,2), 10),
+			dd = parseInt(serverStr.substr(6,2), 10);
+
+		d.setFullYear(yyyy);
+		d.setMonth(MM - 1);
+		d.setMonth(MM - 1);
+		d.setDate(dd);
+		this.parseServerTime(serverStr, d, noSpecialUtcCase);
+		return d;
+	},
+
+	/**
+	 * Returns server date time object.
+	 *
+	 * @param {String} serverStr
+	 * @param {Date} date
+	 * @param {String} noSpecialUtcCase
+	 * @return {Date}
+	 */
+	parseServerTime: function(serverStr, date, noSpecialUtcCase) {
+		if (serverStr.charAt(8) == 'T') {
+			var hh = parseInt(serverStr.substr(9,2), 10),
+				mm = parseInt(serverStr.substr(11,2), 10),
+				ss = parseInt(serverStr.substr(13,2), 10);
+
+			if (!noSpecialUtcCase && serverStr.charAt(15) == 'Z') {
+				mm += ZCS.timezone.getOffset(ZCS.timezone.DEFAULT_TZ, date);
+			}
+			date.setHours(hh, mm, ss, 0);
+		}
+		return date;
+	},
+
+	/**
+	 * Returns messages from properties with formatted data.
+	 *
+	 * @param {String} pattern
+	 * @param {Object} value - This could be a Number/String/Array object
+	 * @return {String}
+	 */
+	formatRecurMsg: function(pattern, value) {
+		switch (pattern) {
+			case ZtMsg.recurStart:
+				return Ext.String.format(pattern, Ext.Date.format(value, 'F j, Y'));
+
+			case ZtMsg.recurEndNumber:
+				return Ext.String.format(pattern, value);
+
+			case ZtMsg.recurEndByDate:
+				return Ext.String.format(pattern, Ext.Date.format(value, 'F j, Y'));
+
+			case ZtMsg.recurDailyEveryNumDays:
+				return Ext.String.format(pattern, value);
+
+			case ZtMsg.recurWeeklyEveryNumWeeksDate: {
+				if (value[1].length === 0) {
+					return Ext.String.format(pattern, value[0], '');
+				}
+				else if (value[1].length === 1) {
+					return Ext.String.format(pattern, value[0], Ext.Date.format(value[0][0], 'l'));
+				}
+
+				var weekDaysLen = value[1].length,
+					i,
+					msgStr = '';
+
+				for (i = 0; i < weekDaysLen; i++) {
+					msgStr += Ext.Date.format(value[1][i], 'l') + (i !== weekDaysLen - 1 ? ', ' : '');
+				}
+
+				return Ext.String.format(pattern, value[0], msgStr);
+			}
+
+			case ZtMsg.recurWeeklyEveryWeekday:
+				return Ext.String.format(pattern, Ext.Date.format(value, 'l'));
+
+			case ZtMsg.recurYearlyEveryDate:
+				return Ext.String.format(pattern, Ext.Date.format(value[0], 'F'), value[1]);
+
+			case ZtMsg.recurYearlyEveryMonthWeekDays:
+				return Ext.String.format(pattern, this.getOrdinal(value[0]), this.getDayType(value[1]), Ext.Date.format(value[2], 'F'));
+
+			case ZtMsg.recurYearlyEveryMonthNumDay:
+				return Ext.String.format(pattern, this.getOrdinal(value[0]), Ext.Date.format(value[1], 'l'), Ext.Date.format(value[2], 'F'));
+
+			case ZtMsg.recurMonthlyEveryNumMonthsNumDay:
+				return Ext.String.format(pattern, this.getOrdinal(value[0]), Ext.Date.format(value[1], 'l'), value[2]);
+
+			case ZtMsg.recurMonthlyEveryNumMonthsWeekDays:
+				return Ext.String.format(pattern, this.getOrdinal(value[0]), this.getDayType(value[1]), value[2]);
+
+			case ZtMsg.recurMonthlyEveryNumMonthsDate:
+				return Ext.String.format(pattern, value[0], value[1]);
+		}
+	},
+
+	/**
+	 * Returns words - last, first, second, third and fourth based on the bysetpos/ordinal values supplied.
+	 *
+	 * @param {String} ordinal
+	 * @return {String}
+	 */
+	getOrdinal: function(ordinal) {
+		switch (ordinal) {
+			case -1: return ZtMsg.recurLast;
+			case 1: return ZtMsg.recurFirst;
+			case 2: return ZtMsg.recurSecond;
+			case 3: return ZtMsg.recurThird;
+			case 4: return ZtMsg.recurFourth;
+		}
+	},
+
+	/**
+	 * Returns words - day, week end, weekday based on the dayType values supplied.
+	 *
+	 * @param {String} dayType
+	 * @return {String}
+	 */
+	getDayType: function(dayType) {
+		switch (dayType) {
+			case -1: return ZtMsg.recurDay;
+			case 0: return ZtMsg.recurWeekend;
+			case 1: return ZtMsg.recurWeekday;
+		}
+	},
+
+	isAppEnabled: function(app) {
+		return ZCS.constant.IS_ENABLED[app] && ZCS.session.getSetting(ZCS.constant.APP_SETTING[app]);
+	},
+
+	getDeviceType: function () {
+		//Tablet is default for testing in a browser.
+		var dt = Ext.os.deviceType;
+
+		if (dt === 'Desktop') {
+			return 'tablet';
+		} else {
+			return dt.toLowerCase();
+		}
+	}
 });

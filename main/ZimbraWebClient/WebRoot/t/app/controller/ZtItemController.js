@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -39,18 +39,11 @@ Ext.define('ZCS.controller.ZtItemController', {
 
 		control: {
 			itemPanelToolbar: {
-				showMenu: 'doShowMenu'
+				showMenu: 'showMenu'
 			}
 		},
 
 		item: null
-	},
-
-	launch: function () {
-        //<debug>
-		Ext.Logger.verbose('STARTUP: item ctlr launch - ' + ZCS.util.getClassName(this));
-        //</debug>
-		this.callParent();
 	},
 
 	/**
@@ -66,17 +59,42 @@ Ext.define('ZCS.controller.ZtItemController', {
 		});
 
 		// Don't show placeholder text if there is nothing to select
-		var itemListView = this.getItemPanel().down('list'),
-			placeholderText = itemListView && itemListView.emptyTextCmp;
-
-		if (placeholderText) {
+		var placeholder = this.getPlaceholder();
+		if (placeholder) {
 			if (noItemsFound) {
-				placeholderText.hide();
+				placeholder.hide();
 			}
 			else {
-				placeholderText.show();
+				placeholder.show();
 			}
 		}
+	},
+
+	/**
+	 * Do a delete originating from a button.  This drops the button parameter and
+	 * allows doDelete to be used by both a button and the standard menu behavior.
+	 */
+	doButtonDelete: function() {
+		this.doDelete();
+	},
+
+	doDelete: function() {
+	},
+
+	/**
+	 * Removes the given tag from the item.
+	 *
+	 * @param {String}  tagName     tag name
+	 */
+	doRemoveTag: function(tagName) {
+		var item = this.getItem();
+		if (item && tagName) {
+			this.tagItem(item, tagName, true);
+		}
+	},
+
+	getPlaceholder: function() {
+		return null;
 	},
 
 	/**
@@ -93,9 +111,9 @@ Ext.define('ZCS.controller.ZtItemController', {
 	 * Performs a simple server operation on an item. Generally that means some sort of
 	 * ActionRequest with an 'op' attribute and possibly other arguments.
 	 *
-	 * @param {ZtItem}          item    item to act on
-	 * @param {Object|String}   data    data to save, or op to perform
-	 * @param {Function} success    The function to run on succes.
+	 * @param {ZtItem}          item        item to act on
+	 * @param {Object|String}   data        data to save, or op to perform
+	 * @param {Function}        callback    function to run on succes.
 	 */
 	performOp: function(item, data, callback) {
 
@@ -172,6 +190,10 @@ Ext.define('ZCS.controller.ZtItemController', {
 	 *                                      isDraft     if true, draft is being displayed
 	 */
 	updateToolbar: function(params) {
+		this.updateTitle(params);
+	},
+
+	updateTitle: function (params) {
 		var toolbar = this.getItemPanelToolbar();
 		if (toolbar && params && params.title != null) {
 			toolbar.setTitle(params.title);

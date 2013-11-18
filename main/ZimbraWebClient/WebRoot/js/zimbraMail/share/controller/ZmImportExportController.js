@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -360,7 +360,15 @@ function(funcName, params, type, fault1 /* , ... , faultN */) {
 			for (var i = 0; i < formatArgs.length; i++) {
 				formatArgs[i] = args[mappings[i]];
 			}
-			messages.push(ZMsg[code] ? AjxMessageFormat.format(ZMsg[code], formatArgs) : message);
+			var errorMsg = ZMsg[code] ? AjxMessageFormat.format(ZMsg[code], formatArgs) : "";
+			// be a little more verbose if there was a failure
+			if (type == "fail") {
+				errorMsg = message ? errorMsg + '<br><br>' + AjxStringUtil.htmlEncode(message) : errorMsg;
+			}
+			else if (type == "warn") {
+				errorMsg = errorMsg || message;
+			}
+			messages.push(errorMsg);
 		}
 	}
 	// show success or failure
@@ -520,7 +528,7 @@ function(errorCallback, message) {
 	if (errorCallback) {
 		errorCallback.run(false);
 	}
-	var msg = AjxStringUtil.htmlEncode(message) || ZmMsg.importFailed; 
+	var msg = message || ZmMsg.importFailed;
 	ZmImportExportController.__showMessage(msg, DwtMessageDialog.CRITICAL_STYLE);
 	return true;
 };

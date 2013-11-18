@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -22,11 +20,7 @@ package com.zimbra.qa.selenium.projects.ajax.ui.mail;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.zimbra.qa.selenium.framework.items.FolderItem;
-import com.zimbra.qa.selenium.framework.items.IItem;
-import com.zimbra.qa.selenium.framework.items.SavedSearchFolderItem;
-import com.zimbra.qa.selenium.framework.items.TagItem;
-import com.zimbra.qa.selenium.framework.items.ZimletItem;
+import com.zimbra.qa.selenium.framework.items.*;
 import com.zimbra.qa.selenium.framework.ui.AbsApplication;
 import com.zimbra.qa.selenium.framework.ui.AbsPage;
 import com.zimbra.qa.selenium.framework.ui.AbsTree;
@@ -440,6 +434,123 @@ public class TreeMail extends AbsTree {
 
 	}
 
+	/**
+	 * This is the same locators as FolderItem ... hmm. How to combine?
+	 * @param action
+	 * @param tag
+	 * @return
+	 * @throws HarnessException
+	 */
+	protected AbsPage zTreeItem(Action action, TagItem tag) throws HarnessException {
+		AbsPage page = null;
+		String locator = null;
+
+		if ( action == Action.A_LEFTCLICK ) {
+			
+			locator = "css=td[id='zti__main_Mail__"+ tag.getId() +"_textCell']";
+
+			// FALL THROUGH
+
+		} else if ( action == Action.A_RIGHTCLICK ) {
+
+			locator = "css=td[id='zti__main_Mail__"+ tag.getId() +"_textCell']";
+
+			// Select the folder
+			this.zRightClickAt(locator,"");
+
+			// return a context menu
+			return (new ContextMenu(MyApplication));
+
+		} else if ( action == Action.A_TREE_EXPAND ) {
+
+			locator = "css=[id='zti__main_Mail__"+ tag.getId() +"_nodeCell'] div[class='ImgNodeCollapsed']";
+			if ( !this.sIsElementPresent(locator) ) {
+				logger.warn("Trying to expand a folder that probably has no subfolders or is already expanded");
+				return (page);
+			}
+
+			this.sMouseDown(locator);
+
+			this.zWaitForBusyOverlay();
+
+			// No page to return
+			return (null);
+
+		} else if ( action == Action.A_TREE_COLLAPSE ) {
+
+			locator = "css=[id='zti__main_Mail__"+ tag.getId() +"_nodeCell'] div[class='ImgNodeExpanded']";
+			if ( !this.sIsElementPresent(locator) ) {
+				logger.warn("Trying to collapse a folder that probably has no subfolders or is already collapsed");
+				return (page);
+			}
+
+			this.sMouseDown(locator);
+
+			this.zWaitForBusyOverlay();
+
+			// No page to return
+			return (null);
+
+		} else if ( action == Action.A_HOVEROVER ) {
+			
+			locator = "css=td[id='zti__main_Mail__"+ tag.getId() +"_textCell']";
+			page = new TooltipFolder(MyApplication);
+			
+			// If another tooltip is active, sometimes it takes a few seconds for the new text to show
+			// So, wait if the tooltip is already active
+			// Don't wait if the tooltip is not active
+			//
+			
+			if (page.zIsActive()) {
+				
+				// Mouse over
+				this.sMouseOver(locator);
+				this.zWaitForBusyOverlay();
+				
+				// Wait for the new text
+				SleepUtil.sleep(5000);
+				
+				// Make sure the tooltip is active
+				page.zWaitForActive();
+
+			} else {
+				
+				// Mouse over
+				this.sMouseOver(locator);
+				this.zWaitForBusyOverlay();
+
+				// Make sure the tooltip is active
+				page.zWaitForActive();
+
+			}
+						
+			return (page);
+			
+		} else {
+			throw new HarnessException("Action "+ action +" not yet implemented");
+		}
+
+
+		if ( locator == null )
+			throw new HarnessException("locator is null for action "+ action);
+
+
+		// Default behavior.  Click the locator
+		zClickAt(locator,"");
+
+		// If there is a busy overlay, wait for that to finish
+		this.zWaitForBusyOverlay();
+
+		if ( page != null ) {
+
+			// Wait for the page to become active, if it was specified
+			page.zWaitForActive();
+		}
+
+		return (page);
+
+	}
+
 	protected AbsPage zTreeItem(Action action, FolderItem folder) throws HarnessException {
 		AbsPage page = null;
 		String locator = null;
@@ -536,6 +647,11 @@ public class TreeMail extends AbsTree {
 
 		// Default behavior.  Click the locator
 		zClickAt(locator,"");
+		
+		if ( folder instanceof FolderMountpointItem ) {
+			// Mountpoints seem to take longer to render.  Pause a bit.
+			SleepUtil.sleepSmall();
+		}
 
 		// If there is a busy overlay, wait for that to finish
 		this.zWaitForBusyOverlay();
@@ -619,6 +735,11 @@ public class TreeMail extends AbsTree {
 				optionLocator = "css=div[id='ZmActionMenu_mail_FOLDER'] div[id='NEW_FOLDER'] td[id$='_title']";
 				page = new DialogCreateFolder(MyApplication, ((AppAjaxClient)MyApplication).zPageMail);
 			
+			} else if ( option == Button.B_TREE_FIND_SHARES ) {
+					
+				optionLocator = "css=div[id='ZmActionMenu_mail_FOLDER'] div[id='FIND_SHARES'] td[id$='_title']";
+				page = new DialogShareFind(MyApplication, ((AppAjaxClient)MyApplication).zPageMail);
+				
 			} else {
 				throw new HarnessException("Pulldown/Option "+ pulldown +"/"+ option +" not implemented");
 			}
@@ -826,6 +947,8 @@ public class TreeMail extends AbsTree {
 		
 		if ( folder instanceof FolderItem ) {
 			return (zTreeItem(action, (FolderItem)folder));
+		} else if ( folder instanceof TagItem ) {
+			return (zTreeItem(action, (TagItem)folder));
 		} else if ( folder instanceof SavedSearchFolderItem ) {
 			return (zTreeItem(action, (SavedSearchFolderItem)folder));
 		} else if ( folder instanceof ZimletItem ) {

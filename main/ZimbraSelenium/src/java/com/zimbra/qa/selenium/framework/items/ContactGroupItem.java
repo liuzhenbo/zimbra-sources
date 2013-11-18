@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.framework.items;
@@ -22,7 +20,6 @@ import org.apache.log4j.*;
 
 import com.zimbra.common.soap.Element;
 import com.zimbra.qa.selenium.framework.util.*;
-import com.zimbra.qa.selenium.framework.util.ZimbraAccount.SOAP_DESTINATION_HOST_TYPE;
 
 /**
  * The <code>ContactGroupItem</code> defines a Zimbra Contact Group
@@ -251,15 +248,6 @@ public class ContactGroupItem extends ContactItem implements IItem {
 	}
 
 	public static ContactGroupItem importFromSOAP(ZimbraAccount account, String query) throws HarnessException {
-		return ContactGroupItem.importFromSOAP(
-				account,
-				query,
-				SOAP_DESTINATION_HOST_TYPE.SERVER,
-				null);
-	}
-
-	public static ContactGroupItem importFromSOAP(ZimbraAccount account,
-			String query, SOAP_DESTINATION_HOST_TYPE destType, String accountName) throws HarnessException {
 
 		try
 		{
@@ -267,9 +255,7 @@ public class ContactGroupItem extends ContactItem implements IItem {
 			account.soapSend(
 					"<SearchRequest xmlns='urn:zimbraMail' types='contact'>" +
 							"<query>"+ query +"</query>" +
-							"</SearchRequest>",
-							destType,
-							accountName);
+							"</SearchRequest>");
 
 			Element[] results = account.soapSelectNodes("//mail:SearchResponse/mail:cn");
 			if (results.length == 0) {
@@ -283,9 +269,7 @@ public class ContactGroupItem extends ContactItem implements IItem {
 			account.soapSend(
 					"<GetContactsRequest xmlns='urn:zimbraMail' >" +
 							"<cn id='"+ id +"'/>" +
-							"</GetContactsRequest>",
-							destType,
-							accountName);
+							"</GetContactsRequest>");
 			Element getContactsResponse = account.soapSelectNode("//mail:GetContactsResponse", 1);
 
 			// Using the response, create this item

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -89,12 +89,12 @@ Dwt.DISPLAY_NONE = "none";
 /**
  * Table row style.
  */
-Dwt.DISPLAY_TABLE_ROW = AjxEnv.isIE ? Dwt.DISPLAY_BLOCK : "table-row";
+Dwt.DISPLAY_TABLE_ROW = "table-row";
 
 /**
  * Table cell style.
  */
-Dwt.DISPLAY_TABLE_CELL = AjxEnv.isIE ? Dwt.DISPLAY_BLOCK : "table-cell";
+Dwt.DISPLAY_TABLE_CELL = "table-cell";
 
 // Scroll constants
 /**
@@ -531,7 +531,7 @@ function(htmlElement, point) {
 Dwt.setLocation =
 function(htmlElement, x, y) {
 	if (!(htmlElement = Dwt.getElement(htmlElement))) { return; }
-	var position = htmlElement.style.position;
+	var position = DwtCssStyle.getProperty(htmlElement, 'position');
 	if (position != Dwt.ABSOLUTE_STYLE && position != Dwt.RELATIVE_STYLE && position != Dwt.FIXED_STYLE) {
 		DBG.println(AjxDebug.DBG1, "Cannot position static widget " + htmlElement.className);
 		throw new DwtException("Static widgets may not be positioned", DwtException.INVALID_OP, "Dwt.setLocation");
@@ -777,7 +777,7 @@ Dwt.__MSIE_OPACITY_RE = /alpha\(opacity=(\d+)\)/;
 Dwt.getOpacity =
 function(htmlElement) {
 	if (!(htmlElement = Dwt.getElement(htmlElement))) { return; }
-	if (AjxEnv.isIE) {
+	if (AjxEnv.isIE && !AjxEnv.isIE9up) {
 		var filter = Dwt.getIEFilter(htmlElement, "alpha");
 		var m = Dwt.__MSIE_OPACITY_RE.exec(filter) || [ filter, "100" ];
 		return Number(m[1]);
@@ -788,7 +788,7 @@ function(htmlElement) {
 Dwt.setOpacity =
 function(htmlElement, opacity) {
 	if (!(htmlElement = Dwt.getElement(htmlElement))) { return; }
-	if (AjxEnv.isIE) {
+	if (AjxEnv.isIE && !AjxEnv.isIE9up) {
         Dwt.alterIEFilter(htmlElement, "alpha", "alpha(opacity="+opacity+")");
 	} else {
 		htmlElement.style.opacity = opacity/100;
@@ -911,6 +911,22 @@ Dwt.insetBounds = function(bounds, insets) {
 	bounds.width  -= insets.left + insets.right;
 	bounds.height -= insets.top + insets.bottom;
 	return bounds;
+};
+
+Dwt.getMargins = function(htmlElement) {
+	// return an object with the margins for each side of the element, eg:
+	//		{ left: 3, top:0, right:3, bottom:0 }
+	// NOTE: assumes values from computedStyle are returned in pixels!!!
+
+	if (!(htmlElement = Dwt.getElement(htmlElement))) { return; }
+	var style = DwtCssStyle.getComputedStyleObject(htmlElement);
+
+	return {
+		left 	: parseInt(style.marginLeft) 	|| 0,
+		top  	: parseInt(style.marginTop) 	|| 0,
+		right 	: parseInt(style.marginRight) 	|| 0,
+		bottom	: parseInt(style.marginBottom)	|| 0
+	};
 };
 
 Dwt.setStatus =
@@ -1236,7 +1252,7 @@ function(args, paramNames, force) {
 	
 	// Check for arg-list style of passing params. There will almost always
 	// be more than one arg, and the first one is the parent DwtControl.
-	if (args.length > 1 || args[0]._eventMgr || force) {
+	if (args.length > 1 || (args[0] && args[0]._eventMgr) || force) {
 		var params = {};
 		for (var i = 0; i < args.length; i++) {
 			params[paramNames[i]] = args[i];
@@ -1253,6 +1269,8 @@ function(args, paramNames, force) {
 // PRIVATE METHODS
 //////////////////////////////////////////////////////////////////////////////////
 
+Dwt.__REM_RE = /^(-?[0-9]+(?:\.[0-9]*)?)rem$/;
+
 /**
  * @private
  */
@@ -1267,6 +1285,9 @@ function(val, check) {
 	}
 	if (typeof(val) == "number") {
 		val = val + "px";
+	}
+	if (!AjxEnv.supportsCSS3RemUnits && Dwt.__REM_RE.test(val)) {
+		val = DwtCssStyle.asPixelCount(val) + "px";
 	}
 	return val;
 };
@@ -1305,6 +1326,33 @@ function(tagName) {
 	return document.getElementsByTagName(tagName);
 };
 
+Dwt.byClassName =
+function(className, ancestor) {
+	if (!ancestor) {
+        ancestor = document;
+	}
+
+    try {
+        return ancestor.getElementsByClassName(className);
+    } catch (e) {
+        /* fall back for IE 8 and earlier */
+        var pattern = new RegExp("\\b"+className+"\\b");
+
+        function byClass(element, accumulator)
+        {
+            if (element.className && element.className.match(pattern))
+                accumulator.push(element);
+
+            for (var i = 0; i < element.childNodes.length; i++)
+                byClass(element.childNodes[i], accumulator);
+
+            return accumulator;
+	    };
+
+	    return byClass(ancestor, []);
+    }
+};
+
 Dwt.show =
 function(it) {
 	var el = Dwt.byId(it);
@@ -1319,15 +1367,6 @@ function(it) {
 	if (el) {
 		Dwt.setVisible(el,false);
 	}
-};
-
-Dwt.toggle =
-function(it, show) {
-	it = Dwt.byId(it);
-	if (show == null) {
-		show = (Dwt.getVisible(it) != true);
-	}
-	Dwt.setVisible(it, show);
 };
 
 //setText Methods
@@ -1641,13 +1680,27 @@ function(startColor, endColor, direction) {
 
     var cssDirection;
     var gradient = {};
-    if (AjxEnv.isIE) {
+    if (AjxEnv.isIE && !AjxEnv.isIE9up) {
         cssDirection = (direction == 'v') ? 0 : 1;
         gradient.field = "filter";
         gradient.name  = "DXImageTransform.Microsoft.Gradient";
         gradient.css   = "progid:" + gradient.name + "(" +
                          "GradientType=" + cssDirection + ",startColorstr=" + startColor +
                          ",endColorstr=" + endColor + "); zoom:1;";
+    } else if (AjxEnv.isIE9) {
+        var params = {
+            x1: "0%",
+            x2: direction == 'v' ? "0%" : "100%",
+            y1: "0%",
+            y2: direction == 'v' ? "100%" : "0%",
+            startColor: startColor,
+            endColor: endColor
+        };
+        var svgsrc =
+            AjxTemplate.expand('dwt.Widgets#SVGGradient', params);
+        gradient.field = "background";
+        gradient.css   = ('url(data:image/svg+xml,' +
+                          escape(svgsrc.replace(/\s+/g, ' ')) + ')');
     } else if (AjxEnv.isFirefox3_6up) {
         cssDirection = (direction == 'v') ? 'top' : 'left';
         gradient.field = "background";
@@ -1663,6 +1716,10 @@ function(startColor, endColor, direction) {
         gradient.field = "background";
         gradient.css   = "-webkit-gradient(linear, " + startPt + ", " + endPt +
                          ", color-stop(0%, " + startColor + "), color-stop(100%, " + endColor + "))";
+    } else {
+        cssDirection = (direction == 'v') ? 'to bottom' : 'to right';
+        gradient.field = "background";
+        gradient.css   = "linear-gradient(" + cssDirection + "," + startColor + ", "  + endColor + ")";
     }
     return gradient;
 }
@@ -1670,7 +1727,7 @@ function(startColor, endColor, direction) {
 Dwt.setLinearGradient =
 function(htmlElement, startColor, endColor, direction) {
     var gradient = Dwt.createLinearGradientInfo(startColor, endColor, direction);
-    if (AjxEnv.isIE) {
+    if (gradient.field == 'filter') {
         Dwt.alterIEFilter(htmlElement, gradient.name, gradient.css);
     } else {
         htmlElement.style[gradient.field] = gradient.css;

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -352,27 +352,33 @@ function() {
 
 /**
  * Checks if this conversation has a message that matches the given search.
- * If the search is not present or not matchable, the provided default value is
- * returned.
+ * If we're not able to tell whether a msg matches, we return the given default value.
  *
  * @param {ZmSearch}	search			the search to match against
- * @param {Object}	defaultValue		the value to return if search is not matchable
- * @return	{Boolean|Object}	<code>true</code> if this conversation has the message
+ * @param {Object}	    defaultValue	the value to return if search is not matchable or conv not loaded
+ * @return	{Boolean}	<code>true</code> if this conversation has a matching message
  */
 ZmConv.prototype.hasMatchingMsg =
 function(search, defaultValue) {
-	if (search && search.isMatchable() && this.msgs) {
-		var msgs = this.msgs.getArray();
+
+	var msgs = this.msgs && this.msgs.getArray(),
+		hasUnknown = false;
+
+	if (msgs && msgs.length > 0) {
 		for (var i = 0; i < msgs.length; i++) {
-			var msg = msgs[i];
-			if (search.matches(msg) && !msg.ignoreJunkTrash() && this.folders[msg.folderId]) {
+			var msg = msgs[i],
+				msgMatches = search.matches(msg);
+
+			if (msgMatches && !msg.ignoreJunkTrash() && this.folders[msg.folderId]) {
 				return true;
 			}
+			else if (msgMatches === null) {
+				hasUnknown = true;
+			}
 		}
-	} else {
-		return defaultValue;
 	}
-	return false;
+
+	return hasUnknown ? !!defaultValue : false;
 };
 
 ZmConv.prototype.ignoreJunkTrash =
@@ -604,7 +610,7 @@ function(params, callback) {
 	params = params || {};
 
 	if (this.msgs && this.msgs.size()) {
-		msg = this.msgs.getFirstHit(params.offset, params.limit);
+		msg = this.msgs.getFirstHit(params.offset, params.limit, params.foldersToOmit);
 	}
 
 	if (callback) {

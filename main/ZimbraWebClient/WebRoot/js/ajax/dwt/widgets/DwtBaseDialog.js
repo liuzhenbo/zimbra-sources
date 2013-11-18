@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -67,10 +67,8 @@ DwtBaseDialog = function(params) {
 		this._loc.x = this._loc.y = Dwt.LOC_NOWHERE;
 	}
 	
-	// Default dialog tab group. Note that we disable application handling of
-	// keyboard shortcuts, since we don't want the view underneath reacting to
-	// keystrokes in the dialog.
-	this._tabGroup = new DwtTabGroup(this.toString(), true);
+	// Default dialog tab group.
+	this._tabGroup = new DwtTabGroup(this.toString());
 
     this._dragHandleId = params.dragHandleId || this._htmlElId + "_handle";
 	this._createHtml();

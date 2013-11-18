@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010 Zimbra, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -35,6 +35,7 @@ import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.zimbra.common.localconfig.LC;
 
 public class L10nUtil {
@@ -81,7 +82,7 @@ public class L10nUtil {
         calendarResourceConflictScheduledBy,
 
         calendarUserReplyPermissionDenied,
-        
+
         // Calendar Forward Notifications
         calendarForwardNotificationSubject,
         calendarForwardNotificationBody,
@@ -106,6 +107,9 @@ public class L10nUtil {
         // carddav messages
         carddavAddressbookDescription,
 
+        // default fragment for encrypted mail
+        encryptedMessageFragment,
+
         // share notification
         mail,
         calendar,
@@ -117,6 +121,10 @@ public class L10nUtil {
         sharedBySubject,
         shareNotifBodyText,
         shareNotifBodyHtml,
+
+        shareModifySubject,
+        shareModifyBodyText,
+        shareModifyBodyHtml,
 
         shareRevokeSubject,
         shareRevokeBodyText,
@@ -134,6 +142,7 @@ public class L10nUtil {
         shareNotifBodyGranteeRoleViewer,
         shareNotifBodyGranteeRoleManager,
         shareNotifBodyGranteeRoleAdmin,
+        shareNotifBodyGranteeRoleNone,
 
         shareNotifBodyFolderDesc,
         shareNotifBodyExternalShareText,
@@ -150,6 +159,7 @@ public class L10nUtil {
         shareNotifBodyActionPrivate,
         shareNotifBodyActionFreebusy,
         shareNotifBodyActionSubfolder,
+        shareNotifBodyActionNone,
         //////////////////////
 
         // group subscription request
@@ -225,12 +235,22 @@ public class L10nUtil {
         errPermissionDenied,
         errUnsupportedFormat,
         errResourceNotAllowedOnPort,
+        errMissingBlob,
 
         passwordViolation,
 
         domainAggrQuotaWarnMsgSubject,
         domainAggrQuotaWarnMsgBody,
 
+        // mobile notification
+        mobile_notification_skip_item_subject,
+        mobile_notification_skip_item_message,
+        mobile_notification_skip_item_reason_cannot_permit,
+        mobile_notification_skip_item_reason_choke_device,
+        mobile_notification_skip_item_reason_other,
+        mobile_notification_skip_item_attachment_name,
+
+        //TODO remove octopus
         octopus_share_notification_email_subject,
         octopus_share_notification_email_message,
         octopus_share_notification_email_accept,
@@ -267,6 +287,11 @@ public class L10nUtil {
         }
 
         return classLoader;
+    }
+
+    @VisibleForTesting
+    public static void setMsgClassLoader(String directory) {
+        sMsgClassLoader = getClassLoader(directory);
     }
 
     public static ClassLoader getMsgClassLoader() {
@@ -316,14 +341,16 @@ public class L10nUtil {
     public static String getMessage(String basename, String key, Locale lc, Object... args) {
         ResourceBundle rb;
         try {
-            if (lc == null)
+            if (lc == null) {
                 lc = Locale.getDefault();
+            }
             rb = ResourceBundle.getBundle(basename, lc, sMsgClassLoader);
             String fmt = rb.getString(key);
-            if (fmt != null && args != null && args.length > 0)
+            if (fmt != null && args != null && args.length > 0) {
                 return MessageFormat.format(fmt, args);
-            else
+            } else {
                 return fmt;
+            }
         } catch (MissingResourceException e) {
             ZimbraLog.misc.warn("no resource bundle for base name " + basename + " can be found, " +
                     "(locale=" + key + ")", e);
@@ -349,12 +376,13 @@ public class L10nUtil {
     public static Set<String> getBundleKeySet(String basename, Locale lc) {
         ResourceBundle rb;
         try {
-            if (lc == null)
+            if (lc == null) {
                 lc = Locale.getDefault();
+            }
             rb = ResourceBundle.getBundle(basename, lc, sMsgClassLoader);
             Set<String> result = new HashSet<String>();
             Enumeration<String> keysEnum =  rb.getKeys();
-            while(keysEnum.hasMoreElements()) {
+            while (keysEnum.hasMoreElements()) {
                 result.add(keysEnum.nextElement());
             }
             return result;
@@ -380,8 +408,9 @@ public class L10nUtil {
         for (File file : dir.listFiles(new MatchingPropertiesFilter(new String[] { MSG_FILE_BASENAME }))) {
             Locale locale = getLocaleForPropertiesFile(file, false);
             if (locale != null) {
-                for (MsgKey key : msgkeys)
+                for (MsgKey key : msgkeys) {
                     messages.add(getMessage(key, locale));
+                }
             }
         }
         messages.remove(null);
@@ -402,11 +431,13 @@ public class L10nUtil {
 
         @Override
         public boolean accept(File dir, String name) {
-            if (!name.endsWith(".properties"))
+            if (!name.endsWith(".properties")) {
                 return false;
+            }
             for (String prefix : prefixes) {
-                if (name.startsWith(prefix))
+                if (name.startsWith(prefix)) {
                     return true;
+                }
             }
             return false;
         }
@@ -418,16 +449,19 @@ public class L10nUtil {
     static Locale getLocaleForPropertiesFile(File file, boolean debug) {
         String[] localeParts = file.getName().split("\\.")[0].split("_");
         if (localeParts.length == 2) {
-            if (debug)
+            if (debug) {
                 ZimbraLog.misc.debug("        found locale: " + localeParts[1]);
+            }
             return new Locale(localeParts[1]);
         } else if (localeParts.length == 3) {
-            if (debug)
+            if (debug) {
                 ZimbraLog.misc.debug("        found locale: " + localeParts[1] + " " + localeParts[2]);
+            }
             return new Locale(localeParts[1], localeParts[2]);
         } else if (localeParts.length == 4) {
-            if (debug)
+            if (debug) {
                 ZimbraLog.misc.debug("        found locale: " + localeParts[1] + " " + localeParts[2] + " " + localeParts[3]);
+            }
             return new Locale(localeParts[1], localeParts[2], localeParts[3]);
         }
         return null;
@@ -446,14 +480,16 @@ public class L10nUtil {
                 lc = sLocaleMap.get(name);
                 if (lc == null) {
                     String parts[] = name.indexOf('_') != -1 ? name.split("_") : name.split("-");
-                    if (parts.length == 1)
+                    if (parts.length == 1) {
                         lc = new Locale(parts[0]);
-                    else if (parts.length == 2)
+                    } else if (parts.length == 2) {
                         lc = new Locale(parts[0], parts[1]);
-                    else if (parts.length >= 3)
+                    } else if (parts.length >= 3) {
                         lc = new Locale(parts[0], parts[1], parts[2]);
-                    if (lc != null)
+                    }
+                    if (lc != null) {
                         sLocaleMap.put(name, lc);
+                    }
                 }
             }
         }

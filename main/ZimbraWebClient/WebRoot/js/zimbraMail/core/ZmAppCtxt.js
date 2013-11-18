@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -45,6 +45,12 @@ ZmAppCtxt = function() {
     this.sendAsEmails = [];
     this.sendOboEmails = [];
 
+    // HTML-5 offline-specific
+    this.isWebClientOfflineSupported = AjxEnv.isOfflineSupported && window.isWebClientOfflineEnabled;
+    if (this.isWebClientOfflineSupported) {
+        this.webClientOfflineHandler = new ZmOffline();
+    }
+
 	this._evtMgr = new AjxEventMgr();
 
 	this._itemCache			= {};
@@ -59,6 +65,7 @@ ZmAppCtxt.ONE_MINUTE = 60 * 1000;
 ZmAppCtxt.MAX_TIMEOUT_VALUE = 2147483647;
 
 ZmAppCtxt._ZIMLETS_EVENT = 'ZIMLETS';
+ZmAppCtxt._AUTHTOKEN_EVENT = 'AUTHTOKEN';
 
 //Regex constants
 //Bug fix # 79986, #81095. Invalid file names are < > , ? | / \ * :
@@ -80,6 +87,29 @@ function() {
 	window.setInterval(this._authTokenWarningTimeout.bind(this), ZmAppCtxt.ONE_MINUTE);
 };
 
+/**
+ * Adds a listener to the auth token warning event. This listener is fired once
+ * per minute when less than five minutes remain before token expiry.
+ *
+ * @param	{AjxCallback}	listener		the listener
+ * @param	{int}		index		the index to where to add the listener
+ * @return	{Boolean}	<code>true</code> if the listener is added; <code>false</code> otherwise
+ */
+ZmAppCtxt.prototype.addAuthTokenWarningListener =
+function(listener, index) {
+	return this._evtMgr.addListener(ZmAppCtxt._AUTHTOKEN_EVENT, listener, index);
+};
+
+/**
+ * Removes a listener for the auth token warning event.
+ *
+ * @param	{AjxCallback}	listener		the listener
+ * @return	{Boolean}	<code>true</code> if the listener is removed; <code>false</code> otherwise
+ */
+ZmAppCtxt.prototype.removeAuthTokenWarningListener =
+function(listener) {
+	return this._evtMgr.removeListener(ZmAppCtxt._AUTHTOKEN_EVENT, listener);
+};
 
 ZmAppCtxt.prototype._authTokenWarningTimeout =
 function () {
@@ -90,6 +120,11 @@ function () {
 
 	if (minutesToLive > 5 || minutesToLive <= 0) {
 		return;
+	}
+
+	if (this._evtMgr.isListenerRegistered(ZmAppCtxt._AUTHTOKEN_EVENT)) {
+		var event = new ZmEvent(ZmAppCtxt._AUTHTOKEN_EVENT);
+		this._evtMgr.notifyListeners(ZmAppCtxt._AUTHTOKEN_EVENT, event);
 	}
 
 	var msg = AjxMessageFormat.format(ZmMsg.authTokenExpirationWarning, [minutesToLive, minutesToLive  > 1 ? ZmMsg.minutes : ZmMsg.minute]);
@@ -1276,6 +1311,22 @@ function() {
 	return this._uploadManagerIframeId;
 };
 
+ZmAppCtxt.prototype.reloadOfflineAppCache =
+function(locale, skin, reload){
+    if (this.isWebClientOfflineSupported) {
+        var appCacheManifest= appContextPath + "/appcache/images,common,dwt,msgview,login,zm,spellcheck,skin.appcache?";
+        var urlParams = [];
+        window.cacheKillerVersion && urlParams.push("v=" + window.cacheKillerVersion);
+        urlParams.push("debug="+window.appDevMode);
+        urlParams.push("compress=" + !(window.appDevMode === true));
+        urlParams.push("templates=only");
+        var manifestUrl = encodeURIComponent(appCacheManifest + urlParams.join('&'));
+        document.cookie = "ZM_CACHE_NEW_LANG = " + locale ;
+        document.cookie = "ZM_CACHE_NEW_SKIN = " + skin ;
+        $("#offlineIframe").attr('src', 'public/Offline.jsp/?url=' + manifestUrl + '&reload=' + reload);
+    }
+};
+
 /**
  * Gets the upload manager.
  * 
@@ -1419,6 +1470,8 @@ function(fullVersion, width, height, name) {
 	url[i++] = appCurrentSkin;
 	url[i++] = "&localeId=";
 	url[i++] = AjxEnv.DEFAULT_LOCALE || "";
+	url[i++] = "&authTokenExpires=";
+	url[i++] = window.authTokenExpires;
 	if (fullVersion) {
 		url[i++] = "&full=1";
 	}
@@ -1428,8 +1481,10 @@ function(fullVersion, width, height, name) {
     if (window.appCoverageMode) {
         url[i++] = "&coverage=1";
     }
-     name = name || "_blank";
+	this.__childWindowId = (this.__childWindowId+1) || 0;
+	url[i++] = "&childId=" + this.__childWindowId;
 
+    name = name || "_blank";
 	width = width || 705;
 	height = height || 465;
 	var args = ["height=", height, ",width=", width, ",location=no,menubar=no,resizable=yes,scrollbars=no,status=yes,toolbar=no"].join("");
@@ -1440,7 +1495,7 @@ function(fullVersion, width, height, name) {
 	this.handlePopupBlocker(newWin);
 	if(newWin) {
 		// add this new window to global list so parent can keep track of child windows!
-		return this.getAppController().addChildWindow(newWin);
+		return this.getAppController().addChildWindow(newWin, this.__childWindowId);
 	}
 };
 
@@ -1787,12 +1842,13 @@ function(ev) {
     			proto = switchMode ? proto : parts.protocol;
     			port = switchMode ? port : parts.port;
     		}
-    		url = AjxUtil.formatUrl({protocol:proto, port:port, path:path, qsReset:true});
+			var qsArgs = {skin: appCurrentSkin};
+    		url = AjxUtil.formatUrl({protocol: proto, port: port, path: path, qsReset: true, qsArgs: qsArgs});
     	}
 
     	var args  = "height=465,width=705,location=no,menubar=no,resizable=yes,scrollbars=no,status=yes,toolbar=no";
     	window.open(url,'ChangePasswordWindow', args);
-}
+};
 
 /**
  * Gets the skin hint for the given argument(s), which will be used to look
@@ -2018,14 +2074,36 @@ function() {
  */
 ZmAppCtxt.handleWindowOpener = 
 function() {
-	var aCtxt = appCtxt;
-	if (window.opener) {
-		try {
-			aCtxt = window.opener.appCtxt;
-		}
-		catch (ex) {
-			aCtxt = appCtxt;
-		}
+	try {
+		return window.opener && window.opener.appCtxt || appCtxt;
 	}
-	return aCtxt;
+	catch (ex) {
+		return appCtxt;
+	}
+};
+
+ZmAppCtxt.prototype.isWebClientOffline =
+function() {
+    if (this.isWebClientOfflineSupported) {
+        return ZmOffline.isServerReachable === false;
+    }
+    return false;
+};
+
+ZmAppCtxt.prototype.initWebOffline =
+function(callback) {
+    this.webClientOfflineHandler.init(callback)
+};
+
+/**
+ * Gets the offline settings dialog.
+ *
+ * @return	{ZmOfflineSettingsDialog}	offline settings dialog
+ */
+ZmAppCtxt.prototype.getOfflineSettingsDialog =
+function() {
+    if (!this._offlineSettingsDialog) {
+        this._offlineSettingsDialog = new ZmOfflineSettingsDialog();
+    }
+    return this._offlineSettingsDialog;
 };

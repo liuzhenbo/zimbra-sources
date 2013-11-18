@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -504,12 +504,14 @@ Ext.define('ZCS.common.mail.ZtMailUtil', {
 	 */
 	getSenders: function(addresses, numSenders) {
 
-		var senderStr = '',
+		var	isOutbound = ZCS.util.isOutboundFolderId(ZCS.util.curFolderLocalId()),
+			addrType = isOutbound ? ZCS.constant.TO : ZCS.constant.FROM,
+			senderStr = '',
 			senders;
 
-		if (addresses && addresses[ZCS.constant.FROM]) {
-			senders = Ext.Array.map(addresses[ZCS.constant.FROM], function(addr) {
-				return this.getDisplayName(addr);
+		if (addresses && addresses[addrType]) {
+			senders = Ext.Array.map(addresses[addrType], function(addr) {
+				return this.getDisplayName(addr, true);
 			}, this);
 			numSenders = numSenders || ZCS.constant.NUM_CONV_SENDERS;
 			if (senders.length > numSenders) {
@@ -526,25 +528,29 @@ Ext.define('ZCS.common.mail.ZtMailUtil', {
 	 * Returns a displayable form of the given address. An option may be set to get the display
 	 * name from the user's contacts instead of using the "friendly" portion of the address.
 	 *
-	 * @param {ZtEmailAddress}  addr    an email address
+	 * @param {ZtEmailAddress}  addr            an email address
+	 * @param {Boolean}         useShortName    if true, get short (first) name only
+	 *
 	 * @return {String}     display name
 	 */
-	getDisplayName: function(addr) {
+	getDisplayName: function(addr, useShortName) {
 
 		if (!addr) {
 			return '';
 		}
 
-		var sender = '',
+		var contactName = '',
 			email = addr.get('email');
 
-		if (ZCS.session.getSetting(ZCS.constant.SETTING_GET_SENDER_FROM_CONTACTS)) {
+		if (ZCS.session.getSetting(ZCS.constant.SETTING_GET_NAME_FROM_CONTACTS)) {
 			var contact = ZCS.cache.get(email, 'email');
 			if (contact) {
-				sender = contact.get('displayName');
+				contactName = contact.get(useShortName ? 'shortName' : 'longName');
 			}
 		}
-		return sender || addr.get('displayName') || addr.get('name') || email;
+		contactName = contactName || addr.get(useShortName ? 'shortName' : 'longName');
+
+		return Ext.String.htmlEncode(contactName);
 	},
 
 	/**

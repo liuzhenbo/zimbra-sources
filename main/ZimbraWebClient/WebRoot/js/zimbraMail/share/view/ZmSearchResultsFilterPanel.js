@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -545,6 +545,7 @@ function(menu, text, width) {
 			});
 	comboBox.addChangeListener(this._domainChangeListener.bind(this));
 	comboBox.input.addListener(DwtEvent.ONKEYUP, this._keyUpListener.bind(this));
+	subMenu.addPopdownListener(comboBox.popdown.bind(comboBox));
 	return comboBox;
 };
 
@@ -877,9 +878,17 @@ function(menu) {
 				});
 		subMenu.addClassName(this.toString() + "SubMenu");
 		menuItem.setMenu({menu: subMenu, menuPopupStyle: DwtButton.MENU_POPUP_STYLE_CASCADE});
-		var input = this._input[type] = new DwtInputField({parent:subMenu, size: 5});
+		var input = this._input[type] = new DwtInputField({
+			parent:          subMenu,
+			type:            DwtInputField.FLOAT,
+			errorIconStyle:  DwtInputField.ERROR_ICON_LEFT,
+			validationStyle: DwtInputField.CONTINUAL_VALIDATION,
+			size:            5
+		});
+		input.setValidNumberRange(0, 1e6);
 		var comboBox = new DwtComboBox({
 			parent:			input,
+			parentElement: input.getInputElement().parentNode,
 			id:		DwtId.makeId(ZmId.WIDGET_COMBOBOX, this._viewId, this.id, type+ZmSizeSearchFilter.UNIT),
 			inputParams:	{size: ZmSizeSearchFilter.COMBO_INPUT_WIDTH},
 			useLabel: true,
@@ -905,9 +914,16 @@ function(type, comboBox, ev) {
 ZmSizeSearchFilter.prototype._keyUpListener =
 function(type, comboBox, ev) {
 	var keyCode = DwtKeyEvent.getCharCode(ev);
+	var input = this._input[type];
 	if (keyCode == 13 || keyCode == 3) {
-		var term = new ZmSearchToken(ZmSizeSearchFilter.OP[type], this._input[type].getValue() + comboBox.getValue());
-		this._updateCallback(term);
+		var errorMsg = input.getValidationError();
+		if (errorMsg) {
+			appCtxt.setStatusMsg(errorMsg, ZmStatusView.LEVEL_WARNING);
+		} else {
+			var term = new ZmSearchToken(ZmSizeSearchFilter.OP[type],
+			                             input.getValue() + comboBox.getValue());
+			this._updateCallback(term);
+		}
 	}
 };
 

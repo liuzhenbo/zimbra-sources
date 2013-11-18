@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -128,25 +128,25 @@ DwtPropertySheet.prototype._insertValue = function(row, value, required) {
 
 DwtPropertySheet.prototype.removeProperty = function(id) {
 	var prop = this._propertyMap[id];
-	if (prop.visible) {
+	if (prop) {
 		var propIndex = prop.index;
-		var tableIndex = this.__getTableIndex(propIndex);
-		var row = this._tableEl.rows[tableIndex];
-		row.parentNode.removeChild(row);
+		if (prop.visible) {
+			var tableIndex = this.__getTableIndex(propIndex);
+			var row = this._tableEl.rows[tableIndex];
+			row.parentNode.removeChild(row);
+		}
+		prop.row = null;
+		for (var i = propIndex + 1; i < this._propertyList.length; i++) {
+			this._propertyList[i].index--;
+		}
+		this._propertyList.splice(propIndex, 1);
+		delete this._propertyMap[id];
 	}
-
-	prop.row = null;
-	for (var i = index + 1; i < this._propertyList.length; i++) {
-		var prop = this._propertyList[i];
-		prop.index--;
-	}
-	this._propertyList.splice(index, 1);
-	delete this._propertyMap[id];
 };
 
 DwtPropertySheet.prototype.setPropertyVisible = function(id, visible) {
 	var prop = this._propertyMap[id];
-	if (prop.visible != visible) {
+	if (prop && prop.visible != visible) {
 		prop.visible = visible;
 		var propIndex = prop.index;
 		if (visible) {

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -492,6 +492,10 @@ ZmFilterRule.CONDITIONS[ZmFilterRule.C_BULK] = {
 		ops:		ZmFilterRule.TYPE_SELECT,
 		opsOptions:	[ZmFilterRule.OP_EXISTS, ZmFilterRule.OP_NOT_EXISTS]
 };
+
+// map config keys to fields in a ZmCondition
+ZmFilterRule.CONDITIONS_KEY = {"subjectMod": "subjectModifier", "ops": "comparator",
+							   "value": "value" /*, "valueMod": "valueModifier"*/};   //valueModifier was in the old CONDITIONS_KEY that I revived, but no longer seemed to work at all... no references to it.
 
 // listed in order we want to display them in the SELECT
 ZmFilterRule.CONDITIONS_LIST = [

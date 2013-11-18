@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- *
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -62,8 +62,7 @@ Ext.define('ZCS.view.ZtListPanel', {
 					handler: function() {
 						this.up('listpanel').fireEvent('showFolders');
 					},
-					iconCls: 'organizer-list',
-					iconMask: true,
+					iconCls: 'organizer',
 					align: 'left'
 				},
 				{
@@ -73,7 +72,6 @@ Ext.define('ZCS.view.ZtListPanel', {
 						this.up('listpanel').fireEvent('newItem');
 					},
 					iconCls: this.getNewButtonIcon(),
-					iconMask: true,
 					align: 'right'
 				}
 			]
@@ -90,10 +88,10 @@ Ext.define('ZCS.view.ZtListPanel', {
 						{
 							xtype: 'searchfield',
 							name: 'searchField',
-							placeHolder: 'Search',
-                            autoComplete: false,
-                            autoCorrect: false,
-                            autoCapitalize: false,
+							placeHolder: ZtMsg.search,
+							autoComplete: false,
+							autoCorrect: false,
+							autoCapitalize: false,
 							listeners: {
 								keyup: function(fld, ev) {
 									var keyCode = ev.browserEvent.keyCode;

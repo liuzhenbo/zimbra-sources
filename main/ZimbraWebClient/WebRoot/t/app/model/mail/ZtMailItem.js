@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -41,7 +41,8 @@ Ext.define('ZCS.model.mail.ZtMailItem', {
 			{ name: 'isSent',           type: 'boolean' },
 			{ name: 'isReplied',        type: 'boolean' },
 			{ name: 'isUnread',         type: 'boolean' },
-			{ name: 'isInvite',         type: 'boolean' }
+			{ name: 'isInvite',         type: 'boolean' },
+			{ name: 'deletedIndicator', type: 'boolean' }
 		]
 	},
 
@@ -71,7 +72,7 @@ Ext.define('ZCS.model.mail.ZtMailItem', {
 		},
 
 		/**
-		 * Converts ZtEmailAddress models into anonymous objects with 'address' and 'displayName' properties.
+		 * Converts ZtEmailAddress models into anonymous objects with useful address-related properties.
 		 *
 		 * @param {Array|Object|ZtEmailAddress}     addrs   addresses to convert
 		 * @return {Object}    the provided data with addresses as anonymous objects
@@ -83,10 +84,10 @@ Ext.define('ZCS.model.mail.ZtMailItem', {
 				if (addrs.length > 0) {
 					return Ext.Array.map(addrs,
 						function (addr) {
-							var email = addr.get('email') || '',
-								addrData = {
-									address: email.toString(),
-									displayName: addr.get('viewName').replace('"', '')
+							var	addrData = {
+									address:    addr.get('email'),
+									name:       ZCS.mailutil.getDisplayName(addr),
+									addrObj:    addr
 								};
 							addrData.id = ZCS.util.getUniqueId(addrData);
 							return addrData;

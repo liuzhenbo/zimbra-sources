@@ -1,7 +1,7 @@
 
 # Copyright (C) Igor Sysoev
 # Copyright (C) Nginx, Inc.
-# Portions Copyright (c) VMware, Inc. [1998 – 2011]. All Rights Reserved.
+# Portions Copyright (c) Zimbra Software, LLC. [1998 – 2011]. All Rights Reserved.
 
 help=no
 
@@ -215,7 +215,7 @@ do
         --with-http_sub_module)          HTTP_SUB=YES               ;;
         --with-http_dav_module)          HTTP_DAV=YES               ;;
         --with-http_flv_module)          HTTP_FLV=YES               ;;
-        --with-http_mp4_module)          HTTP_MP4=YES               ;;        
+        --with-http_mp4_module)          HTTP_MP4=YES               ;;
         --with-http_gzip_static_module)  HTTP_GZIP_STATIC=YES       ;;
         --with-http_random_index_module) HTTP_RANDOM_INDEX=YES      ;;
         --with-http_secure_link_module)  HTTP_SECURE_LINK=YES       ;;
@@ -429,7 +429,7 @@ cat << END
 
   --add-module=PATH                  enable an external module
 
-   --with-cc=PATH                     set C compiler pathname
+  --with-cc=PATH                     set C compiler pathname
   --with-cpp=PATH                    set C preprocessor pathname
   --with-cc-opt=OPTIONS              set additional C compiler options
   --with-ld-opt=OPTIONS              set additional linker options
@@ -442,7 +442,7 @@ cat << END
   --with-pcre=DIR                    set path to PCRE library sources
   --with-pcre-opt=OPTIONS            set additional build options for PCRE
   --with-pcre-jit                    build PCRE with JIT compilation support
-  
+
   --with-md5=DIR                     set path to md5 library sources
   --with-md5-opt=OPTIONS             set additional build options for md5
   --with-md5-asm                     use md5 assembler sources

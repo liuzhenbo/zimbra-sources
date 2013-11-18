@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.tasks.toaster;
@@ -74,7 +72,7 @@ public class DeleteTask extends AjaxCommonTest {
 		TaskItem task = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject);
 		ZAssert.assertNotNull(task, "Verify the task is created");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		// Refresh the tasks view
 		app.zPageTasks.zToolbarPressButton(Button.B_REFRESH);
@@ -117,7 +115,7 @@ public class DeleteTask extends AjaxCommonTest {
 				"</m>" +
 		"</CreateTaskRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		TaskItem task = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject);
 		ZAssert.assertNotNull(task, "Verify the task is created");
@@ -173,7 +171,7 @@ public class DeleteTask extends AjaxCommonTest {
 				"</m>" +
 		"</CreateTaskRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		TaskItem task = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject);
 		ZAssert.assertNotNull(task, "Verify the task is created");
@@ -223,7 +221,7 @@ public class DeleteTask extends AjaxCommonTest {
 				"</m>" +
 		"</CreateTaskRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		TaskItem task = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject);
 		ZAssert.assertNotNull(task, "Verify the task is created");
@@ -304,7 +302,7 @@ public class DeleteTask extends AjaxCommonTest {
 				"</m>" +
 		"</CreateTaskRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		// Import each message into MailItem objects
 		TaskItem task1 = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject1);
@@ -361,7 +359,7 @@ public class DeleteTask extends AjaxCommonTest {
 				"</m>" +
 		"</CreateTaskRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		TaskItem task = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject);
 		ZAssert.assertNotNull(task, "Verify the task is created");
@@ -410,7 +408,7 @@ public class DeleteTask extends AjaxCommonTest {
 				"</m>" +
 		"</CreateTaskRequest>");
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		TaskItem task = TaskItem.importFromSOAP(app.zGetActiveAccount(), subject);
 		ZAssert.assertNotNull(task, "Verify the task is created");

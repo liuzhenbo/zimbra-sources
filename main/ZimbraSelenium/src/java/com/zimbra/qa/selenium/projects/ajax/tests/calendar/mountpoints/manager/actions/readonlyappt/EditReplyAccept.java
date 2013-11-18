@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.mountpoints.manager.actions.readonlyappt;
@@ -86,8 +84,8 @@ public class EditReplyAccept extends CalendarWorkWeekTest {
 		app.zPageCalendar.zToolbarPressButton(Button.B_REFRESH);
 		
 		// Mark ON to mounted calendar folder and select the appointment
-		app.zTreeCalendar.zDeSelectCalendarFolder("Calendar");
-		app.zTreeCalendar.zSelectMountedFolder(mountPointName);
+		app.zTreeCalendar.zMarkOnOffCalendarFolder("Calendar");
+		app.zTreeCalendar.zMarkOnOffMountedFolder(mountPointName);
 
 		FormMailNew mailComposeForm = (FormMailNew)app.zPageCalendar.zListItem(Action.A_RIGHTCLICK, Button.O_EDIT_REPLY_ACCEPT_SUB_MENU, apptSubject);
         mailComposeForm.zFillField(Field.Body, modifiedBody + " ");		
@@ -107,7 +105,7 @@ public class EditReplyAccept extends CalendarWorkWeekTest {
 		
 		String attendeeStatus = ZimbraAccount.AccountB().soapSelectValue("//mail:at[@a='"+ ZimbraAccount.AccountA().EmailAddress +"']", "ptst");
 
-		// Verify attendee status shows as psts=AC
+		// Verify attendee status shows as ptst=AC
 		ZAssert.assertEquals(attendeeStatus, "AC", "Verify that the attendee shows as 'ACCEPTED'");
 		
 		// Verify from and sender address in accept invitation message		
@@ -132,7 +130,7 @@ public class EditReplyAccept extends CalendarWorkWeekTest {
 		
 		attendeeStatus = ZimbraAccount.AccountB().soapSelectValue("//mail:at[@a='"+ ZimbraAccount.AccountA().EmailAddress +"']", "ptst");
 	
-		// Verify attendee status shows as psts=AC
+		// Verify attendee status shows as ptst=AC
 		ZAssert.assertEquals(attendeeStatus, "AC", "Verify that the attendee shows as 'ACCEPTED'");
 
 		
@@ -150,7 +148,7 @@ public class EditReplyAccept extends CalendarWorkWeekTest {
 		
 		String myStatus = ZimbraAccount.AccountA().soapSelectValue("//mail:at[@a='"+ ZimbraAccount.AccountA().EmailAddress +"']", "ptst");
 
-		// Verify attendee status shows as psts=AC
+		// Verify attendee status shows as ptst=AC
 		ZAssert.assertEquals(myStatus, "AC", "Verify that the attendee shows as 'ACCEPTED'");
 		
 		// Verify sent mail for accepted appointment notification (action performed by assistant)
@@ -163,7 +161,7 @@ public class EditReplyAccept extends CalendarWorkWeekTest {
 		
 		attendeeStatus = ZimbraAccount.AccountA().soapSelectValue("//mail:at[@a='"+ ZimbraAccount.AccountA().EmailAddress +"']", "ptst");
 
-		// Verify attendee status shows as psts=AC
+		// Verify attendee status shows as ptst=AC
 		ZAssert.assertEquals(attendeeStatus, "AC", "Verify that the attendee shows as 'ACCEPTED'");
 		
 		// Verify from and sender address in accept invitation message		

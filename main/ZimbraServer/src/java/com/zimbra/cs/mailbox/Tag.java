@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
- * 
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -97,11 +97,20 @@ public class Tag extends MailItem {
         }
     }
 
+    // Note space reserved in the Flag number-space.
+    // This is used for a pseudo non-existent tag.  Normally one defined for a mailbox of a shared folder, but
+    // also used in searches for a tag which doesn't exist.
+    public static final int NONEXISTENT_TAG = -32;
+
     private boolean isListed;
     private RetentionPolicy retentionPolicy;
 
     Tag(Mailbox mbox, UnderlyingData ud) throws ServiceException {
-        super(mbox, ud);
+        this(mbox, ud, false);
+    }
+    
+    Tag(Mailbox mbox, UnderlyingData ud, boolean skipCache) throws ServiceException {
+        super(mbox, ud, skipCache);
         if (mData.type != Type.TAG.toByte() && mData.type != Type.FLAG.toByte()) {
             throw new IllegalArgumentException();
         }
@@ -235,7 +244,7 @@ public class Tag extends MailItem {
         } catch (MailServiceException.NoSuchItemException nsie) {}
 
         UnderlyingData data = new UnderlyingData();
-        data.id = Mailbox.ID_AUTO_INCREMENT;  /* faked */
+        data.id = NONEXISTENT_TAG; /* faked */
         data.type = Type.TAG.toByte();
         data.folderId = Mailbox.ID_FOLDER_TAGS;
         data.name = name;

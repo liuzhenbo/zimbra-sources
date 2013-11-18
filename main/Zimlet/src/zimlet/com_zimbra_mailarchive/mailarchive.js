@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Zimlets
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -81,17 +81,39 @@ function(postCallback) {
 	dialog.popup(params);
 };
 
+/**
+ * Return true if this folder is suitable to be an "archive" folder.
+ * See mailarchive zimlet for usage
+ */
+ZmArchiveZimlet.prototype._canFolderArchive =
+function(folder) {
+	var id = Number(folder.nId);
+	return id !== ZmFolder.ID_ROOT
+			&& id !== ZmFolder.ID_DRAFTS
+			&& !folder.isInTrash()
+			&& !folder.isInSpam()
+			&& !folder.isOutbound();
+};
+
+
 ZmArchiveZimlet.prototype._handleChooseFolder = 
 function(postCallback, organizer) {
+	if (!this._canFolderArchive(organizer)) {
+		var dlg = appCtxt.getMsgDialog();
+		dlg.reset();
+		dlg.setMessage(this.getMessage("archiveInvalidFolder"), DwtMessageDialog.WARNING_STYLE);
+		dlg.popup();
+		return;
+	}
+
 	var dialog = appCtxt.getChooseFolderDialog();
 	dialog.popdown();
-	
-	if (organizer) {
-		this._archiveFolder = organizer;
-		this._archiveFolderId = organizer.id;
-		var keyVal = this._getMetaKeyVal();
-		this.metaData.set("archiveZimlet", keyVal, null, this._saveAccPrefsHandler.bind(this), null, true);
-	}
+
+	this._archiveFolder = organizer;
+	this._archiveFolderId = organizer.id;
+	var keyVal = this._getMetaKeyVal();
+	this.metaData.set("archiveZimlet", keyVal, null, this._saveAccPrefsHandler.bind(this), null, true);
+
 	if (postCallback) {
 		postCallback.run(organizer, this, true);
 	}
@@ -120,7 +142,7 @@ function(app, toolbar, controller, viewId) {
 		}
 		var buttonArgs = {
 			text	: this.getMessage("label"),
-			tooltip: this.getMessage("description"),
+			tooltip: this.getMessage("archiveButtonToolTip"),
 			index: buttonIndex,
 			image: "archiveZimletIcon",
 			showImageInToolbar: false,
@@ -162,9 +184,14 @@ function(app, toolbar, controller, viewId) {
 		else if (msg.folderId == this._archiveFolderId || msg.folderId == ZmFolder.ID_SENT || msg.folderId == ZmFolder.ID_TRASH	|| msg.folderId == ZmFolder.ID_SPAM) { 
 			visible = false; 
 		}
+
+		var listController = appCtxt.getCurrentApp().getMailListController();
+		var isConvListView = listController.getCurrentViewType() === ZmId.VIEW_CONVLIST;
+		var tooltip = this.getMessage("sendAndArchiveToolTip" + (isConvListView ? "Conv" : ""));
+
 		var buttonArgs = {
 			text: this.getMessage("sendAndArchiveButton"),
-			tooltip: this.getMessage("sendAndArchiveTooltip"),
+			tooltip: tooltip,
 			index: 0,
 			image: "archiveZimletIcon",
 			showImageInToolbar: false,
@@ -182,6 +209,7 @@ function(app, toolbar, controller, viewId) {
 			}
 			button.setEnabled(true);
 			button.setVisible(visible);
+			button.setToolTipContent(tooltip);
 		}
 	}
 };
@@ -415,18 +443,45 @@ function(result) {
 	
 };
 
-ZmArchiveZimlet.prototype.onSendMsgSuccess = function(controller, msg) {
-	var id = msg.id || (msg._origMsg && msg._origMsg.id);
-	var cid = msg.cid || (msg._origMsg && msg._origMsg.cid);
-	if (this._msgMap[id]) {
-		var m = appCtxt.getById(id);
-		var conv = cid ? appCtxt.getById(cid) : null;
-		var obj = conv ? conv : m;
-		if (obj && obj.list && obj.list.moveItems) {
-			obj.list.moveItems({items:obj, folder:this._archiveFolder});
-		}
-		delete this._msgMap[id];
+/**
+ * the user clicked the regular "send" button - remove the id from the _msgMap so it does not archive.
+ * The id might be there in the case the user clicked "send+archive" and the spell checker caught it (or any other error)
+ * and then the user just clicks "send" (not "send+archive"). It's kind of a corner case I think. But we need to deal with it.
+ * @param controller
+ * @param msg
+ */
+ZmArchiveZimlet.prototype.onSendButtonClicked = function(controller, msg) {
+	if (!msg) {
+		return;
 	}
+	var id = msg.id || (msg._origMsg && msg._origMsg.id);
+	delete this._msgMap[id];
+};
+
+ZmArchiveZimlet.prototype.onSendMsgSuccess = function(controller, msg) {
+
+	var id = msg.origId;
+	if (!id) {
+		//nothing to archive, shouldn't happen from send+archive since it won't have "send+archive" for new message.
+		return;
+	}
+	if (!this._msgMap[id]) {
+		//note to self - _msgMap is weird - I don't think it could really have multiple items (so not sure need for a map rather than one item),
+		// but keep it this way. Basically it's a way to check that the message sent also had the "send+archive" button clicked for.
+		//I believe usually it's pretty immediate so it would only be one message there.
+		return;
+	}
+	delete this._msgMap[id];
+
+	var item = appCtxt.getById(id);
+	var listController = appCtxt.getCurrentApp().getMailListController();
+	if (listController.getCurrentViewType() === ZmId.VIEW_CONVLIST) {
+		var cid = msg.cid || (msg._origMsg && msg._origMsg.cid);
+		var conv = cid && appCtxt.getById(cid);
+		item = conv || item;
+	}
+	listController._doMove([item], this._archiveFolder);
+
 };
 
 ZmArchiveZimlet.prototype._getMetaKeyVal = 

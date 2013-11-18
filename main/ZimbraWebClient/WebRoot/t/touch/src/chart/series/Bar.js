@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * @class Ext.chart.series.Bar
  * @extends Ext.chart.series.StackedCartesian
@@ -90,6 +74,22 @@ Ext.define('Ext.chart.series.Bar', {
                     radius: 0
                 }
             }
+        }
+    },
+
+    getItemForPoint: function (x, y) {
+        if (this.getSprites()) {
+            var me = this,
+                chart = me.getChart(),
+                padding = chart.getInnerPadding();
+
+            // Convert the coordinates because the "items" sprites that draw the bars ignore the chart's InnerPadding.
+            // See also Ext.chart.series.sprite.Bar.getItemForPoint(x,y) regarding the series's vertical coordinate system.
+            //
+            // TODO: Cleanup the bar sprites.
+            arguments[0] = x - padding.left;
+            arguments[1] = y + padding.bottom;
+            return me.callParent(arguments);
         }
     },
 

@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.conversation.conversations;
@@ -70,7 +68,7 @@ public class MarkSpamConversation extends PrefGroupMailByConversationTest {
 		// Click spam
 		app.zPageMail.zToolbarPressButton(Button.B_RESPORTSPAM);
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 		
 		// Get the mail item for the new message
 		// Need 'is:anywhere' to include the spam folder
@@ -117,7 +115,7 @@ public class MarkSpamConversation extends PrefGroupMailByConversationTest {
 		// Spam the item
 		app.zPageMail.zKeyboardShortcut(Shortcut.S_MAIL_MARKSPAM);
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 		
 		// Get the mail item for the new message
 		// Need 'is:anywhere' to include the spam folder

@@ -9,21 +9,44 @@ $compose-padding: .5em;
 	background-color: white;
 	background-image: none;
 
+	.x-form .x-scroll-container {
+		background-color: transparent;
+	}
+
 	.x-form-inner {
+
+		.zcs-show-cc-btn {
+			height: 100%;
+			border-radius: 0;
+			border: transparent;
+			border-bottom: 1px solid $light-grey;
+			.x-button-icon {
+				color: $medium-grey;
+			}
+		}
 
 		.x-field {
 			@extend .zcs-compose-formline;
 		}
-		.vm-bubblearea {
+		.zcs-bubblearea {
 			@include border-radius(0);
 		}
 		.x-form-label {
 			text-align: right;
 		}
+		.zcs-subject {
+			.x-field-input {
+				font-size:.97em;  //fixes oveflowing input and hiding the bottom border
+			}
+		}
 		.zcs-attachments {
 			@extend .zcs-compose-formline;
 			margin-bottom: 0;
 			padding: 0 $compose-padding;
+			.x-innerhtml {
+				padding-bottom: 5px;
+				line-height: 1.5em;
+			}
 		}
 		.zcs-body-field {
 			background-color: white;

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2009, 2010 VMware, Inc.
+ * Copyright (C) 2009, 2010, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -21,8 +21,8 @@ import com.zimbra.cs.memcached.MemcachedKeyPrefix;
 public class FoldersTagsCacheKey implements MemcachedKey {
     private String mKeyStr;
 
-    public FoldersTagsCacheKey(String accountId, int changeToken) {
-        mKeyStr = accountId + ":" + changeToken;
+    public FoldersTagsCacheKey(String accountId) {
+        mKeyStr = accountId;
     }
 
     public boolean equals(Object other) {

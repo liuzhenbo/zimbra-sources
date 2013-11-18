@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -850,6 +850,18 @@ function(tmpObj) {
 			return false;		
 		}	
 	}
+
+    if (ZaItem.hasWritePermission(ZaAccount.A_zimbraPrefMailForwardingAddress, tmpObj)) {
+        var forwardingEmail = tmpObj.attrs[ZaAccount.A_zimbraPrefMailForwardingAddress];
+        var keepLocalCopy = tmpObj.attrs[ZaAccount.A_zimbraPrefMailLocalDeliveryDisabled];
+
+        if (keepLocalCopy == "TRUE") {
+            if (forwardingEmail == null || forwardingEmail === "") {
+                ZaApp.getInstance().getCurrentController().popupErrorDialog(ZaMsg.ERROR_missing_zimbraPrefMailForwardingAddress);
+                return false;
+            }
+        }
+    }
 
     if(ZaItem.hasWritePermission(ZaAccount.A_zimbraPasswordLockoutMaxFailures,tmpObj)&& tmpObj.attrs[ZaAccount.A_zimbraPasswordLockoutMaxFailures] && !AjxUtil.isInt(tmpObj.attrs[ZaAccount.A_zimbraPasswordLockoutMaxFailures])) {
 			//show error msg
@@ -1887,7 +1899,12 @@ ZaAccount.myXModel = {
         {id:ZaAccount.A_zimbraPrefMailInitialSearch, type:_COS_STRING_, ref:"attrs/"+ZaAccount.A_zimbraPrefMailInitialSearch},
         {id:ZaAccount.A_zimbraMaxMailItemsPerPage, type:_COS_NUMBER_, ref:"attrs/"+ZaAccount.A_zimbraMaxMailItemsPerPage,maxInclusive:2147483647, minInclusive:0},
         {id:ZaAccount.A_zimbraPrefMailItemsPerPage, type:_COS_NUMBER_, ref:"attrs/"+ZaAccount.A_zimbraPrefMailItemsPerPage, choices:[10,25,50,100]},
-        {id:ZaAccount.A_zimbraPrefMailPollingInterval, type:_COS_ENUM_, ref:"attrs/"+ZaAccount.A_zimbraPrefMailPollingInterval, choices: ZaSettings.mailPollingIntervalChoices},
+        {
+            id: ZaAccount.A_zimbraPrefMailPollingInterval,
+            type: _COS_ENUM_POLLING_,
+            ref: "attrs/" + ZaAccount.A_zimbraPrefMailPollingInterval,
+            choices: ZaModel.MAIL_POLLING_INTERVAL_CHOICES
+        },
         {id:ZaAccount.A_zimbraMailMinPollingInterval, type:_COS_MLIFETIME_, ref:"attrs/"+ZaAccount.A_zimbraMailMinPollingInterval},
         {id:ZaAccount.A_zimbraPrefMailFlashIcon, choices:ZaModel.BOOLEAN_CHOICES, ref:"attrs/"+ZaAccount.A_zimbraPrefMailFlashIcon, type:_COS_ENUM_},
         {id:ZaAccount.A_zimbraPrefMailFlashTitle, choices:ZaModel.BOOLEAN_CHOICES, ref:"attrs/"+ZaAccount.A_zimbraPrefMailFlashTitle, type:_COS_ENUM_},
@@ -2370,7 +2387,7 @@ function (instance, firstName, lastName, initials) {
 
 ZaAccount.setDefaultCos =
 function (instance) {
-	var defaultCos = ZaCos.getDefaultCos4Account(instance[ZaAccount.A_name]);
+	var defaultCos = ZaCos.getDefaultCos4Account(instance[ZaAccount.A_name], instance.attrs[ZaAccount.A_zimbraIsExternalVirtualAccount] == "TRUE");
 			
 	if( defaultCos && defaultCos.id) {
 		instance._defaultValues = defaultCos;
@@ -2385,7 +2402,7 @@ function (){
 		var currentCos ;
 		currentCos = ZaCos.getCosById(this.attrs[ZaAccount.A_COSId]);
 		if (!currentCos){
-			currentCos = ZaCos.getDefaultCos4Account( this.name );
+			currentCos = ZaCos.getDefaultCos4Account(this.name, this.attrs[ZaAccount.A_zimbraIsExternalVirtualAccount] == "TRUE");
 		}
 		return currentCos ;
 	} catch (ex) {
@@ -2527,7 +2544,7 @@ ZaAccount.getAccountTypeOutput = function (isNewAccount) {
             currentType = currentCos.id ;
         */
         var currentType = instance[ZaAccount.A2_currentAccountType] ;
-	var defaultType = ZaCos.getDefaultCos4Account(instance[ZaAccount.A_name]); 
+	var defaultType = ZaCos.getDefaultCos4Account(instance[ZaAccount.A_name], instance.attrs[ZaAccount.A_zimbraIsExternalVirtualAccount] == "TRUE");
 	if(!currentType && defaultType)
 		currentType = defaultType.id;
 
@@ -2641,7 +2658,7 @@ ZaAccount.setAccountType = function (newType, ev) {
 ZaAccount.isAccountTypeSet = function (tmpObj) {
 
     var cosId = tmpObj.attrs [ZaAccount.A_COSId] || tmpObj[ZaAccount.A2_currentAccountType];
-    var defaultType = ZaCos.getDefaultCos4Account(tmpObj[ZaAccount.A_name]);
+    var defaultType = ZaCos.getDefaultCos4Account(tmpObj[ZaAccount.A_name], tmpObj.attrs[ZaAccount.A_zimbraIsExternalVirtualAccount] == "TRUE");
     if (!tmpObj.accountTypes  || tmpObj.accountTypes.length <= 0) {
         return  true ; //account type is not present, no need to check if it is set
     } else if (!cosId){
@@ -2729,7 +2746,7 @@ ZaAccount.getRelatedList =
 function (parentPath) {
     var alias = this.attrs[ZaAccount.A_zimbraMailAlias];
     var cos = ZaCos.getCosById(this.attrs[ZaAccount.A_COSId])
-            || ZaCos.getDefaultCos4Account(this[ZaAccount.A_name]);
+            || ZaCos.getDefaultCos4Account(this[ZaAccount.A_name], this.attrs[ZaAccount.A_zimbraIsExternalVirtualAccount] == "TRUE");
     var domainName = ZaAccount.getDomain(this[ZaAccount.A_name]);
     var domainObj =  ZaDomain.getDomainByName (domainName) ;
     //var zimletList = item.attrs[ZaAccount.A_zimbraZimletAvailableZimlets]

@@ -1,9 +1,16 @@
 /*
- * Copyright (C) Igor Sysoev
- */
-
-/*
- * Portions Copyright (c) VMware, Inc. [1998-2011]. All Rights Reserved.
+ * ***** BEGIN LICENSE BLOCK *****
+ * Zimbra Collaboration Suite Server
+ * Copyright (C) 2011 Zimbra Software, LLC.
+ *
+ * The contents of this file are subject to the Zimbra Public License
+ * Version 1.4 ("License"); you may not use this file except in
+ * compliance with the License.  You may obtain a copy of the License at
+ * http://www.zimbra.com/license.
+ *
+ * Software distributed under the License is distributed on an "AS IS"
+ * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
+ * ***** END LICENSE BLOCK *****
  */
 
 #include <ngx_config.h>
@@ -469,7 +476,7 @@ ngx_mail_zmauth_lookup_result_handler(ngx_zm_lookup_work_t * work) {
         ctx->errmsg.len = p - ctx->errmsg.data;
         s->out = ctx->errmsg;
 
-        if (work->result == ZM_LOOKUP_LOGIN_FAILED && work->wait_time > 0) {
+        if (work->result == ZM_LOOKUP_LOGIN_FAILED && work->wait_time >= 0) {
             ngx_add_timer(ctx->wait_ev, (ngx_msec_t) (work->wait_time * 1000));
 
             s->connection->read->handler = ngx_mail_zmauth_block_read;

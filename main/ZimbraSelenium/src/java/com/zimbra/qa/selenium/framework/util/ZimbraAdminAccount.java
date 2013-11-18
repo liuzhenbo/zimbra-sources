@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.framework.util;
@@ -116,13 +114,46 @@ public class ZimbraAdminAccount extends ZimbraAccount {
 		return (this);
 	}
 
+	public Element soapSend(String request) throws HarnessException {
+		
+		// Tests seem to be running a lot longer, or there are now
+		// so many tests that the authToken timeout for the global
+		// admin expires.
+		//
+		// Either way, check for <Code>service.AUTH_EXPIRED</Code>
+		// and re-auth, if necessary
+		//
+		
+		// Send the request
+		Element response = super.soapSend(request);
+		
+		// Check if re-auth is required
+		String code = this.soapSelectValue("//zimbra:Code", null);
+		if ( "service.AUTH_EXPIRED".equalsIgnoreCase(code) ) {
+			
+			logger.warn("Admin Auth token expired.  Re-authenticating.");
+			logger.warn(request);
+			logger.warn(this.soapLastResponse());
+			
+			// Re-auth
+			soapClient.setAuthToken(null);
+			this.authenticate();
+			
+			// Re-send SOAP request (this time, ignore errors and bubble back up)
+			response = super.soapSend(request);
+			
+		}
+		
+		return (response);
+	}
+	
 	/**
 	 * Authenticates the admin account (using SOAP admin AuthRequest)
 	 * Sets the authToken
 	 */
 	public ZimbraAccount authenticate() {
 		try {
-			soapSend(
+			super.soapSend(
 					"<AuthRequest xmlns='urn:zimbraAdmin'>" +
 					"<name>"+ EmailAddress +"</name>" +
 					"<password>"+ Password +"</password>" +
@@ -184,7 +215,7 @@ public class ZimbraAdminAccount extends ZimbraAccount {
 	 */
 	public static synchronized ZimbraAdminAccount GlobalAdmin() {
 		if ( _GlobalAdmin == null ) {
-			String name = ZimbraSeleniumProperties.getStringProperty("adminName", "admin@zqa-062.eng.vmware.com");
+			String name = ZimbraSeleniumProperties.getStringProperty("adminName");
 			_GlobalAdmin = new ZimbraAdminAccount(name);
 			_GlobalAdmin.authenticate();
 		}

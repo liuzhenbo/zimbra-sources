@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -156,11 +154,16 @@ public class TreeCalendar extends AbsTree {
 			
 			// Use default actionLocator
 			optionLocator += " div[id^='DETACH_WIN'] td[id$='_title']";
-			page = null; // TODO
 
 			this.zRightClick(actionLocator);
-
-			// FALL THROUGH
+			this.zClickAt(optionLocator,"");
+			
+			page = new SeparateWindow(this.MyApplication);
+			((SeparateWindow)page).zInitializeWindowNames();
+			
+			this.zWaitForBusyOverlay();
+			
+			return (page);
 
 		} else if ( (action == Action.A_RIGHTCLICK) && (option == Button.B_RECOVER_DELETED_ITEMS) ) {
 			
@@ -345,22 +348,24 @@ public class TreeCalendar extends AbsTree {
 				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='NEW_CALENDAR'] td[id$='_title']";
 				page = new DialogCreateFolder(MyApplication, ((AppAjaxClient)MyApplication).zPageMail);
 			
-				/**
-				 * TODO: add other options:
-				 * 
-				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='ADD_EXTERNAL_CALENDAR'] td[id$='_title']";
-				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='CHECK_ALL'] td[id$='_title']";
-				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='CLEAR_ALL'] td[id$='_title']";
-				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='FREE_BUSY_LINK'] td[id$='_title']";
-
-				 */
-
+			} else if ( option == Button.B_TREE_FIND_SHARES ) {
+				
+				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='FIND_SHARES'] td[id$='_title']";
+				page = new DialogShareFind(MyApplication, ((AppAjaxClient)MyApplication).zPageMail);
+				
 			} else if ( option == Button.B_TREE_NEW_EXTERNAL_CALENDAR ) {
 				
 				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='ADD_EXTERNAL_CALENDAR'] td[id$='_title']";
 				page = new DialogAddExternalCalendar(MyApplication, ((AppAjaxClient)MyApplication).zPageMail);
 				
-				// FALL THROUGH
+				/**
+				 * TODO: add other options:
+				 * 
+				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='CHECK_ALL'] td[id$='_title']";
+				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='CLEAR_ALL'] td[id$='_title']";
+				optionLocator = "css=div[id='ZmActionMenu_calendar_CALENDAR'] div[id='FREE_BUSY_LINK'] td[id$='_title']";
+
+				 */
 				
 			} else {
 				throw new HarnessException("Pulldown/Option "+ pulldown +"/"+ option +" not implemented");
@@ -566,7 +571,7 @@ public class TreeCalendar extends AbsTree {
 		throw new HarnessException("Must use FolderItem or SavedSearchFolderItem or ZimletItem as argument, but was "+ folder.getClass());
 	}
 	
-	public void zSelectMountedFolder(String folderName) throws HarnessException {
+	public void zMarkOnOffMountedFolder(String folderName) throws HarnessException {
 		
 		tracer.trace("Click on folder "+ folderName);
 		
@@ -577,7 +582,7 @@ public class TreeCalendar extends AbsTree {
 		SleepUtil.sleepLong(); //Let calendar UI refresh
 	}
 	
-	public void zDeSelectCalendarFolder(String folderName) throws HarnessException {
+	public void zMarkOnOffCalendarFolder(String folderName) throws HarnessException {
 		
 		tracer.trace("Click on folder "+ folderName);
 		

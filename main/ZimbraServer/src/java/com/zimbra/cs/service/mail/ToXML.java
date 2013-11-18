@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -493,6 +493,7 @@ public final class ToXML {
         }
         if (needToOutput(fields, Change.METADATA)) {
             encodeAllCustomMetadata(elem, folder, fields);
+            elem.addAttribute(MailConstants.A_WEB_OFFLINE_SYNC_DAYS, folder.getWebOfflineSyncDays());
         }
         if (needToOutput(fields, Change.DISABLE_ACTIVESYNC)) {
             elem.addAttribute(MailConstants.A_ACTIVESYNC_DISABLED, folder.isActiveSyncDisabled());
@@ -995,7 +996,8 @@ public final class ToXML {
                 m.addAttribute(MailConstants.A_ID, ifmt.formatItemId(msg));
                 m.addAttribute(MailConstants.A_DATE, msg.getDate());
                 m.addAttribute(MailConstants.A_SIZE, msg.getSize());
-                m.addAttribute(MailConstants.A_FOLDER, ifmt.formatItemId(msg.getFolderId()));
+                m.addAttribute(MailConstants.A_FOLDER,
+                               new ItemId(msg.getMailbox().getAccountId(), msg.getFolderId()).toString(ifmt));
                 recordItemTags(m, msg, octxt, fields);
                 m.addAttribute(MailConstants.E_FRAG, msg.getFragment(), Element.Disposition.CONTENT);
                 encodeEmail(m, msg.getSender(), EmailType.FROM);
@@ -1415,7 +1417,8 @@ public final class ToXML {
 
         calItemElem.addAttribute(MailConstants.A_UID, calItem.getUid());
         calItemElem.addAttribute(MailConstants.A_ID, ifmt.formatItemId(calItem));
-        calItemElem.addAttribute(MailConstants.A_FOLDER, ifmt.formatItemId(calItem.getFolderId()));
+        calItemElem.addAttribute(MailConstants.A_FOLDER,
+                       new ItemId(calItem.getMailbox().getAccountId(), calItem.getFolderId()).toString(ifmt));
 
         if (needToOutput(fields, Change.CONTENT) && calItem.getSavedSequence() != 0) {
             calItemElem.addAttribute(MailConstants.A_REVISION, calItem.getSavedSequence());
@@ -1486,7 +1489,7 @@ public final class ToXML {
         if (inv.hasRecurId()) {
             ie.addAttribute(MailConstants.A_CAL_RECURRENCE_ID, inv.getRecurId().toString());
         }
-        encodeInviteComponent(ie, ifmt, octxt, cal, inv, NOTIFY_FIELDS, neuter);
+        encodeInviteComponent(ie, ifmt, octxt, cal, (ItemId) null, inv, NOTIFY_FIELDS, neuter);
 
         if (includeContent && (inv.isPublic() || allowPrivateAccess(octxt, cal))) {
             int invId = inv.getMailItemId();
@@ -1526,18 +1529,49 @@ public final class ToXML {
      */
     public static Element encodeCalendarItemSummary(Element parent, ItemIdFormatter ifmt, OperationContext octxt,
             CalendarItem calItem, int fields, boolean includeInvites, boolean includeContent) throws ServiceException {
-        Element elem;
-        if (calItem instanceof Appointment) {
-            elem = parent.addElement(MailConstants.E_APPOINTMENT);
-        } else {
-            elem = parent.addElement(MailConstants.E_TASK);
-        }
-        setCalendarItemFields(elem, ifmt, octxt, calItem, fields, includeInvites, includeContent, true);
+        final int MAX_RETRIES = LC.calendar_item_get_max_retries.intValue();
+        Element elem = null;
+        Mailbox mbox = calItem.getMailbox();
+        int changeId = calItem.getSavedSequence();
+        int numTries = 0;
+        while (numTries < MAX_RETRIES) {
+            numTries++;
+            if (calItem instanceof Appointment) {
+                elem = parent.addElement(MailConstants.E_APPOINTMENT);
+            } else {
+                elem = parent.addElement(MailConstants.E_TASK);
+            }
+            try {
+                setCalendarItemFields(elem, ifmt, octxt, calItem, fields, includeInvites, includeContent, true);
 
-        if (needToOutput(fields, Change.METADATA)) {
-            encodeAllCustomMetadata(elem, calItem, fields);
+                if (needToOutput(fields, Change.METADATA)) {
+                    encodeAllCustomMetadata(elem, calItem, fields);
+                }
+                return elem;
+            } catch (ServiceException e) {
+                // Problem writing the structure to the response
+                //   (this case generally means that the blob backing the Calendar item disappeared halfway through)
+                elem.detach();
+                elem = null;
+                try {
+                    calItem = mbox.getCalendarItemById(octxt, calItem.getId());
+                    if (calItem.getSavedSequence() != changeId) {
+                        // just fetch the new item and try again
+                        changeId = calItem.getSavedSequence();
+                        ZimbraLog.soap.info("caught calendar item content change while serializing; will retry");
+                        continue;
+                    }
+                } catch (NoSuchItemException nsie) {
+                    // the message has been deleted, so don't include data in the response
+                    throw nsie;
+                }
+                // Were unable to write calendar item structure & not clear what went wrong. Try again a few times
+                // in case it was related to underlying modifications
+                ZimbraLog.soap.warn("Could not serialize full calendar item structure in response", e);
+            }
         }
-        return elem;
+        // Still failing after several retries...
+        throw NoSuchItemException.NO_SUCH_CALITEM("Problem encoding calendar item.  Maybe corrupt");
     }
 
     public static Element encodeCalendarItemSummary(Element parent, ItemIdFormatter ifmt,
@@ -1679,7 +1713,7 @@ public final class ToXML {
                     encodeCalendarReplies(invElt, calItem, invites[0], recurIdZ);
                 }
                 for (Invite inv : invites) {
-                    encodeInviteComponent(invElt, ifmt, octxt, calItem, inv, NOTIFY_FIELDS, neuter);
+                    encodeInviteComponent(invElt, ifmt, octxt, calItem, (ItemId) null, inv, NOTIFY_FIELDS, neuter);
                 }
             }
 
@@ -1822,7 +1856,8 @@ public final class ToXML {
             elem.addAttribute(MailConstants.A_DATE, item.getDate());
         }
         if (needToOutput(fields, Change.FOLDER)) {
-            elem.addAttribute(MailConstants.A_FOLDER, ifmt.formatItemId(item.getFolderId()));
+            elem.addAttribute(MailConstants.A_FOLDER,
+                              new ItemId(item.getMailbox().getAccountId(), item.getFolderId()).toString(ifmt));
         }
         if (item instanceof Message) {
             Message msg = (Message) item;
@@ -1899,7 +1934,8 @@ public final class ToXML {
     }
 
     public static Element encodeInviteComponent(Element parent, ItemIdFormatter ifmt, OperationContext octxt,
-            CalendarItem calItem /* may be null */, Invite invite, int fields, boolean neuter)
+            CalendarItem calItem /* may be null */, ItemId calId /* may be null */,
+            Invite invite, int fields, boolean neuter)
     throws ServiceException {
         boolean allFields = true;
 
@@ -2032,14 +2068,21 @@ public final class ToXML {
             e.addAttribute(MailConstants.A_CAL_SEQUENCE, invite.getSeqNo());
             e.addAttribute(MailConstants.A_CAL_DATETIME, invite.getDTStamp()); //zdsync
 
-            if (calItem != null) {
-                String itemId = ifmt.formatItemId(calItem);
-                e.addAttribute(MailConstants.A_CAL_ID, itemId);
+            String itemId = null;
+            if (calId != null) {
+                itemId = calId.toString(ifmt);
+            } else if (calItem != null) {
+                itemId = ifmt.formatItemId(calItem);
+            }
+            if (itemId != null) {
+                e.addAttribute(MailConstants.A_CAL_ID /* calItemId */, itemId);
                 if (invite.isEvent()) {
-                    e.addAttribute(MailConstants.A_APPT_ID_DEPRECATE_ME, itemId);  // for backward compat
+                    e.addAttribute(MailConstants.A_APPT_ID_DEPRECATE_ME /* apptId */, itemId);  // for backward compat
                 }
-                ItemId ciFolderId = new ItemId(calItem.getMailbox(), calItem.getFolderId());
-                e.addAttribute(MailConstants.A_CAL_ITEM_FOLDER, ifmt.formatItemId(ciFolderId));
+                if (calItem != null) {
+                    ItemId ciFolderId = new ItemId(calItem.getMailbox(), calItem.getFolderId());
+                    e.addAttribute(MailConstants.A_CAL_ITEM_FOLDER /* ciFolder */, ifmt.formatItemId(ciFolderId));
+                }
             }
 
             Recurrence.IRecurrence recur = invite.getRecurrence();
@@ -2156,11 +2199,13 @@ public final class ToXML {
                 method = Invite.lookupMethod(invCi.getMethod());
             }
             Invite invite = invCi;
+            ItemId calendarItemId = info.getCalendarItemId();
             if (info.calItemCreated()) {
                 try {
-                    calItem = mbox.getCalendarItemById(octxt, info.getCalendarItemId());
+                    calItem = mbox.getCalendarItemById(octxt, calendarItemId);
                 } catch (MailServiceException.NoSuchItemException e) {
-                    // ignore
+                    // Calendar item has been deleted. Bug 84877 - don't include stale references to it in SOAP response
+                    calendarItemId = null;
                 } catch (ServiceException e) {
                     // eat PERM_DENIED
                     if (e.getCode() != ServiceException.PERM_DENIED) {
@@ -2235,7 +2280,7 @@ public final class ToXML {
             if (invite != null) {
                 setCalendarItemType(ie, invite.getItemType());
                 encodeTimeZoneMap(ie, invite.getTimeZoneMap());
-                encodeInviteComponent(ie, ifmt, octxt, calItem, invite, fields, neuter);
+                encodeInviteComponent(ie, ifmt, octxt, calItem, calendarItemId, invite, fields, neuter);
                 ICalTok invMethod = Invite.lookupMethod(invite.getMethod());
                 if (ICalTok.REQUEST.equals(invMethod) || ICalTok.PUBLISH.equals(invMethod)) {
                     InviteChanges invChanges = info.getInviteChanges();
@@ -2377,7 +2422,7 @@ public final class ToXML {
             String disp = mp.getHeader("Content-Disposition", null);
             if (disp != null) {
                 ContentDisposition cdisp = new ContentDisposition(MimeUtility.decodeText(disp));
-                el.addAttribute(MailConstants.A_CONTENT_DISPOSTION, StringUtil.stripControlCharacters(cdisp.getDisposition()));
+                el.addAttribute(MailConstants.A_CONTENT_DISPOSITION, StringUtil.stripControlCharacters(cdisp.getDisposition()));
             }
         } catch (MessagingException e) {
         } catch (UnsupportedEncodingException e) {
@@ -3063,22 +3108,26 @@ public final class ToXML {
 
     private static void encodeAddrsWithGroupInfo(Element eParent,
             String emailElem, Account requestedAcct, Account authedAcct) {
-        GalGroupInfoProvider groupInfoProvider = GalGroupInfoProvider.getInstance();
+        if (requestedAcct.isFeatureGalEnabled()
+                && requestedAcct.isFeatureGalAutoCompleteEnabled()
+                && requestedAcct.isPrefGalAutoCompleteEnabled()) {
+            GalGroupInfoProvider groupInfoProvider = GalGroupInfoProvider.getInstance();
 
-        for (Element eEmail : eParent.listElements(emailElem)) {
-            String addr = eEmail.getAttribute(MailConstants.A_ADDRESS, null);
-            if (addr != null) {
-                // shortcut the check if the email address is the authed or requested account - it cannot be a group
-                if (addr.equalsIgnoreCase(requestedAcct.getName()) || addr.equalsIgnoreCase(authedAcct.getName()))
-                    continue;
+            for (Element eEmail : eParent.listElements(emailElem)) {
+                String addr = eEmail.getAttribute(MailConstants.A_ADDRESS, null);
+                if (addr != null) {
+                    // shortcut the check if the email address is the authed or requested account - it cannot be a group
+                    if (addr.equalsIgnoreCase(requestedAcct.getName()) || addr.equalsIgnoreCase(authedAcct.getName()))
+                        continue;
 
-                GroupInfo groupInfo = groupInfoProvider.getGroupInfo(addr, true, requestedAcct, authedAcct);
-                if (GroupInfo.IS_GROUP == groupInfo) {
-                    eEmail.addAttribute(MailConstants.A_IS_GROUP, true);
-                    eEmail.addAttribute(MailConstants.A_EXP, false);
-                } else if (GroupInfo.CAN_EXPAND == groupInfo) {
-                    eEmail.addAttribute(MailConstants.A_IS_GROUP, true);
-                    eEmail.addAttribute(MailConstants.A_EXP, true);
+                    GroupInfo groupInfo = groupInfoProvider.getGroupInfo(addr, true, requestedAcct, authedAcct);
+                    if (GroupInfo.IS_GROUP == groupInfo) {
+                        eEmail.addAttribute(MailConstants.A_IS_GROUP, true);
+                        eEmail.addAttribute(MailConstants.A_EXP, false);
+                    } else if (GroupInfo.CAN_EXPAND == groupInfo) {
+                        eEmail.addAttribute(MailConstants.A_IS_GROUP, true);
+                        eEmail.addAttribute(MailConstants.A_EXP, true);
+                    }
                 }
             }
         }

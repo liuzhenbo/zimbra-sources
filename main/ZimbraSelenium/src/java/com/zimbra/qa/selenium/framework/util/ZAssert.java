@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.framework.util;
@@ -23,7 +21,6 @@ import org.apache.log4j.*;
 import org.testng.Assert;
 
 import com.zimbra.qa.selenium.framework.core.ExecuteHarnessMain;
-import com.zimbra.qa.selenium.framework.core.Repository;
 
 
 public class ZAssert {
@@ -63,15 +60,11 @@ public class ZAssert {
         {
         	// Execute the Assert base method (if available)
             Assert.assertTrue(condition, details);
-            Repository.testCaseVerification(message, String.valueOf(condition),
-                  String.valueOf(true), true);
         }
         catch (AssertionError e)
         {
         	// On failure, log the error
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(condition),
-               String.valueOf(true), false);
             throw e;
         }
         
@@ -97,15 +90,11 @@ public class ZAssert {
         {
         	// Execute the Assert base method (if available)
             Assert.assertFalse(condition, details);
-            Repository.testCaseVerification(message, String.valueOf(condition),
-                  String.valueOf(false), true);
         }
         catch (AssertionError e)
         {
         	// On failure, log the error
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(condition),
-               String.valueOf(false), false);
             throw e;
         }
         
@@ -126,14 +115,10 @@ public class ZAssert {
         try
         {
         	Assert.assertEquals(actual, expected, details);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(expected), true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(expected), false);
             throw e;
         }
         
@@ -153,13 +138,10 @@ public class ZAssert {
         try
         {
         	Assert.assertTrue(!actual.equals(expected), details);
-        	Repository.testCaseVerification(message, String.valueOf(actual), String.valueOf(expected), true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(expected), false);
             throw e;
         }
         
@@ -179,21 +161,15 @@ public class ZAssert {
         try
         {
         	if ( actual <= expected ) {
-        	   Repository.testCaseVerification(message, String.valueOf(true),
-        	         String.valueOf(true), false);
         		throw new AssertionError(details);
         	}
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(true),
-               String.valueOf(true), false);
             throw e;
         }
 
-        Repository.testCaseVerification(message, String.valueOf(true),
-              String.valueOf(true), true);
         CountPass++; TotalCountPass++;
 	}
 
@@ -209,20 +185,14 @@ public class ZAssert {
         try
         {
         	if ( actual < expected ) {
-        	   Repository.testCaseVerification(message, String.valueOf(true),
-        	         String.valueOf(true), false);
         		throw new AssertionError(details);
         	}
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(true),
-               String.valueOf(true), false);
             throw e;
         }
-        Repository.testCaseVerification(message, String.valueOf(true),
-              String.valueOf(true), true);
         CountPass++; TotalCountPass++;
 	}
 
@@ -238,20 +208,14 @@ public class ZAssert {
         try
         {
         	if ( actual >= expected ) {
-        	   Repository.testCaseVerification(message, String.valueOf(true),
-                String.valueOf(true), false);
         		throw new AssertionError(details);
         	}
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(true),
-               String.valueOf(true), false);
             throw e;
         }
-        Repository.testCaseVerification(message, String.valueOf(true),
-              String.valueOf(true), true);
         CountPass++; TotalCountPass++;
 	}
 
@@ -267,20 +231,14 @@ public class ZAssert {
         try
         {
         	if ( actual > expected ) {
-        	   Repository.testCaseVerification(message, String.valueOf(true),
-                String.valueOf(true), false);
         		throw new AssertionError(details);
         	}
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(true),
-               String.valueOf(true), false);
             throw e;
         }
-        Repository.testCaseVerification(message, String.valueOf(true),
-              String.valueOf(true), true);
         CountPass++; TotalCountPass++;
 	}
 
@@ -297,14 +255,10 @@ public class ZAssert {
         try
         {
         	Assert.assertNull(object, details);
-        	Repository.testCaseVerification(message, String.valueOf(object),
-               "null", true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(object),
-               "null", false);
             throw e;
         }
         
@@ -326,8 +280,6 @@ public class ZAssert {
         try
         {
         	Assert.assertNotNull(object, details);
-        	Repository.testCaseVerification(message, String.valueOf(object),
-               "null", true);
         }
         catch (AssertionError e)
         {
@@ -352,14 +304,10 @@ public class ZAssert {
         {
         	boolean contains = collection.contains(object);
         	Assert.assertTrue(contains, details);
-        	Repository.testCaseVerification(message, String.valueOf(collection),
-               String.valueOf(object), true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(collection),
-               String.valueOf(object), false);
             throw e;
         }
         
@@ -384,14 +332,10 @@ public class ZAssert {
         {
         	Matcher m = pattern.matcher(input);
         	Assert.assertTrue(m.matches(), details);
-        	Repository.testCaseVerification(message, String.valueOf(pattern),
-               String.valueOf(input), true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(pattern),
-               String.valueOf(input), false);
             throw e;
         }
         
@@ -450,14 +394,10 @@ public class ZAssert {
         {
         	boolean contains = actual.contains(substring);
         	Assert.assertTrue(contains, details);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(substring), true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(substring), false);
             throw e;
         }
         
@@ -484,14 +424,10 @@ public class ZAssert {
         {
         	boolean contains = actual.contains(substring);
         	Assert.assertFalse(contains, details);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(substring), true);
         }
         catch (AssertionError e)
         {
         	logger.error(e.getMessage(), e);
-        	Repository.testCaseVerification(message, String.valueOf(actual),
-               String.valueOf(substring), false);
             throw e;
         }
         

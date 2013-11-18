@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -37,7 +37,7 @@ public class ZMimeMultipartTest {
     @Test
     public void encoded() throws Exception {
         final String boundary = "dfghjkl";
-        final String preamble = "when in the course of human events...";
+        final String preamble = "when in the course of human events...\r\n";
         final String plain = "The Rain in Spain.";
         final String html = "The <u>Rain</u> in <em>Spain</em>.";
 
@@ -51,7 +51,7 @@ public class ZMimeMultipartTest {
         bbheader.append("\r\n");
 
         ByteBuilder bbmulti = new ByteBuilder();
-        bbmulti.append(preamble).append("\r\n");
+        bbmulti.append(preamble);
         bbmulti.append("--").append(boundary).append("\r\n");
         bbmulti.append("Content-Type: text/plain\r\n");
         bbmulti.append("\r\n");

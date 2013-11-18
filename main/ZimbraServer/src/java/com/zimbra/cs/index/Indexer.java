@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -43,11 +43,6 @@ public interface Indexer extends Closeable {
     void deleteDocument(List<Integer> ids) throws IOException;
 
     /**
-     * Requests an "optimize" operation on the index, priming the index for the fastest available search.
-     */
-    void optimize();
-
-    /**
      * Compacts the index by expunging all the deletes.
      */
     void compact();
@@ -55,7 +50,7 @@ public interface Indexer extends Closeable {
     /**
      * Modeled on {@link org.apache.lucene.index.IndexReader} {@code maxDoc()} whose description is: <br />
      * Returns total number of docs in this index, including docs not yet flushed (still in the RAM buffer),
-     * not counting deletions.
+     * not counting deletions.  Note that this is a cached value.
      * <p>Used from SOAP GetIndexStatsRequest</p>
      * @return total number of documents in this index excluding deletions
      */

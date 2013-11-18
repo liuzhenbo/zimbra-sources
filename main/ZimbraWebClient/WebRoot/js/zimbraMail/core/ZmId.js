@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -114,6 +114,7 @@ ZmId.SKIN_SEARCH_BUILDER_TR			= "skin_tr_search_builder";
 ZmId.SKIN_SEARCH					= "skin_container_search";
 ZmId.SKIN_SEARCH_RESULTS_TOOLBAR	= "skin_container_search_results_toolbar";
 ZmId.SKIN_REFRESH					= "skin_container_refresh";
+ZmId.SKIN_NETWORK					= "skin_container_network";
 ZmId.SKIN_SHELL						= "skin_outer";
 ZmId.SKIN_SPACING_SEARCH			= "skin_spacing_search";
 ZmId.SKIN_SPLASH_SCREEN				= "skin_container_splash_screen";
@@ -672,6 +673,7 @@ ZmId.CMP_ATT_ROW			= "_attachments_row";
 ZmId.CMP_ATT_DIV			= "_attachments_div";
 ZmId.CMP_ATT_BTN			= "_attachments_btn";
 ZmId.CMP_ATT_INP			= "_file_input";
+ZmId.CMP_ATT_COMPUTER_INP	= "_file_input_computer";
 ZmId.CMP_ATT_INLINE_INP		= "_file_input_inline";
 ZmId.CMP_ATT_INCL_ORIG_LINK	= "_show_orig";
 ZmId.CMP_DND_TOOLTIP        = "_zdnd_tooltip";
@@ -700,6 +702,7 @@ ZmId.APP_MAIL			= "Mail";
 ZmId.APP_PORTAL			= "Portal";
 ZmId.APP_PREFERENCES	= "Options";
 ZmId.APP_SEARCH			= "Search";
+ZmId.APP_SOCIAL			= "Social";
 ZmId.APP_TASKS			= "Tasks";
 ZmId.APP_VOICE			= "Voice";
 
@@ -865,6 +868,7 @@ ZmId.OP_CHECKIN                 = "CHECKIN";
 ZmId.OP_CHECKOUT                = "CHECKOUT";
 ZmId.OP_CHECK_ALL				= "CHECK_ALL";
 ZmId.OP_CHECK_MAIL				= "CHECK_MAIL";
+ZmId.OP_GO_OFFLINE				= "GOOFFLINE";
 ZmId.OP_CALL_BACK				= "CALL_BACK";
 ZmId.OP_CLEAR_ALL				= "CLEAR_ALL";
 ZmId.OP_CLOSE					= "CLOSE";
@@ -910,6 +914,9 @@ ZmId.OP_EXPAND					= "EXPAND";
 ZmId.OP_EXPAND_ALL				= "EXPAND_ALL";
 //ZmId.OP_EXPORT_FOLDER			= "EXPORT_FOLDER";
 ZmId.OP_FB_VIEW				    = "FB_VIEW";
+ZmId.OP_FLAG					= "FLAG";
+ZmId.OP_UNFLAG					= "UNFLAG";
+ZmId.OP_FIND_SHARES				= "FIND_SHARES";
 ZmId.OP_FORMAT_HTML				= "FORMAT_HTML";
 ZmId.OP_FORMAT_HTML_SOURCE		= "FORMAT_HTML_SOURCE";
 ZmId.OP_FORMAT_MEDIA_WIKI		= "FORMAT_MEDIA_WIKI";

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -518,7 +518,7 @@ ZaCos.getCosChoices = function () {
 
 
 ZaCos.getDefaultCos4Account =
-function (accountName){
+function (accountName, isExtVirtualAccount){
 	var defaultCos ;
 	var defaultDomainCos ;
 
@@ -526,7 +526,7 @@ function (accountName){
 	if (!accountName) {
 		return defaultCos; //default cos
 	}
-	
+
 	var domainName = ZaAccount.getDomain(accountName);
 	var domainCosId ;
 	var domain;
@@ -537,15 +537,16 @@ function (accountName){
     }
 
 	if(domain) {
-		domainCosId = domain.attrs[ZaDomain.A_domainDefaultCOSId] ;
+		domainCosId = isExtVirtualAccount ? domain.attrs[ZaDomain.A_domainDefaultExternalUserCOSId] : domain.attrs[ZaDomain.A_domainDefaultCOSId] ;
 		//when domainCosId doesn't exist, we always set default cos
+        var defaultCosName = isExtVirtualAccount ? "defaultExternal" : "default";
 		if (!domainCosId) {
-			var cos = ZaCos.getCosByName("default");
+			var cos = ZaCos.getCosByName(defaultCosName);
 			return cos ;
 		} else{
 			var cos = ZaCos.getCosById (domainCosId);
 			if(!cos)
-				cos = ZaCos.getCosByName("default");
+				cos = ZaCos.getCosByName(defaultCosName);
 			
 		 	return cos ;
 			//return cosList.getItemById(domainCosId);
@@ -690,7 +691,12 @@ ZaCos.myXModel = {
         {id:ZaCos.A_zimbraPrefShowSearchString, choices:ZaModel.BOOLEAN_CHOICES, ref:"attrs/"+ZaCos.A_zimbraPrefShowSearchString, type:_ENUM_},
         //{id:ZaCos.A_zimbraPrefMailSignatureStyle, choices:ZaModel.SIGNATURE_STYLE_CHOICES, ref:"attrs/"+ZaCos.A_zimbraPrefMailSignatureStyle, type:_ENUM_,defaultValue:"internet"},
         {id:ZaCos.A_zimbraPrefUseTimeZoneListInCalendar, choices:ZaModel.BOOLEAN_CHOICES, ref:"attrs/"+ZaCos.A_zimbraPrefUseTimeZoneListInCalendar, type:_ENUM_},
-        {id:ZaCos.A_zimbraPrefMailPollingInterval, ref:"attrs/"+ZaCos.A_zimbraPrefMailPollingInterval, type:_ENUM_, choices: ZaSettings.mailPollingIntervalChoices},
+        {
+            id: ZaCos.A_zimbraPrefMailPollingInterval,
+            ref: "attrs/" + ZaCos.A_zimbraPrefMailPollingInterval,
+            type: _ENUM_,
+            choices: ZaModel.MAIL_POLLING_INTERVAL_CHOICES
+        },
 	{id:ZaCos.A_zimbraPrefAutoSaveDraftInterval, ref:"attrs/"+ZaCos.A_zimbraPrefAutoSaveDraftInterval, type:_MLIFETIME_},
         {id:ZaCos.A_zimbraDataSourceMinPollingInterval, ref:"attrs/"+ZaCos.A_zimbraDataSourceMinPollingInterval, type:_MLIFETIME_},
         {id:ZaCos.A_zimbraDataSourcePop3PollingInterval, ref:"attrs/"+ZaCos.A_zimbraDataSourcePop3PollingInterval, type:_MLIFETIME_},
@@ -903,7 +909,9 @@ ZaCos.prototype.countAllAccounts = function() {
 	var query = "(" + ZaAccount.A_COSId + "=" + this.id + ")";
 
     if(this.name == "default") {
-        query = "(|(!(" + ZaAccount.A_COSId + "=*))" + query + ")";
+        query = "(|(&(!(" + ZaAccount.A_COSId + "=*))(!(" + ZaAccount.A_zimbraIsExternalVirtualAccount + "=TRUE)))" + query + ")";
+    } else if(this.name == "defaultExternal") {
+        query = "(|(&(!(" + ZaAccount.A_COSId + "=*))(" + ZaAccount.A_zimbraIsExternalVirtualAccount + "=TRUE))" + query + ")";
     }
     query = "(&" + query + "(!("+ ZaAccount.A_zimbraIsSystemAccount +"=TRUE)))" ;
 	soapDoc.set("query", query);
@@ -931,6 +939,8 @@ ZaCos.prototype.countAllDomains = function() {
 
     if(this.name == "default") {
         query = "(|(!(" + ZaDomain.A_domainDefaultCOSId + "=*))" + query + ")";
+    } else if(this.name == "defaultExternal") {
+        query = "(|(!(" + ZaDomain.A_domainDefaultExternalUserCOSId + "=*))" + query + ")";
     }
 	soapDoc.set("query", query);
     soapDoc.set("types", ZaSearch.DOMAINS);

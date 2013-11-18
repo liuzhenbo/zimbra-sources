@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * This class compiles the XTemplate syntax into a function object. The function is used
  * like so:
@@ -113,7 +97,7 @@ Ext.define('Ext.XTemplateCompiler', {
 
     doExpr: function (expr) {
         var out = this.body;
-        out.push('if ((v=' + expr + ')!==undefined && (v=' + expr + ')!==null) out');
+            out.push('v=' + expr + '; if (v !== undefined && v !== null) out');
 
         // Coerce value to string using concatenation of an empty string literal.
         // See http://jsperf.com/tostringvscoercion/5

@@ -22,7 +22,7 @@
  */
 Ext.define('ZCS.view.mail.ZtAssignmentView', {
 	extend: 'Ext.Sheet',
-	requires: [
+	requies: [
 		'Ext.Anim'
 	],
 	alias: 'widget.assignmentview',
@@ -86,9 +86,7 @@ Ext.define('ZCS.view.mail.ZtAssignmentView', {
 		 */
 		onAssignmentComplete: null,
 
-		listHasOwnHeader: false,
-
-		animatedComponent: null
+		listHasOwnHeader: false
 
 	},
 
@@ -177,30 +175,6 @@ Ext.define('ZCS.view.mail.ZtAssignmentView', {
 			e.preventDefault();
 			me.onClose();
 		});
-
-		ZCS.app.on('orientationChange', function () {
-			if (!this.isHidden()) {
-				Ext.defer(this.rePosition, 200, this);
-			}
-		}, this);
-	},
-
-	/**
-	 * Repositions the assignment view
-	 */
-	rePosition: function () {
-		this.resizeSheet();
-		this.positionSheet();
-		this.show();
-
-		var fromBox = this.getAnimatedComponent().element.getPageBox(),
-			targetBox = this.down('#animationTarget').element.getPageBox();
-
-		this.getAnimatedComponent().setWidth(targetBox.width);
-		this.getAnimatedComponent().setHeight(targetBox.height);
-		this.getAnimatedComponent().setLeft(targetBox.left);
-		this.getAnimatedComponent().setTop(targetBox.top);
-		this.getAnimatedComponent().show();
 	},
 
 	/**
@@ -256,9 +230,7 @@ Ext.define('ZCS.view.mail.ZtAssignmentView', {
 				}
 			},
 			duration: 750
-		});
-
-		this.setAnimatedComponent(component);
+		})
 	},
 
 	popComponentOutOfContainer: function (component) {
@@ -302,30 +274,14 @@ Ext.define('ZCS.view.mail.ZtAssignmentView', {
 			sheetTargetElement = this.getTargetElement(),
 			sheetTargetElementBox = sheetTargetElement.getPageBox();
 
-		this.resizeSheet();
+		sheet.setWidth(sheetTargetElementBox.width + 1);
+		sheet.setHeight(sheetTargetElementBox.height + 1);
 
 		sheet.showBy(this.getTargetElement());
 
-		this.positionSheet();
-	},
-
-	resizeSheet: function () {
-		var sheet = this,
-			sheetTargetElement = this.getTargetElement(),
-			sheetTargetElementBox = sheetTargetElement.getPageBox();
-
-		sheet.setWidth(sheetTargetElementBox.width + 1);
-		sheet.setHeight(sheetTargetElementBox.height + 1);
-	},
-
-	positionSheet: function () {
-		var sheet = this,
-			sheetTargetElement = this.getTargetElement(),
-			sheetTargetElementBox = sheetTargetElement.getPageBox();
-
 		//Why it's off by 5 I don't know.
-		sheet.setLeft(sheetTargetElementBox.left);
-		sheet.setTop(sheetTargetElementBox.top);
+		sheet.setLeft(sheet.getLeft() - 5);
+		sheet.setTop(sheet.getTop() + 4);
 	},
 
 	updateComponentBox: function (component, targetBox) {

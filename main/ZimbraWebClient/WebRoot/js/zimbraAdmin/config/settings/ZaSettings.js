@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -830,26 +830,6 @@ ZaSettings.getLocaleChoices = function () {
 ZaSettings.isNetworkVersion = function () {
     return (ZaSettings.IS_ZCS_NETWORK_VERSION || false );
 }
-
-ZaSettings.getMailPollingIntervalChoices = function() {
-
-	return [
-	    {value: "500ms", label: ZaMsg.LBL_asNewMailArrives},
-	    {value: "120s", label: "2 " + ZaMsg.LBL_minute},
-	    {value: "180s", label: "3 " + ZaMsg.LBL_minute},
-	    {value: "240s", label: "4 " + ZaMsg.LBL_minute},
-	    {value: "300s", label: "5 " + ZaMsg.LBL_minute},
-	    {value: "360s", label: "6 " + ZaMsg.LBL_minute},
-	    {value: "420s", label: "7 " + ZaMsg.LBL_minute},
-	    {value: "480s", label: "8 " + ZaMsg.LBL_minute},
-	    {value: "540s", label: "9 " + ZaMsg.LBL_minute},
-	    {value: "600s", label: "10 " + ZaMsg.LBL_minute},
-	    {value: "900s", label: "15 " + ZaMsg.LBL_minute},
-	    {value: "31536000s", label: ZaMsg.LBL_manual} /* one year */
-	];
-}
-
-ZaSettings.mailPollingIntervalChoices = ZaSettings.getMailPollingIntervalChoices;
 
 ZaSettings.isOctopus = function () {
     return (ZaSettings.IS_OCTOPUS || false);

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -29,6 +29,9 @@ ZmMailListView = function(params) {
 	}
 
 	this._disallowSelection[ZmItem.F_READ] = true;
+    if (!appCtxt.isWebClientOffline()) {
+        localStorage.setItem("MAILVIEW", params.mode || ZmId.VIEW_TRAD);
+    }
 };
 
 ZmMailListView.prototype = new ZmListView;
@@ -357,7 +360,7 @@ function(viewId, headerList) {
 	var headers = headerList;
 	if (userHeaders && isMultiColumn) {
 		headers = userHeaders.split(ZmListView.COL_JOIN);
-		//we have to do it regardless of the size of headers and headerList, as items could be added and removed, masking each other as far as length (previous code compared length) 
+		//we have to do it regardless of the size of headers and headerList, as items could be added and removed, masking each other as far as length (previous code compared length)
 		headers = this._normalizeHeaders(headers, headerList);
 	}
     // adding account header in _normalizeHeader method
@@ -395,8 +398,17 @@ function(viewId, headerList) {
 				hdrParams.visible = true;
 				this._showingAccountColumn = true;
 			} else {
-				hdrParams.visible = (appCtxt.multiAccounts && header == ZmItem.F_ACCOUNT && !userHeaders)
+				var visible = (appCtxt.multiAccounts && header == ZmItem.F_ACCOUNT && !userHeaders)
 					? false : (header.indexOf("*") == -1);
+                if (!userHeaders && isMultiColumn) {
+                    //this is the default header
+                    if (typeof hdrParams.visible === "undefined") {
+                        //if the visible header is not set than use the computed value
+                        hdrParams.visible = visible;
+                    }
+                } else {
+                    hdrParams.visible = visible;
+                }
 			}
 			hList.push(new DwtListHeaderItem(hdrParams));
 		}
@@ -1031,7 +1043,8 @@ function(ev) {
 			&& (ev.event == ZmEvent.E_TAGS || ev.event == ZmEvent.E_REMOVE_ALL)) {
 		DBG.println(AjxDebug.DBG2, "ZmMailListView: TAG");
 		this.redrawItem(item);
-		ev.handled = true;
+        ZmListView.prototype._changeListener.call(this, ev);
+        ev.handled = true;
 	}
 
 	if (ev.event == ZmEvent.E_FLAGS) { // handle "unread" flag
@@ -1124,7 +1137,8 @@ function(clickedEl, ev) {
 		if (appCtxt.get(ZmSetting.SHOW_SELECTION_CHECKBOX) && ev.button == DwtMouseEvent.LEFT) {
 			if (!ev.shiftKey && !ev.ctrlKey) {
 				// get the field being clicked
-				var id = (ev.target.id && ev.target.id.indexOf("AjxImg") == -1) ? ev.target.id : clickedEl.id;
+				var target = this._getEventTarget(ev);
+				var id = (target && target.id && target.id.indexOf("AjxImg") == -1) ? target.id : clickedEl.id;
 				var m = id ? this._parseId(id) : null;
 				if (m && m.field == ZmItem.F_SELECTION) {
 					if (this.getSelectionCount() == 1) {

@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 //@tag foundation,core
 //@define Ext.ClassManager
 //@require Ext.Class
@@ -788,7 +772,7 @@
             });
         },
 
-        createOverride: function(className, data) {
+        createOverride: function(className, data, createdFn) {
             var overriddenClassName = data.override,
                 requires = Ext.Array.from(data.requires);
 
@@ -800,7 +784,17 @@
             Ext.require(requires, function() {
                 // Override the target class right after it's created
                 this.onCreated(function() {
-                    this.get(overriddenClassName).override(data);
+                    var overridenClass = this.get(overriddenClassName);
+                    if (overridenClass.singleton) {
+                        overridenClass.self.override(data);
+                    }
+                    else {
+                        overridenClass.override(data);
+                    }
+
+                    if (createdFn) {
+                        createdFn.call(overridenClass, overridenClass);
+                    }
 
                     // This push the overridding file itself into Ext.Loader.history
                     // Hence if the target class never exists, the overriding file will
@@ -943,8 +937,8 @@
 
         /**
          * @private
-         * @param name
-         * @param args
+         * @param {String} name
+         * @param {Array} args
          */
         dynInstantiate: function(name, args) {
             args = arrayFrom(args, true);
@@ -955,7 +949,7 @@
 
         /**
          * @private
-         * @param length
+         * @param {Number} length
          */
         getInstantiator: function(length) {
             var instantiators = this.instantiators,
@@ -992,10 +986,7 @@
 
         /**
          * Register a post-processor function.
-         *
          * @private
-         * @param {String} name
-         * @param {Function} postprocessor
          */
         registerPostprocessor: function(name, fn, properties, position, relativeTo) {
             if (!position) {
@@ -1021,7 +1012,7 @@
          * Set the default post processors array stack which are applied to every class.
          *
          * @private
-         * @param {String/Array} The name of a registered post processor or an array of registered names.
+         * @param {String/Array} postprocessors The name of a registered post processor or an array of registered names.
          * @return {Ext.ClassManager} this
          */
         setDefaultPostprocessors: function(postprocessors) {
@@ -1150,7 +1141,37 @@
      *     Ext.define('MyApp.CoolPanel', {
      *         extend: 'Ext.panel.Panel',
      *         alias: ['widget.coolpanel'],
-     *         title: 'Yeah!'
+     *
+     *         config: {
+     *             html : 'Yeah!'
+     *         }
+     *     });
+     *
+     *     // Using Ext.create
+     *     Ext.create('widget.coolpanel');
+     *
+     *     // Using the shorthand for widgets and in xtypes
+     *     Ext.widget('panel', {
+     *         items: [
+     *             {xtype: 'coolpanel', html: 'Foo'},
+     *             {xtype: 'coolpanel', html: 'Bar'}
+     *         ]
+     *     });
+     *
+     * For {@link Ext.Component}, you can also use the {@link Ext.Component#xtype} property.
+     */
+    /**
+     * @cfg {String[]} xtype
+     * @member Ext.Component
+     * List of xtypes for {@link Ext.Component}. XTypes must not contain periods.
+     *
+     *     Ext.define('MyApp.CoolPanel', {
+     *         extend: 'Ext.panel.Panel',
+     *         xtype: 'coolpanel',
+     *
+     *         config: {
+     *             html : 'Yeah!'
+     *         }
      *     });
      *
      *     // Using Ext.create
@@ -1273,6 +1294,8 @@
          *
          * @member Ext
          * @method widget
+         * @param {String} name
+         * @return {Object} instance
          */
         widget: function(name) {
             var args = arraySlice.call(arguments);
@@ -1285,6 +1308,9 @@
          * Convenient shorthand, see {@link Ext.ClassManager#instantiateByAlias}.
          * @member Ext
          * @method createByAlias
+         * @param {String} alias
+         * @param {Mixed...} args Additional arguments after the alias will be passed to the class constructor.
+         * @return {Object} instance
          */
         createByAlias: alias(Manager, 'instantiateByAlias'),
 
@@ -1390,6 +1416,7 @@
          *  - `statics`
          *  - `config`
          *  - `alias`
+         *  - `xtype` (for {@link Ext.Component}s only)
          *  - `self`
          *  - `singleton`
          *  - `alternateClassName`
@@ -1485,7 +1512,7 @@
 
     /**
      * Old name for {@link Ext#widget}.
-     * @deprecated 4.0.0 Please use {@link Ext#widget} instead.
+     * @deprecated 2.0.0 Please use {@link Ext#widget} instead.
      * @method createWidget
      * @member Ext
      */

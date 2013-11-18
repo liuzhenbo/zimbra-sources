@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -31,7 +31,7 @@ Ext.define('ZCS.view.ZtItemPanel', {
 	xtype: 'itempanel',
 
 	config: {
-		layout: 'fit',
+		layout: 'vbox',
 		cls:    'zcs-item-panel',
 		app:    null
 	},
@@ -55,6 +55,7 @@ Ext.define('ZCS.view.ZtItemPanel', {
 		items.push({
 			xtype: 'button',
 			align: 'left',
+			iconCls: 'back',
 			itemId: 'listpanelToggle',
 			hidden: true
 		});
@@ -71,7 +72,6 @@ Ext.define('ZCS.view.ZtItemPanel', {
 				xtype:      'button',
 				iconCls:    button.icon,
 				cls:        'zcs-flat',
-				iconMask:   true,
 				align:      button.align || 'right',
 				handler:    createHandler(button.event, { menuName: button.menuName }),
 				hidden:     !!button.hidden,
@@ -86,11 +86,19 @@ Ext.define('ZCS.view.ZtItemPanel', {
 		};
 
 		var itemView = {
-			xtype: app + 'itemview'
+			xtype: app + 'itemview',
+			flex: 1
+		};
+
+		var titleBar = {
+			xtype: 'component',
+			itemId: 'itemTitleOnlyBar',
+			cls: 'zcs-conv-title-bar'
 		};
 
 		this.add([
 			toolbar,
+			titleBar,
 			itemView
 		]);
 
@@ -98,29 +106,37 @@ Ext.define('ZCS.view.ZtItemPanel', {
 			var quickReply = {
 				xtype: 'container',
 				itemId: 'quickReply',
-				docked: 'bottom',
 				cls: 'zcs-quick-reply',
+				docked: 'bottom',
 				hidden: true,
-				layout: 'hbox',
+				layout: 'vbox',
 				items: [{
-					xtype: 'fieldset',
-					flex: 1,
-					items: [
-						{
-							flex: 1,
-							xtype: 'textareafield',
-							placeholder: 'Test Placeholder',
-							height: ZCS.constant.QUICK_REPLY_SMALL
+					xtype: 'titlebar',
+					titleAlign: 'left',
+					hidden: true
+				}, {
+					xtype: 'container',
+					layout: 'hbox',
+					items: [{
+						xtype: 'fieldset',
+						flex: 1,
+						items: [
+							{
+								flex: 1,
+								xtype: 'textareafield',
+								placeholder: 'Test Placeholder',
+								height: ZCS.constant.QUICK_REPLY_SMALL
+							}
+						]
+					},{
+						xtype: 'button',
+						text: ZtMsg.send,
+						ui: 'neutral',
+						padding: '0 1em',
+						handler: function() {
+							ZCS.app.fireEvent('sendQuickReply');
 						}
-					]
-				},{
-					xtype: 'button',
-					text: ZtMsg.send,
-					ui: 'neutral',
-					padding: '0 1em',
-					handler: function() {
-						ZCS.app.fireEvent('sendQuickReply');
-					}
+					}]
 				}]
 			}
 			this.add(quickReply);
@@ -136,5 +152,20 @@ Ext.define('ZCS.view.ZtItemPanel', {
 		} else {
 			listpanelToggle.hide();
 		}
+	},
+
+	hideListPanelToggle: function () {
+		var listpanelToggle = this.down('#listpanelToggle');
+		listpanelToggle.hide();
+	},
+
+	showListPanelToggle: function () {
+		var listpanelToggle = this.down('#listpanelToggle');
+		listpanelToggle.show();
+	},
+
+	isListPanelToggleHidden: function() {
+		var listpanelToggle = this.down('#listpanelToggle');
+		return listpanelToggle.isHidden();
 	}
 });

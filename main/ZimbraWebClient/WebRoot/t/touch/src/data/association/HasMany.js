@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * @aside guide models
  *
@@ -276,6 +260,8 @@ Ext.define('Ext.data.association.HasMany', {
 
     /**
      * @private
+     * @deprecated as of v2.0.0 on an association. Instead use the store configuration.
+     *
      * Creates a function that returns an Ext.data.Store which is configured to load a set of data filtered
      * by the owner model's primary key - e.g. in a `hasMany` association where Group `hasMany` Users, this function
      * returns a Store configured to return the filtered set of a single Group's Users.
@@ -283,7 +269,6 @@ Ext.define('Ext.data.association.HasMany', {
      */
     applyStore: function(storeConfig) {
         var me = this,
-            association     = me,
             associatedModel = me.getAssociatedModel(),
             storeName       = me.getStoreName(),
             foreignKey      = me.getForeignKey(),

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2010, 2011 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -765,7 +765,7 @@ function() {
 
     this._timeSelectInput = new DwtInputField(params);
     var timeInputEl = this._timeSelectInput.getInputElement();
-    Dwt.setSize(timeInputEl, "80px", "22px");
+    Dwt.setSize(timeInputEl, "80px", "2rem");
     timeInputEl.typeId = this.id;
     //listeners
     var buttonListener = new AjxListener(this, this._timeButtonListener);

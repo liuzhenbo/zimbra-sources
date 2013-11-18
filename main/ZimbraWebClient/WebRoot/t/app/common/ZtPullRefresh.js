@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- *
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -34,6 +34,10 @@ Ext.define('ZCS.common.ZtPullRefresh', {
             oldRecords = store.getData(),
             newRecords = operation.getRecords(),
             length     = newRecords.length,
+            list       = this.getList(),
+            scroller   = list.getScrollable().getScroller(),
+            scrollerOffsetX = scroller.position.x,
+            scrollerOffsetY = scroller.position.y,
             recordToInsert,
             toInsert   = [],
             newRecordCollection = new Ext.util.MixedCollection(),
@@ -70,6 +74,15 @@ Ext.define('ZCS.common.ZtPullRefresh', {
         for (i = 0; i < toInsert.length; i += 1) {
         	recordToInsert = toInsert[i];
         	store.insert(recordToInsert.properIndex, recordToInsert);
+        }
+
+        scroller.scrollTo(scrollerOffsetX, scrollerOffsetY);
+
+
+        this.setViewState('loaded');
+        this.fireEvent('latestfetched');
+        if (this.getAutoSnapBack()) {
+            this.snapBack();
         }
     }
 })

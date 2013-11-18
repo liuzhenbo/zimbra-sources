@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -35,16 +35,27 @@ Ext.define('ZCS.common.ZtItemCache', {
 	},
 
 	/**
-	 * Returns the item with the given key and/or altKey.
+	 * Returns the item with the given key and/or altKey. The cached item can be an array,
+	 * for example multiple instances of the same organizer can be stored in different
+	 * stores under the same zcsID key. Normally a single item is returned. The optional
+	 * argument 'raw' can be set to true to return the array in that case.
 	 *
-	 * @param {string}  key         item key, defaults to ID
-	 * @param {string}  altKey      (optional) name of key type if not ID
+	 * @param {String}      key         item key, defaults to ID
+	 * @param {String}      altKey      (optional) name of key type if not ID
+	 * @param {Boolean}     raw         if true, it's okay to return an array
 	 *
 	 * @return {object}     the item with the given key/altKey
 	 */
-	get: function(key, altKey) {
-		var cache = altKey ? this._cache[altKey] : this._cache;
-		return cache ? cache[key] : null;
+	get: function(key, altKey, raw) {
+
+		var cache = altKey ? this._cache[altKey] : this._cache,
+			result = cache ? cache[key] : null;
+
+		if (Array.isArray(result) && !raw) {
+			result = result[0];
+		}
+
+		return result;
 	},
 
 	/**
@@ -63,21 +74,31 @@ Ext.define('ZCS.common.ZtItemCache', {
 			return;
 		}
 
+		if (!item) {
+            //<debug>
+			Ext.Logger.warn('Trying to add empty item to item cache. Use clear() to remove an item.');
+            //</debug>
+			return;
+		}
+
 		var cache = altKey ? this._cache[altKey] : this._cache;
 		if (altKey && !cache) {
 			cache = this._cache[altKey] = {};
 		}
 
-/*
-		if (this.get(key, altKey) === item) {
-			Ext.Logger.warn('Setting item in cache that is already there. Key: ' + key);
-		}
-		else if (this.get(key, altKey)) {
-			Ext.Logger.warn('Overwriting item in cache. Key: ' + key);
-		}
-*/
-
 		cache[key] = item;
+	},
+
+	/**
+	 * Clears an item from the cache.
+	 *
+	 * @param {string}  key         item key, defaults to ID
+	 * @param {string}  altKey      (optional) name of key type if not ID
+	 */
+	clear: function(key, altKey) {
+		var cache = altKey ? this._cache[altKey] : this._cache;
+		cache[key] = null;
+		delete cache[key];
 	},
 
 	/**

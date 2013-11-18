@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Zimlets
- * Copyright (C) 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -132,11 +132,6 @@ function(img) {
 	if (this.emailZimlet.emailAddress.indexOf(UnknownPersonSlide.DOMAIN) != -1) {
 		img.onclick =  AjxCallback.simpleClosure(this._handleProfileImageClick, this); 
 		img.style.cursor = "pointer";
-		img.style.maxHeight = UnknownPersonSlide.HEIGHT + "px";
-		img.style.maxWidth = UnknownPersonSlide.WIDTH + "px";
-	}
-	if (AjxEnv.isIE) {
-		img.height = UnknownPersonSlide.HEIGHT;
 	}
 };
 
@@ -149,9 +144,7 @@ UnknownPersonSlide.prototype._handleAllClicks =
 function(ev) {
 	var isRightClick;
 	this.emailZimlet.popdown();
-	if (AjxEnv.isIE) {
-		ev = window.event;
-	}
+	ev = DwtUiEvent.getEvent(ev);
 	if (ev.which){
 		isRightClick = (ev.which == 3);
 	} else if (ev.button) {
@@ -280,7 +273,7 @@ function(response, contact) {
     attrs["fullName"] =  this.emailZimlet.fullName || attrs["fullName"] || contact && contact._fileAs;
     this._presentity = attrs["email"] = this.emailZimlet.emailAddress || attrs["email"];        // email is the presence identity
 
-	var imgUrl = contact && contact.getImageUrl(UnknownPersonSlide.WIDTH);
+	var imgUrl = contact && contact.getImageUrl(UnknownPersonSlide.WIDTH, UnknownPersonSlide.HEIGHT);
 
 	this._setProfileImage(imgUrl);
 	this._setContactDetails(attrs);
@@ -336,7 +329,7 @@ UnknownPersonSlide.prototype._getTooltipBGHtml =
 function(email) {
 	var width = ";";
 	var left = ";";
-	if (AjxEnv.isIE) {
+	if (AjxEnv.isIE8) {
 		var width = "width:100%;";
 		var left = "left:3%;";
 	}

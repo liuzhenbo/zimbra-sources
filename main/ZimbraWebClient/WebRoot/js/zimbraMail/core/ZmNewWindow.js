@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -41,6 +41,9 @@ ZmNewWindow = function() {
 
 	//update body class to reflect user selected font
 	document.body.className = "user_font_" + appCtxt.get(ZmSetting.FONT_NAME);
+	//update root html elment class to reflect user selected font size
+	Dwt.addClass(document.documentElement, "user_font_size_" + appCtxt.get(ZmSetting.FONT_SIZE));
+
 
 	this._settings = appCtxt.getSettings();
 	this._settings.setReportScriptErrorsSettings(AjxException, ZmController.handleScriptError); //must set this for child window since AjxException is fresh for this window. Also must pass AjxException and the handler since we want it to update the one from this child window, and not the parent window
@@ -158,8 +161,8 @@ function(ev) {
  */
 ZmNewWindow.prototype.startup =
 function() {
-
 	// get params from parent window b/c of Safari bug #7162
+	// and in case of a refresh, our old window parameters are still stored there
 	if (window.parentController) {
 		var childWinObj = window.parentController.getChildWindow(window);
 		if (childWinObj) {
@@ -267,7 +270,7 @@ function() {
 		if (cmd == "compose") {
 			cc._setView(params);
 		} else {
-			AjxDispatcher.require(["MailCore", "CalendarCore"]);
+			AjxDispatcher.require(["MailCore", "ContactsCore", "CalendarCore"]);
 			var op = params.action || ZmOperation.NEW_MESSAGE;
 			if (params.msg && params.msg._mode) {
 				switch (params.msg._mode) {
@@ -648,6 +651,16 @@ function(msg) {
 	if (msg.share) {
 		newMsg.share = msg.share;
 	}
+
+	// TODO: When/if you get rid of this function, also remove the cloneOf uses in:
+	//		ZmBaseController.prototype._tagListener
+	//		ZmBaseController.prototype._setTagMenu
+	//		ZmMailMsgView.prototype._setTags
+	//		ZmMailMsgView.prototype._handleResponseSet
+	//		ZmMailListController.prototype._handleResponseFilterListener
+	//		ZmMailListController.prototype._handleResponseNewApptListener
+	//		ZmMailListController.prototype._handleResponseNewTaskListener
+	newMsg.cloneOf = msg;
 
 	return newMsg;
 };

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -882,7 +882,7 @@ ZaSaveSearchDialog.prototype._checkExistSearch = function() {
         if(isExist) {
 		// If exist searchquries, call confirm dialog
 		ZaApp.getInstance().dialogs["confirmMessageDialog"] = new ZaMsgDialog(ZaApp.getInstance().getAppCtxt().getShell(), null, [DwtDialog.YES_BUTTON, DwtDialog.NO_BUTTON]);
-                ZaApp.getInstance().dialogs["confirmMessageDialog"].setMessage(ZaMsg.Q_SAVE_REPLACE, DwtMessageDialog.INFO_STYLE);
+                ZaApp.getInstance().dialogs["confirmMessageDialog"].setMessage(ZaMsg.Q_SAVE_REPLACE, DwtMessageDialog.WARNING_STYLE);
                 ZaApp.getInstance().dialogs["confirmMessageDialog"].registerCallback(DwtDialog.YES_BUTTON, this._continueDoSave, this);
                 ZaApp.getInstance().dialogs["confirmMessageDialog"].registerCallback(DwtDialog.NO_BUTTON, this._cancelDoSave, this);
                 ZaApp.getInstance().dialogs["confirmMessageDialog"].popup();
@@ -911,22 +911,36 @@ ZaSaveSearchDialog.prototype._cancelDoSave = function() {
 }
 
 
-ZaSaveSearchDialog.prototype.show =
-function (name, query, isCreated){
-	if (!this._createUI) {
-		this._nameInputId = Dwt.getNextId();
-		this._queryInputId = Dwt.getNextId();
-		var html = [
-			"<table><tr>",
-			"<td>",  ZaMsg.saved_search_editor_name, "</td>",
-			"<td><div style='overflow:auto;'><input id='", this._nameInputId, "' type=text size=50 maxlength=50 /></div></td></tr>",
-			//"<td>", this._queryInput.getHtmlElement().innerHTML ,"</td></tr>",
-			
-			"<tr><td>",  ZaMsg.saved_search_editor_query, "</td>",	
-			"<td><div style='overflow:auto;'><input id='", this._queryInputId, "' type=text size=50 maxlength=200 /><div></td>",
-			//"<td>", this._nameInput.getHtmlElement().innerHTML ,"</td></tr>",
-			"</tr></table>"
-		] ; 
+ZaSaveSearchDialog.prototype.show = function (name, query, isCreated) {
+    if (!this._createUI) {
+        this._nameInputId = Dwt.getNextId();
+        this._queryInputId = Dwt.getNextId();
+        var html = [
+            "<table cellspacing='5' style='border-spacing: 7px;'>",
+                "<tbody>",
+                    "<tr>",
+                        "<td>",
+                            ZaMsg.saved_search_editor_name,
+                        "</td>",
+                        "<td>",
+                            "<div style='overflow: auto;'>",
+                                "<input type='text' size='50' maxlength='50' id='", this._nameInputId, "' />",
+                            "</div>",
+                        "</td>",
+                    "</tr>",
+                    "<tr>",
+                        "<td>",
+                            ZaMsg.saved_search_editor_query,
+                        "</td>",
+                        "<td>",
+                            "<div style='overflow: auto;'>",
+                                "<input type='text' size='50' maxlength='200' id='", this._queryInputId, "' />",
+                            "</div>",
+                        "</td>",
+                    "</tr>",
+                "</tbody>",
+            "</table>"
+        ];
 		this.setContent (html.join("")) ;			
 		this._createUI = true ;
 	}

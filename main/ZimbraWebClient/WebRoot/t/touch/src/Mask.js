@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * A simple class used to mask any {@link Ext.Container}.
  *
@@ -36,6 +20,7 @@
 Ext.define('Ext.Mask', {
     extend: 'Ext.Component',
     xtype: 'mask',
+    requires: ['Ext.util.InputBlocker'],
 
     config: {
         /**
@@ -84,6 +69,22 @@ Ext.define('Ext.Mask', {
         this.callSuper();
 
         this.element.on('*', 'onEvent', this);
+
+        this.on({
+            hide: 'onHide'
+        });
+    },
+
+    onHide: function(){
+        Ext.util.InputBlocker.unblockInputs();
+
+        // Oh how I loves the Android
+        if (Ext.browser.is.AndroidStock4 && Ext.os.version.getMinor() === 0) {
+            var firstChild = this.element.getFirstChild();
+            if (firstChild) {
+                firstChild.redraw();
+            }
+        }
     },
 
     onEvent: function(e) {

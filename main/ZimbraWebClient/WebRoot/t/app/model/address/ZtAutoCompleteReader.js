@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -24,16 +24,32 @@ Ext.define('ZCS.model.address.ZtAutoCompleteReader', {
 
 	alias: 'reader.autocompletereader',
 
+	/**
+	 * The response always has: 'email', 'type', 'isGroup', and 'ranking'. If it is a local
+	 * contact, it will also have 'id' and 'l'. The email address is a full email string, so
+	 * we parse it into components.
+	 */
 	getDataFromNode: function(node) {
-		//Take the email address that was given by the search, and break it down into a ZtEmailAddress
-		//This may be in the form <email> or "blah" <email>
-		var emailAddress = ZCS.model.mail.ZtEmailAddress.fromEmail(node.email);
 
-		node.name = emailAddress.get('name');
-		node.fullEmail = node.email;
-		node.email = emailAddress.get('email');
+		var data = {},
+            isGroup = data.isGroup = node.isGroup;
 
-		return node;
+        if (!isGroup) {
+			var emailAddressObj = ZCS.model.mail.ZtEmailAddress.fromEmail(node.email);
+	        if (emailAddressObj) {
+	            data.email = emailAddressObj.get('email');
+	            data.name = emailAddressObj.get('name');
+	            data.displayName = emailAddressObj.get('displayName');
+	        }
+        } else {
+            data.displayName = node.display;
+        }
+		data.ranking = node.ranking;
+        data.matchType = node.type;
+		data.contactId = node.id;
+		data.folderId = node.l;
+
+		return data;
 	},
 
 	/**

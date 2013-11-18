@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.briefcase.file;
@@ -31,9 +29,9 @@ public class UnTagFile extends FeatureBriefcaseTest {
 		// All tests start at the Briefcase page
 		super.startingPage = app.zPageBriefcase;
 
-		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains("FOSS")){
+		//if(ZimbraSeleniumProperties.zimbraGetVersionString().contains("FOSS")){
 		    super.startingAccountPreferences.put("zimbraPrefShowSelectionCheckbox","TRUE");
-		}
+		//}
 			
 		super.startingAccountPreferences.put("zimbraPrefBriefcaseReadingPaneLocation", "bottom");
 	}
@@ -47,7 +45,7 @@ public class UnTagFile extends FeatureBriefcaseTest {
 
 		// Create file item
 		String filePath = ZimbraSeleniumProperties.getBaseDirectory()
-				+ "/data/public/other/com_zimbra_ymaps.zip";
+				+ "/data/public/other/testtextfile.txt";
 
 		FileItem fileItem = new FileItem(filePath);
 
@@ -107,7 +105,7 @@ public class UnTagFile extends FeatureBriefcaseTest {
 		 * SleepUtil.sleepVerySmall();
 		 * 
 		 * // Click on created document
-		 * GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		 * 
 		 * app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, docItem);
 		 * 
 		 * // Click on New Tag DialogTag dialogTag = (DialogTag)
@@ -137,9 +135,11 @@ public class UnTagFile extends FeatureBriefcaseTest {
 		// refresh briefcase page
 		app.zTreeBriefcase.zTreeItem(Action.A_LEFTCLICK, briefcaseFolder, true);
 
-		SleepUtil.sleepVerySmall();
+		SleepUtil.sleepSmall();
 
 		// Click on created file
+		app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
+		/*
 		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains(
     			"FOSS")){
 		    app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
@@ -147,7 +147,7 @@ public class UnTagFile extends FeatureBriefcaseTest {
 		}else{
 		    app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, fileItem);
 		}
-
+		*/
 		// Tag document using Right Click context menu
 		app.zPageBriefcase.zListItem(Action.A_RIGHTCLICK, Button.O_TAG_FILE,
 				tagItem.getName(), fileItem);
@@ -173,9 +173,11 @@ public class UnTagFile extends FeatureBriefcaseTest {
 		// refresh briefcase page
 		app.zTreeBriefcase.zTreeItem(Action.A_LEFTCLICK, briefcaseFolder, true);
 
-		SleepUtil.sleepVerySmall();
+		SleepUtil.sleepSmall();
 
 		// Click on tagged file
+		app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
+		/*
 		if(ZimbraSeleniumProperties.zimbraGetVersionString().contains(
     			"FOSS")){
 		    app.zPageBriefcase.zListItem(Action.A_BRIEFCASE_CHECKBOX, fileItem);
@@ -183,12 +185,12 @@ public class UnTagFile extends FeatureBriefcaseTest {
 		}else{
 		    app.zPageBriefcase.zListItem(Action.A_LEFTCLICK, fileItem);
 		}
-
+		*/
 		// Click Remove Tag
 		app.zPageBriefcase.zToolbarPressPulldown(Button.B_TAG,
 				Button.O_TAG_REMOVETAG, null);
 
-		GeneralUtility.syncDesktopToZcsWithSoap(app.zGetActiveAccount());
+		
 
 		account
 				.soapSend("<SearchRequest xmlns='urn:zimbraMail' types='document'>"

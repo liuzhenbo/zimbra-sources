@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -203,7 +203,7 @@ ZmAddrBookTreeController.prototype._getHeaderActionMenuOps =
 function() {
 	var ops = null;
 	if (appCtxt.get(ZmSetting.NEW_ADDR_BOOK_ENABLED)) {
-		ops = [ZmOperation.NEW_ADDRBOOK];
+		ops = [ZmOperation.NEW_ADDRBOOK, ZmOperation.FIND_SHARES];
 	}
 	return ops;
 };
@@ -330,7 +330,7 @@ function(folder, result) {
 	// bug fix #19307 - Trash is special when in Contacts app since it
 	// is a FOLDER type in ADDRBOOK tree. So reset selection if clicked
 	if (folder.nId == ZmFolder.ID_TRASH) {
-		this._treeView[this._app.getOverviewId()].setSelected(ZmFolder.ID_TRASH, true);
+		this._treeView[this._app.getOverviewId()].setSelected(folder, true);
 	}
 };
 

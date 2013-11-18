@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -60,9 +60,18 @@ ZmContactController.prototype.getDefaultViewType = ZmContactController.getDefaul
  *
  * @param	{ZmContact}	contact		the contact
  * @param	{Boolean}	isDirty		<code>true</code> to mark the contact as dirty
+ * @param	{Boolean}	isBack		<code>true</code> in case of DL, we load (or reload) all the DL info, so we have to call back here. isBack indicates this is after the reload so we can continue.
  */
 ZmContactController.prototype.show =
-function(contact, isDirty) {
+function(contact, isDirty, isBack) {
+	if (contact.id && contact.isDistributionList() && !isBack) {
+		//load the full DL info available for the owner, for edit.
+		var callback = this.show.bind(this, contact, isDirty, true); //callback HERE
+		contact.clearDlInfo();
+		contact.gatherExtraDlStuff(callback);
+		return;
+	}
+
 	this._contact = contact;
 	if (isDirty) {
 		this._contactDirty = true;
@@ -304,10 +313,18 @@ function(view, bPageForward) {
 ZmContactController.prototype._resetOperations =
 function(parent, num) {
 	if (!parent) return;
-	if (this._contact.id == undefined || this._contact.isGal) {
+	if (!this._contact.id) {
 		// disble all buttons except SAVE and CANCEL
 		parent.enableAll(false);
 		parent.enable([ZmOperation.SAVE, ZmOperation.CANCEL], true);
+	}
+	else if (this._contact.isGal) {
+		//GAL item or DL.
+		parent.enableAll(false);
+		parent.enable([ZmOperation.SAVE, ZmOperation.CANCEL], true);
+		//for editing a GAL contact - need to check special case for DLs that are owned by current user and if current user has permission to delete on this domain.
+		var deleteAllowed = ZmContactList.deleteGalItemsAllowed([this._contact]);
+		parent.enable(ZmOperation.DELETE, deleteAllowed);
 	} else if (this._contact.isReadOnly()) {
 		parent.enableAll(true);
 		parent.enable(ZmOperation.TAG_MENU, false);
@@ -348,8 +365,8 @@ function(ev, bIsPopCallback) {
 	var mods = view.getModifiedAttrs();
 	view.enableInputs(false);
 
+	var contact = view.getContact();
 	if (mods && AjxUtil.arraySize(mods) > 0) {
-		var contact = view.getContact();
 
 		// bug fix #22041 - when moving betw. shared/local folders, dont modify
 		// the contact since it will be created/deleted into the new folder
@@ -380,8 +397,9 @@ function(ev, bIsPopCallback) {
 					var contactFileAsBefore = ZmContact.computeFileAs(contact);
 					var contactFileAsAfter = ZmContact.computeFileAs(AjxUtil.hashUpdate(AjxUtil.hashCopy(contact.getAttrs()), mods, true));
 					this._doModify(contact, mods);
-					if (contactFileAsBefore.toLowerCase()[0] != contactFileAsAfter.toLowerCase()[0])
-						fileAsChanged=true;
+					if (contactFileAsBefore.toLowerCase()[0] !== contactFileAsAfter.toLowerCase()[0]) {
+						fileAsChanged = true;
+					}
 				}
 			} else {
 				var isEmpty = true;
@@ -411,6 +429,10 @@ function(ev, bIsPopCallback) {
 			}
 		}
 	} else {
+		if (contact.isDistributionList()) {
+			//in this case, we need to pop the view since we did not call the server to modify the DL.
+			this.popView();
+		}
 		// bug fix #5829 - differentiate betw. an empty contact and saving
 		//                 an existing contact w/o editing
 		if (view.isEmpty()) {
@@ -419,22 +441,36 @@ function(ev, bIsPopCallback) {
 				: ZmMsg.emptyContact;
 			appCtxt.setStatusMsg(msg, ZmStatusView.LEVEL_WARNING);
 		} else {
-			var msg = this._isGroup()
+			var msg = contact.isDistributionList()
+				? ZmMsg.dlSaved
+				: this._isGroup()
 				? ZmMsg.groupSaved
 				: ZmMsg.contactSaved;
 			appCtxt.setStatusMsg(msg, ZmStatusView.LEVEL_INFO);
 		}
 	}
 
-	if (!bIsPopCallback) {
-		this._app.popView(true);
-		view.cleanup();
+	if (!bIsPopCallback && !contact.isDistributionList()) {
+		//in the DL case it might fail so wait to pop the view when we receive success from server.
+		this.popView();
+	}
+	else {
+		view.enableInputs(true);
 	}
 	if (fileAsChanged) // bug fix #45069 - if the contact is new, change the search to "all" instead of displaying contacts beginning with a specific letter
 		ZmContactAlphabetBar.alphabetClicked(null);
 
     return true;
 };
+
+ZmContactController.prototype.popView =
+function() {
+	this._app.popView(true);
+	if (this._contactView) { //not sure why _contactView is undefined sometimes. Maybe it's a different instance of ZmContactController.
+		this._contactView.cleanup();
+	}
+};
+
 
 /**
  * @private
@@ -463,6 +499,10 @@ function(ev) {
 ZmContactController.prototype._doDelete =
 function(items, hardDelete, attrs, skipPostProcessing) {
 	ZmListController.prototype._doDelete.call(this, items, hardDelete, attrs);
+	if (items.isDistributionList()) { //items === this._contact here
+		//do not pop the view as we are not sure the user will confirm the hard delete
+		return;
+	}
 	appCtxt.getApp(ZmApp.CONTACTS).updateIdHash(items, true);
 
 	if (!skipPostProcessing) {

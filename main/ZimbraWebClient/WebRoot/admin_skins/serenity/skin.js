@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -48,6 +48,7 @@ ZaSkin.hints = {
 	treeFooter:	 	{ containers: "skin_tr_tree_footer" },
     rightTask:      { containers: ["skin_td_right_tool"],
                       minWidth:parseInt("@ToolMinWidth@"),
+                      maxWidth:parseInt("@ToolMaxWidth@"),
                       width:parseInt("@ToolStartWidth@")
                     },
 
@@ -206,17 +207,10 @@ ZaSkin.prototype = {
 		}
 	},
 	
-	_setSize : function(id, width, height) {
-		var el = this._getEl(id);
-		if (!el) return;
-		if (width != null) el.style.width = width;
-		if (height != null) el.style.height = height;
-	},
-	
 	_setContainerSizes : function(containerName, width, height) {
 		var containers = this.hints[containerName].resizeContainers || this.hints[containerName].containers;
 		for (var i = 0; i < containers.length; i++) {
-			this._setSize(containers[i], width, height);
+			Dwt.setSize(containers[i], width, height);
 		}
 	},
 	

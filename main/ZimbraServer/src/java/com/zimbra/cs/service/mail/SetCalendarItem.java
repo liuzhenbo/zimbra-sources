@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011 Zimbra, Inc.
- *
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -21,22 +21,21 @@ import java.util.Map;
 
 import javax.mail.internet.MimeMessage;
 
-import com.zimbra.common.service.ServiceException;
-import com.zimbra.common.soap.MailConstants;
-import com.zimbra.common.soap.Element;
-import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.common.calendar.ZCalendar.ZVCalendar;
 import com.zimbra.common.mime.MimeConstants;
+import com.zimbra.common.service.ServiceException;
+import com.zimbra.common.soap.Element;
+import com.zimbra.common.soap.MailConstants;
+import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.cs.account.Account;
 import com.zimbra.cs.mailbox.CalendarItem;
+import com.zimbra.cs.mailbox.CalendarItem.ReplyInfo;
 import com.zimbra.cs.mailbox.Flag;
 import com.zimbra.cs.mailbox.Folder;
 import com.zimbra.cs.mailbox.MailItem;
 import com.zimbra.cs.mailbox.Mailbox;
-import com.zimbra.cs.mailbox.OperationContext;
-import com.zimbra.cs.mailbox.Tag;
-import com.zimbra.cs.mailbox.CalendarItem.ReplyInfo;
 import com.zimbra.cs.mailbox.Mailbox.SetCalendarItemData;
+import com.zimbra.cs.mailbox.OperationContext;
 import com.zimbra.cs.mailbox.calendar.IcalXmlStrMap;
 import com.zimbra.cs.mailbox.calendar.Invite;
 import com.zimbra.cs.mailbox.util.TagUtil;
@@ -65,8 +64,8 @@ public class SetCalendarItem extends CalendarRequest {
 
         private boolean mExceptOk = false;
         private boolean mForCancel = false;
-        private Folder mFolder;
-        private MailItem.Type type;
+        private final Folder mFolder;
+        private final MailItem.Type type;
 
         SetCalendarItemInviteParser(boolean exceptOk, boolean forCancel, Folder folder, MailItem.Type type) {
             mExceptOk = exceptOk;
@@ -200,8 +199,9 @@ public class SetCalendarItem extends CalendarRequest {
             if (ipr != null && ipr.mInvite != null && mm != null) {
                 String desc = Invite.getDescription(mm, MimeConstants.CT_TEXT_PLAIN);
                 String descHtml = Invite.getDescription(mm, MimeConstants.CT_TEXT_HTML);
-                if ((desc != null && desc.length() > 0) || (descHtml != null && descHtml.length() > 0))
+                if ((desc != null && desc.length() > 0) || (descHtml != null && descHtml.length() > 0)) {
                     ipr.mInvite.setDescription(desc, descHtml);
+                }
             }
         }
 
@@ -211,12 +211,14 @@ public class SetCalendarItem extends CalendarRequest {
         if (inv == null || inv.getDTStamp() == -1) { //zdsync if -1 for 4.5 back compat
             CalendarPartInfo cpi = pm.getCalendarPartInfo();
             ZVCalendar cal = null;
-            if (cpi != null && CalendarItem.isAcceptableInvite(mbox.getAccount(), cpi))
+            if (cpi != null && CalendarItem.isAcceptableInvite(mbox.getAccount(), cpi)) {
                 cal = cpi.cal;
-            if (cal == null)
+            }
+            if (cal == null) {
                 throw ServiceException.FAILURE("SetCalendarItem could not build an iCalendar object", null);
+            }
             boolean sentByMe = false; // not applicable in the SetCalendarItem case
-            Invite iCalInv = Invite.createFromCalendar(acct, pm.getFragment(), cal, sentByMe).get(0);
+            Invite iCalInv = Invite.createFromCalendar(acct, pm.getFragment(acct.getLocale()), cal, sentByMe).get(0);
 
             if (inv == null) {
                 inv = iCalInv;

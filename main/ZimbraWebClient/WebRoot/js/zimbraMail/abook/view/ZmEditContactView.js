@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -158,7 +158,7 @@ ZmEditContactView.prototype.getFormItems = function() {
 			},
 			{ id: "FILE_AS", type: "DwtSelect", onchange: this._handleFileAsChange, items: this.getFileAsOptions() },
 			{ id: "FOLDER", type: "DwtButton", image: "ContactsFolder",
-				enabled: "this._contact && !this._contact.isShared()",
+				enabled: "this._contact && !this._contact.isReadOnly()",
 				onclick: this._handleFolderButton
 			},
 			{ id: "TAG", type: "DwtControl",
@@ -534,6 +534,10 @@ ZmEditContactView.prototype.getModifiedAttrs = function() {
 					if (!v) continue;
 					var list = ZmEditContactView.LISTS[id];
 					var a = onlyvalue ? list.attrs[0] : item.type;
+					if (id === "OTHER" && AjxUtil.arrayContains(AjxUtil.values(ZmEditContactView.ATTRS), a)) {
+						//ignore attributes named the same as one of our basic attributes.
+						continue;
+					}
 					if (!counts[a]) counts[a] = 0;
 					var count = ++counts[a];
 					a = ZmContact.getAttributeName(a, count);
@@ -569,7 +573,7 @@ ZmEditContactView.prototype.getModifiedAttrs = function() {
 	}
 
 	// make sure we set the folder (when new)
-	if (!attributes[ZmContact.F_folderId] && !this._contact.isShared()) {
+	if (!attributes[ZmContact.F_folderId] && !this._contact.id) {
 		attributes[ZmContact.F_folderId] = this.getValue("FOLDER");
 	}
 
@@ -1080,7 +1084,6 @@ ZmEditContactViewImage.prototype.toString = function() {
 
 // Constants
 
-ZmEditContactViewImage.NO_IMAGE_URL = appContextPath + "/img/large/ImgPerson_48.png";
 ZmEditContactViewImage.IMAGE_URL = "/service/content/proxy?aid=@aid@";
 
 // Public methods
@@ -1094,7 +1097,7 @@ ZmEditContactViewImage.IMAGE_URL = "/service/content/proxy?aid=@aid@";
 ZmEditContactViewImage.prototype.setValue = function(value) {
 	this._src = value;
 	if (!value) {
-		this._imgEl.src = ZmEditContactViewImage.NO_IMAGE_URL;
+		this._imgEl.src = ZmContact.NO_IMAGE_URL;
 		this._badgeEl.className = "ImgAdd";
         
 	}
@@ -2319,6 +2322,7 @@ ZmEditContactViewOther.prototype._createHtmlFromTemplate = function(templateId, 
 
         var checkbox = new DwtCheckbox({parent:container});
         checkbox.setText(ZmMsg.includeYear);
+		checkbox.addSelectionListener(new AjxListener(this, this._handleDateSelection,[calendar]));
         this._calendarIncludeYear = checkbox;
 	}                                                        
 };
@@ -2394,15 +2398,17 @@ ZmEditContactViewOther._getDateFormatter = function() {
 
 ZmEditContactViewOther.prototype._handleDropDown = function(evt) {
     var value = this.getValue().value;
-    var date = ZmEditContactViewOther.parseDate(value) || new Date;
-    var includeYear = date.getFullYear() != 0;
+    var date = ZmEditContactViewOther.parseDate(value) || new Date();
+    var includeYear = date.getFullYear() !== 0;
     // NOTE: Temporarilly set the year to the current year in the
     // NOTE: case of a date without a year set (i.e. full year == 0).
     // NOTE: This is done so that the calendar doesn't show the
     // NOTE: wrong year.
-    if (!includeYear) date.setFullYear(new Date().getFullYear());
+	if (!includeYear) {
+		date.setFullYear(new Date().getFullYear());
+	}
+	this._calendarIncludeYear.setSelected(includeYear); //see bug 46952 and bug 83177
     this._calendar.setDate(date);
-    this._calendarIncludeYear.setSelected(includeYear);
     this._picker.popup();
 };
 

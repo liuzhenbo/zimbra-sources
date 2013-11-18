@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -181,23 +181,28 @@ Ext.define('ZCS.model.mail.ZtMailMsg', {
 	 * @param {String}  msgBodyId           ID of owning ZtMsgBody
 	 * @param {Boolean} trimQuotedContent   if true, trim quoted content
 	 *
-	 * @return {String}     msg content as HTML
+	 * @return {object}     content to have msg content as HTML
 	 */
 	getContentAsHtml: function(msgBodyId, trimQuotedContent) {
-
-		if (this.get('isInvite')) {
+		if (this.get('isInvite') && this.get('invite')) {
 			return this.get('invite').getContentAsHtml(msgBodyId);
 		}
 
 		var bodyParts = this.get('bodyParts'),
 			ln = bodyParts ? bodyParts.length : 0, i,
-			html = [];
+			html = [],
+            isOutDatedInv = this.get('isInvite') && (this.get('invite') === undefined);
 
 		for (i = 0; i < ln; i++) {
 			var bodyPart = bodyParts[i],
 				content = bodyPart.getContent(),
 				contentType = bodyPart.get('contentType'),
 				disposition = bodyPart.get('contentDisposition');
+
+            // Fix for bug: 83398. Adding invite not current message.
+            if (isOutDatedInv) {
+                html.push("<div class='zcs-invite-outdated'>" + ZtMsg.inviteNotCurrent + "</div>");
+            }
 
 			if (ZCS.mime.isRenderableImage(contentType)) {
 				if (disposition !== 'inline') {
@@ -230,7 +235,7 @@ Ext.define('ZCS.model.mail.ZtMailMsg', {
 			}
 		}
 
-		return html.join('');
+		return {content: html.join('')};
 	},
 
 	/**
@@ -521,7 +526,7 @@ Ext.define('ZCS.model.mail.ZtMailMsg', {
 				attInfo.push(info);
 			}
 		}
-
+	
 		return attInfo;
 	},
 
@@ -549,7 +554,7 @@ Ext.define('ZCS.model.mail.ZtMailMsg', {
 
 	isTruncated: function() {
 		var bodyParts = this.get('bodyParts'),
-			ln = bodyParts.length, i;
+			ln = bodyParts ? bodyParts.length : 0, i;
 
 		for (i = 0; i < ln; i++) {
 			if (bodyParts[i].get('isTruncated')) {
@@ -564,6 +569,7 @@ Ext.define('ZCS.model.mail.ZtMailMsg', {
 	}
 },
 	function (thisClass) {
-		thisClass.inviteTpl = Ext.create('Ext.XTemplate', ZCS.template.Invite);
+		thisClass.inviteDescTpl = Ext.create('Ext.XTemplate', ZCS.template.InviteDesc);
+		thisClass.inviteNotesTpl = Ext.create('Ext.XTemplate', ZCS.template.InviteNotes);
 	}
 );

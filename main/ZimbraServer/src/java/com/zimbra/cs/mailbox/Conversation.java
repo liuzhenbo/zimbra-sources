@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -44,7 +44,11 @@ public class Conversation extends MailItem {
     protected SenderList mSenderList;
 
     Conversation(Mailbox mbox, UnderlyingData data) throws ServiceException {
-        super(mbox, data);
+        this(mbox, data, false);
+    }
+
+    Conversation(Mailbox mbox, UnderlyingData data, boolean skipCache) throws ServiceException {
+        super(mbox, data, skipCache);
         if (mData.type != Type.CONVERSATION.toByte() && mData.type != Type.VIRTUAL_CONVERSATION.toByte()) {
             throw new IllegalArgumentException();
         }
@@ -859,6 +863,17 @@ public class Conversation extends MailItem {
     static Metadata encodeMetadata(Metadata meta, Color color, int metaVersion, int version, CustomMetadataList extended, String encodedSenders) {
         meta.put(Metadata.FN_PARTICIPANTS, encodedSenders);
         return MailItem.encodeMetadata(meta, color, null, metaVersion, version, extended);
+    }
+
+    /**
+     * Overrides the default value of {@code true}, to handle the
+     * {@code zimbraMailAllowReceiveButNotSendWhenOverQuota} account
+     * attribute.
+     */
+    @Override
+    protected boolean isQuotaCheckRequired() throws ServiceException {
+        Account account = getMailbox().getAccount();
+        return !account.isMailAllowReceiveButNotSendWhenOverQuota();
     }
 
     @Override

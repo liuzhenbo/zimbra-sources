@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.framework.ui;
@@ -35,7 +33,6 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.ElementNotVisibleException;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.Keys;
-import org.openqa.selenium.Mouse;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.Point;
 import org.openqa.selenium.TimeoutException;
@@ -60,7 +57,8 @@ import com.zimbra.qa.selenium.framework.core.ExecuteHarnessMain;
 import com.zimbra.qa.selenium.framework.util.HarnessException;
 import com.zimbra.qa.selenium.framework.util.SleepUtil;
 import com.zimbra.qa.selenium.framework.util.ZimbraSeleniumProperties;
-import org.openqa.selenium.HasInputDevices;
+import org.openqa.selenium.interactions.Mouse;
+import org.openqa.selenium.interactions.HasInputDevices;
 import org.openqa.selenium.internal.Locatable;
 
 /**
@@ -2343,6 +2341,28 @@ public abstract class AbsSeleniumObject {
 			throw new HarnessException(e);
 		}
 	}
+	
+	public void sTypeDateTime(String locator, String text, WebElement... elements) throws HarnessException {
+		try {
+			if (ZimbraSeleniumProperties.isWebDriver()){
+			    logger.info("...WebDriver...action.sendKeys()");
+			    
+			    WebElement we = null;
+			    if(elements != null && elements.length > 0){
+				we = elements[0];
+			    } else {
+				we = getElement(locator);
+			    }
+			    we.sendKeys(text);
+			} else {
+			    ClientSessionFactory.session().selenium().type(locator, text);
+			}
+			logger.info("type(" + locator + ", " + text + ")");
+		} catch (SeleniumException e) {
+			throw new HarnessException(e);
+		}
+	}
+
 
 	/**
 	 * DefaultSelenium.typeKeys()
@@ -2835,10 +2855,14 @@ public abstract class AbsSeleniumObject {
 		WebElement we = null;
 		if(bys != null){
 			for(By by:bys){
-				if(we == null){
-					we = webDriver().findElement(by);
-				}else{
-					we = we.findElement(by);
+				try {					
+					if(we == null){
+						we = webDriver().findElement(by);
+					}else{
+						we = we.findElement(by);
+					}
+				}catch(Exception ex){
+					logger.info("...findBy()..." + ex);
 				}
 			}
 		}

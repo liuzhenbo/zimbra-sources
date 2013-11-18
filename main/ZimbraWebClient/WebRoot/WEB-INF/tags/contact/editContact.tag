@@ -1,10 +1,10 @@
 <%--
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -57,7 +57,9 @@
 											<select name="folderid" id="folderSelect">
 												<zm:forEachFolder var="folder">
 													<c:if test="${folder.isContactCreateTarget}">
-														<option <c:if test="${(empty contact and ((context.selectedId eq folder.id) or (empty context.selectedId and folder.isContacts))) or (!empty contact and contact.folderId eq folder.id)}">selected </c:if> value="${folder.id}" />
+														<option <c:if test="${(empty contact and ((context.selectedId eq folder.id)
+														or (empty context.selectedId and folder.isContacts)))
+														or (!empty contact and (contact.folderId eq folder.canonicalId))}">selected </c:if> value="${folder.id}" />
 														${zm:getFolderName(pageContext, folder.id)}
 													</c:if>
 												</zm:forEachFolder>
@@ -146,8 +148,8 @@
                 <select name="folderid" id="folderIdSelect" tabindex=100>
                     <zm:forEachFolder var="folder">
                         <c:if test="${folder.isContactCreateTarget}">
-                            <option <c:if test="${(empty contact and ((context.selectedId eq (folder.isMountPoint ? folder.canonicalId : folder.id)) or (empty context.selectedId and folder.isContacts)))
-                            or (!empty contact and (contact.folderId eq (folder.isMountPoint ? folder.canonicalId : folder.id)))}">selected </c:if> value="${folder.id}">
+                            <option <c:if test="${(empty contact and ((context.selectedId eq folder.id) or (empty context.selectedId and folder.isContacts)))
+                            or (!empty contact and (contact.folderId eq folder.canonicalId))}">selected </c:if> value="${folder.id}">
                             ${zm:getFolderName(pageContext, folder.id) }</option>
                         </c:if>
                     </zm:forEachFolder>
@@ -193,6 +195,14 @@
         <tr><app:contactEditField contact="${contact}" field="email" tabindex="200" /></tr>
         <tr><app:contactEditField contact="${contact}" field="email2" tabindex="201" /></tr>
         <tr><app:contactEditField contact="${contact}" field="email3" tabindex="202" /></tr>
+
+        <tr><td><br></td></tr>
+
+        <tr><td colspan="4" class="sectionLabel" valign="top"><fmt:message key="im"/></td></tr>
+
+        <tr><app:contactEditIMField contact="${contact}" field="imAddress1" tabindex="250" /></tr>
+        <tr><app:contactEditIMField contact="${contact}" field="imAddress2" tabindex="251" /></tr>
+        <tr><app:contactEditIMField contact="${contact}" field="imAddress3" tabindex="252" /></tr>
 
         <tr><td><br></td></tr>
 

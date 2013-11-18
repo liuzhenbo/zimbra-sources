@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -917,6 +917,7 @@ function(show) {
  */
 ZmAppViewMgr.prototype.fitAll =
 function() {
+	this._shell.relayout();
 	this._fitToContainer(ZmAppViewMgr.ALL_COMPONENTS);
 };
 
@@ -1214,7 +1215,7 @@ function(viewId, show) {
 		}
 		
 		if (view.app) {
-			this._controller.setActiveApp(view.app, viewId, view.isTabView);
+			this._controller.setActiveApp(view);
 		}
 	}
 	else {
@@ -1388,8 +1389,10 @@ function(delta) {
 
 	// MOW: get the min/max sizes from the skin.hints
 	if (!this.treeMinSize) {
-		this.treeMinSize = window.skin.hints.tree.minWidth || 150;
-		this.treeMaxSize = window.skin.hints.tree.maxWidth || 300;
+		this.treeMinSize =
+			DwtCssStyle.asPixelCount(window.skin.hints.tree.minWidth || 150);
+		this.treeMaxSize =
+			DwtCssStyle.asPixelCount(window.skin.hints.tree.maxWidth || 300);
 	}
 
 	// pin the resize to the minimum and maximum allowable

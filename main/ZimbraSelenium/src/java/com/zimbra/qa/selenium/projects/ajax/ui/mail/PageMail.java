@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -20,16 +18,12 @@
 package com.zimbra.qa.selenium.projects.ajax.ui.mail;
 
 import java.util.*;
-
 import org.openqa.selenium.*;
-
 import com.zimbra.qa.selenium.framework.items.*;
 import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.*;
 import com.zimbra.qa.selenium.projects.ajax.ui.*;
 import com.zimbra.qa.selenium.projects.ajax.ui.DialogTag;
-
-
 
 /**
  * @author Matt Rhoades
@@ -82,6 +76,9 @@ public class PageMail extends AbsTab {
 		public static final String zReplyAllToolbarButton ="css=div[id$='__REPLY_ALL']";
 		public static final String zForwardToolbarButton ="css=div[id$='__FORWARD']";
 		//public static final String zCancelIconBtn		= "css=[id^=zb__COMPOSE][id$=__CANCEL_title]";
+		
+		public static final String IcsLinkInBody = "css=body[class^='MsgBody'] span a[target='_blank']";
+		public static final String CreateNewCalendar = "css=div[id^='POPUP_DWT'] td[id='NEWCAL_title']";
 		
 		
 		public static class CONTEXT_MENU {
@@ -274,8 +271,45 @@ public class PageMail extends AbsTab {
 
 			page = new DialogMove(MyApplication, this);
 
-			// FALL THROUGH
+		} else if ( button == Button.B_ADD_TO_CALENDAR ) {
 
+			locator = "css=a[id$='2_calendar']";
+			page = new DialogAddToCalendar(MyApplication, this);
+						
+			// FALL THROUGH
+			
+		} else if ( button == Button.B_BRIEFCASE ) {
+
+			locator = "css=a[id$='2_briefcase']";
+			page = new DialogAddToBriefcase(MyApplication, this);
+						
+			// FALL THROUGH
+			
+		} else if ( button == Button.B_LAUNCH_IN_SEPARATE_WINDOW ) {
+			
+			boolean isCLV = this.zIsVisiblePerPosition("css=div#ztb__CLV-main", 0, 0);
+			
+			String pulldownLocator, optionLocator;
+			
+			if (isCLV) {
+				pulldownLocator = "css=td[id='zb__CLV-main__ACTIONS_MENU_dropdown']>div[class='ImgSelectPullDownArrow']";
+				optionLocator = "css=div[id='zm__CLV-main']";
+			} else {
+				pulldownLocator = "css=td[id='zb__TV-main__ACTIONS_MENU_dropdown']>div[class='ImgSelectPullDownArrow']";
+				optionLocator = "css=div[id='zm__TV-main']";
+			}
+			
+			optionLocator += " div[id^='DETACH'] td[id$='_title']";
+			page = new SeparateWindow(this.MyApplication);
+			((SeparateWindow)page).zInitializeWindowNames();
+			
+			this.sClickAt(pulldownLocator, "0,0");
+			zWaitForBusyOverlay();
+			this.sClickAt(optionLocator, "0,0");
+			zWaitForBusyOverlay();
+			
+			return (page);
+			
 		} else if ( button == Button.B_PRINT ) {
 
 			// Check if the button is enabled
@@ -363,7 +397,18 @@ public class PageMail extends AbsTab {
 			}
 
 			locator = "id='"+ Locators.zTagMenuDropdownBtnID +"'";
+			
+		} else if ( button == Button.B_RFC822_ATTACHMENT_LINK ) {
 
+			locator = "css=a[id^='zv__TV__TV-main_MSG']";
+					
+			page = new SeparateWindow(this.MyApplication);
+			((SeparateWindow)page).zInitializeWindowNames();
+			this.sClickAt(locator, "");
+			this.zWaitForBusyOverlay();
+			
+			return (page);
+			
 		} else if ( button == Button.B_ARCHIVE ) {
 
 			// If 'Archive' is not initialized, a 'folder chooser'
@@ -379,6 +424,21 @@ public class PageMail extends AbsTab {
 			if ( !this.sIsElementPresent(locator) ) {
 				throw new HarnessException("Archive icon not present "+ button);
 			}
+
+			// FALL THROUGH
+
+		} else if ( button == Button.B_READMORE ) {
+
+			if ( !this.sIsElementPresent("css=div[id$='__KEEP_READING']") ) {
+				throw new HarnessException("Keep Reading button not present "+ button);
+			}
+			
+			if ( this.sIsElementPresent("css=div[id$='__KEEP_READING'].ZDisabled")) {
+				throw new HarnessException("Keep Reading button is disabled "+ button);
+			}
+
+			locator = "css=div[id$='__KEEP_READING'] td[id$='_title']";
+			page = null;
 
 			// FALL THROUGH
 
@@ -472,6 +532,39 @@ public class PageMail extends AbsTab {
 			this.zWaitForBusyOverlay();
 			return (page);
 			
+		} else if ( 
+				(button == Button.B_MAIL_LIST_GROUPBY_FROM) ||
+				(button == Button.B_MAIL_LIST_GROUPBY_DATE) ||
+				(button == Button.B_MAIL_LIST_GROUPBY_SIZE)
+				) {
+			
+			// Right click on header area -> Group By -> From
+			
+			// Right click on header area (ex: subject)
+			// This locator could probably be more generic.  Right now, it
+			// assumes the message preview is on the bottom
+			locator = "css=td#zlha__TV-main__su";
+			this.zRightClickAt(locator, "", (WebElement[])null);
+			this.zWaitForBusyOverlay();
+			
+			// Hover over Group By
+			locator = "css=td[id$='_title']:contains('Group By')";	// See http://bugzilla.zimbra.com/show_bug.cgi?id=82491
+			this.sMouseOver(locator, (WebElement[])null);
+			this.zWaitForBusyOverlay();
+			
+			// Select From/Date/Size
+			if ( button == Button.B_MAIL_LIST_GROUPBY_FROM ) {
+				locator = "css=div#GROUPBY_FROM td[id$='_title']";
+			} else if ( button == Button.B_MAIL_LIST_GROUPBY_DATE ) {
+				locator = "css=div#GROUPBY_DATE td[id$='_title']";
+			} else if ( button == Button.B_MAIL_LIST_GROUPBY_SIZE ) {
+				locator = "css=div#GROUPBY_SIZE td[id$='_title']";
+			}
+			this.zClick(locator, (WebElement[])null);
+			this.zWaitForBusyOverlay();
+
+			return (null);
+
 		} else if ( button == Button.B_MAIL_LIST_SORTBY_FLAGGED ) {
 
 			locator = "css=td[id='zlh__TV-main__fg'] div[class='ImgFlagRed']";
@@ -524,7 +617,7 @@ public class PageMail extends AbsTab {
 
 		// Default behavior, process the locator by clicking on it
 		//
-		this.zClickAt(locator,"0,0");
+		this.sClickAt(locator,"0,0");
 
 		//need small wait so that next element gets appeared/visible  after click
 		SleepUtil.sleepMedium();
@@ -732,6 +825,15 @@ public class PageMail extends AbsTab {
 			//optionLocator = "//td[contains(@id,'_title') and contains (text(),'sigName')]";
 
 			page = null;
+			
+		
+		} else if ((pulldown == Button.B_ICS_LINK_IN_BODY) && (option == Button.B_CREATE_NEW_CALENDAR)) {
+
+			pulldownLocator = Locators.IcsLinkInBody;
+			optionLocator = Locators.CreateNewCalendar;
+			
+			page = null;
+			
 
 		} else if ( pulldown == Button.B_MOVE ) {
 
@@ -797,7 +899,13 @@ public class PageMail extends AbsTab {
 
 			// 8.0 change ... need zClickAt()
 			// this.zClick(pulldownLocator);
-			this.zClickAt(pulldownLocator, "0,0");
+			
+			if (pulldownLocator.equals(Locators.IcsLinkInBody)) {
+				this.zRightClickAt(pulldownLocator, "0,0");
+			} else {
+				this.zClickAt(pulldownLocator, "0,0");
+			}
+			
 
 			// If the app is busy, wait for it to become active
 			zWaitForBusyOverlay();

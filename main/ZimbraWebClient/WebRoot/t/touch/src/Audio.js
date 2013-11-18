@@ -1,35 +1,23 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
- * {@link Ext.Audio} is a simple class which provides a container for the [HTML5 Audio element](http://developer.mozilla.org/en-US/docs/Using_HTML5_audio_and_video).
+ * {@link Ext.Audio} is a simple class which provides a container for the 
+ * [HTML5 Audio element](http://developer.mozilla.org/en-US/docs/Using_HTML5_audio_and_video).
  *
  * ## Recommended File Types/Compression:
+ * 
  * * Uncompressed WAV and AIF audio
  * * MP3 audio
  * * AAC-LC
  * * HE-AAC audio
  *
  * ## Notes
- * On Android devices, the audio tags controls do not show. You must use the {@link #method-play}, {@link #method-pause} and
- * {@link #toggle} methods to control the audio (example below).
+ * 
+ * On Android devices, the audio tags controls do not show. You must use the {@link #method-play}, 
+ * {@link #method-pause}, and {@link #toggle} methods to control the audio (example below).
  *
  * ## Examples
  *
- * Here is an example of the {@link Ext.Audio} component in a fullscreen container:
+ * This example shows the use of the {@link Ext.Audio} component in a fullscreen container--change 
+ * the url: item for the location of an audio file--note that the audio starts on page load:
  *
  *     @example preview
  *     Ext.create('Ext.Container', {
@@ -47,13 +35,13 @@
  *             },
  *             {
  *                 xtype: 'audio',
- *                 url  : 'touch/examples/audio/crash.mp3'
+ *                 url  : 'touch-build/examples/audio/crash.mp3'
  *             }
  *         ]
  *     });
  *
  * You can also set the {@link #hidden} configuration of the {@link Ext.Audio} component to true by default,
- * and then control the audio by using the {@link #method-play}, {@link #method-pause} and {@link #toggle} methods:
+ * and then control the audio by using the {@link #method-play}, {@link #method-pause}, and {@link #toggle} methods:
  *
  *     @example preview
  *     Ext.create('Ext.Container', {
@@ -93,7 +81,7 @@
  *             {
  *                 xtype : 'audio',
  *                 hidden: true,
- *                 url   : 'touch/examples/audio/crash.mp3'
+ *                 url   : 'touch-build/examples/audio/crash.mp3'
  *             }
  *         ]
  *     });

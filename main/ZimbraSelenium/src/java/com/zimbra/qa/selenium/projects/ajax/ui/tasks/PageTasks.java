@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -947,12 +945,10 @@ public class PageTasks extends AbsTab{
 
 		// What's the priority?
 		item.gPriority = "normal";
-		if ( this.sIsElementPresent(css + " td[id$='__pr'] div[class*='ImgPriorityHigh_list']") )  {
+		if ( this.sIsElementPresent(css + " td[id$='__pr'] div.ImgPriorityHigh_list") )  {
 			item.gPriority = "high";
-		} else if ( this.sIsElementPresent(css + "td[id$='__pr'] div[class*='ImgPriorityLow_list']") )  {
-
-		} else {
-			item.gPriority = "normal";
+		} else if ( this.sIsElementPresent(css + " td[id$='__pr'] div.ImgPriorityLow_list") )  {
+			item.gPriority = "low";
 		}
 
 		// Is there an attachment?
@@ -962,13 +958,19 @@ public class PageTasks extends AbsTab{
 		item.gSubject = this.sGetText(css + " td[id$='__su']").trim();
 
 		// Get the status
-		item.gStatus = this.sGetText(css + " td[id$='__st']").trim();
+		if ( this.sIsElementPresent(css + " td[id$='__st']") ) {
+			item.gStatus = this.sGetText(css + " td[id$='__st']").trim();
+		}
 
 		// Get the % complete
-		item.gPercentComplete = this.sGetText(css + " td[id$='__pc']").trim();
-
+		if ( this.sIsElementPresent(css + " td[id$='__pc']") ) {
+			item.gPercentComplete = this.sGetText(css + " td[id$='__pc']").trim();
+		}
+		
 		// Get the due date
-		item.gDueDate = this.sGetText(css + " td[id$='__dt']").trim();
+		if ( this.sIsElementPresent(css + " td[id$='__dt']") ) {
+			item.gDueDate = this.sGetText(css + " td[id$='__dt']").trim();
+		}
 
 		return (item);
 	}

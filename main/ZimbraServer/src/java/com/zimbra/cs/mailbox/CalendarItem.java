@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -90,8 +91,8 @@ import com.zimbra.cs.mailbox.calendar.ZOrganizer;
 import com.zimbra.cs.mailbox.calendar.ZRecur;
 import com.zimbra.cs.mailbox.calendar.ZRecur.Frequency;
 import com.zimbra.cs.mime.Mime;
-import com.zimbra.cs.mime.ParsedAddress;
 import com.zimbra.cs.mime.Mime.FixedMimeMessage;
+import com.zimbra.cs.mime.ParsedAddress;
 import com.zimbra.cs.mime.ParsedMessage;
 import com.zimbra.cs.mime.ParsedMessage.CalendarPartInfo;
 import com.zimbra.cs.service.mail.CalendarUtils;
@@ -167,7 +168,11 @@ public abstract class CalendarItem extends MailItem {
     }
 
     protected CalendarItem(Mailbox mbox, UnderlyingData data) throws ServiceException {
-        super(mbox, data);
+        this(mbox, data, false);
+    }
+
+    protected CalendarItem(Mailbox mbox, UnderlyingData data, boolean skipCache) throws ServiceException {
+        super(mbox, data, skipCache);
         if (mData.type != Type.APPOINTMENT.toByte() && mData.type != Type.TASK.toByte()) {
             throw new IllegalArgumentException();
         }
@@ -418,13 +423,13 @@ public abstract class CalendarItem extends MailItem {
     }
 
     @Override
-	public String getSortSender() {
+    public String getSortSender() {
         String sender = new ParsedAddress(getSender()).getSortString();
         // remove surrogate characters and trim to DbMailItem.MAX_SENDER_LENGTH
         return DbMailItem.normalize(sender, DbMailItem.MAX_SENDER_LENGTH);
-	}
+    }
 
-	static CalendarItem create(int id, Folder folder, int flags, Tag.NormalizedTags ntags, String uid,
+    static CalendarItem create(int id, Folder folder, int flags, Tag.NormalizedTags ntags, String uid,
             ParsedMessage pm, Invite firstInvite, long nextAlarm, CustomMetadata custom) throws ServiceException {
         firstInvite.sanitize(false);
 
@@ -523,7 +528,8 @@ public abstract class CalendarItem extends MailItem {
         CalendarItem item = type == Type.APPOINTMENT ? new Appointment(mbox, data) : new Task(mbox, data);
         Invite defInvite = item.getDefaultInviteOrNull();
         if (defInvite != null) {
-            Collection<Instance> instances = item.expandInstances(0, Long.MAX_VALUE, false);
+            Collection<Instance> instances =
+                    item.expandInstances(CalendarUtils.MICROSOFT_EPOC_START_MS_SINCE_EPOC, Long.MAX_VALUE, false);
             if (instances.isEmpty()) {
                 ZimbraLog.calendar.info("CalendarItem has effectively zero instances: id=%d, folderId=%d, subject=\"%s\", UID=%s ",
                         data.id, folder.getId(), firstInvite.isPublic() ? firstInvite.getName() : "(private)", firstInvite.getUid());
@@ -594,6 +600,81 @@ public abstract class CalendarItem extends MailItem {
         return 0;
     }
 
+    /**
+     * Find instances within 24 hours either side.  Assumption is that any timezone related problems
+     * causing {@code recurId} to be incorrect will only be relevant to times within that window.
+     * @param recurId
+     * @return
+     * @throws ServiceException
+     */
+    private Collection<Instance> instancesNear(RecurId recurId) throws ServiceException {
+        if (recurId == null) {
+            return Collections.emptyList();
+        }
+        ParsedDateTime dt = recurId.getDt();
+        if (dt == null) {
+            return Collections.emptyList();
+        }
+        long utcTime = dt.getUtcTime();
+        return this.expandInstances(utcTime - MILLIS_IN_DAY, utcTime + MILLIS_IN_DAY, false);
+    }
+
+    private boolean instanceMatches(RecurId recurId, Collection<Instance> instances) {
+        long utcTime = recurId.getDt().getUtcTime();
+        for (Instance instance: instances) {
+            if (utcTime == instance.getStart()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Diagnostic code to flag when odd EXDATE related changes are made
+     */
+    private void checkExdateIsSensible(RecurId exdateRecurId) throws ServiceException {
+        Collection<Instance> instancesNear = instancesNear(exdateRecurId);
+        if (instancesNear.isEmpty()) {
+            ZimbraLog.calendar.warn(
+                    "WARNING:Adding EXDATE %s, however, that does not exclude any pre-existing instances.",
+                    exdateRecurId.toString());
+
+        } else if (!instanceMatches(exdateRecurId, instancesNear)) {
+            ICalTimeZone exdateTZ = exdateRecurId.getDt().getTimeZone();
+            StringBuilder sb = new StringBuilder();
+            for (Instance instance: instancesNear) {
+                long dtStart = instance.getStart();
+                sb.append(" ").append(ParsedDateTime.fromUTCTime(dtStart, exdateTZ));
+            }
+            ZimbraLog.calendar.warn(
+                "WARNING:Adding EXDATE %s, however, that does not exclude any pre-existing instances.  Nearby times:%s",
+                exdateRecurId.toString(), sb.toString());
+        }
+    }
+
+    /**
+     * Diagnostic code to flag when odd RECURRENCE-ID is used
+     */
+    private void checkRecurIdIsSensible(RecurId recurId) throws ServiceException {
+        Collection<Instance> instancesNear = instancesNear(recurId);
+        if (instancesNear.isEmpty()) {
+            ZimbraLog.calendar.warn(
+                    "WARNING:RECURRENCE-ID %s, does not match any pre-existing instances.",
+                    recurId.toString());
+
+        } else if (!instanceMatches(recurId, instancesNear)) {
+            ICalTimeZone exdateTZ = recurId.getDt().getTimeZone();
+            StringBuilder sb = new StringBuilder();
+            for (Instance instance: instancesNear) {
+                long dtStart = instance.getStart();
+                sb.append(" ").append(ParsedDateTime.fromUTCTime(dtStart, exdateTZ));
+            }
+            ZimbraLog.calendar.warn(
+                "WARNING:RECURRENCE-ID %s, does not match any pre-existing instances.  Nearby times:%s",
+                recurId.toString(), sb.toString());
+        }
+    }
+
     private boolean updateRecurrence(long nextAlarm) throws ServiceException {
         long startTime, endTime;
 
@@ -614,8 +695,8 @@ public abstract class CalendarItem extends MailItem {
                     if (cur.isCancel()) {
                         assert(cur.hasRecurId());
                         if (cur.hasRecurId()) {
-                            Recurrence.CancellationRule cancelRule =
-                                new Recurrence.CancellationRule(cur.getRecurId());
+                            checkExdateIsSensible(cur.getRecurId());
+                            Recurrence.CancellationRule cancelRule = new Recurrence.CancellationRule(cur.getRecurId());
 
                             ((Recurrence.RecurrenceRule) mRecurrence).addException(cancelRule);
                         }
@@ -623,6 +704,7 @@ public abstract class CalendarItem extends MailItem {
                         method.equals(ICalTok.PUBLISH.toString())) {
                         assert (cur.hasRecurId());
                         if (cur.hasRecurId() && cur.getStartTime() != null) {
+                            checkRecurIdIsSensible(cur.getRecurId());
                             Recurrence.ExceptionRule exceptRule = null;
                             IRecurrence curRule = cur.getRecurrence();
                             if (curRule != null && curRule instanceof Recurrence.ExceptionRule) {
@@ -1513,7 +1595,7 @@ public abstract class CalendarItem extends MailItem {
 
         // If we got a cancel request, check if this cancel will result in canceling the entire appointment.
         // If so, move the appointment to trash folder.
-        // Also at the same time, check if the cancel request is oudated, i.e. there is already a newer version
+        // Also at the same time, check if the cancel request is outdated, i.e. there is already a newer version
         // of the invite.
         if (isCancel) {
             boolean cancelAll;
@@ -2173,6 +2255,9 @@ public abstract class CalendarItem extends MailItem {
         return sCallback;
     }
 
+    private String calDesc(Invite invite) {
+        return invite.isTodo() ? "a task" : "an appointment";
+    }
     /**
      * Check to make sure the new invite doesn't change the organizer in a disallowed way.
      * @param newInvite
@@ -2211,6 +2296,14 @@ public abstract class CalendarItem extends MailItem {
                 return false;
             }
         }
+        boolean updatingSameComponent = true;
+        if (newInvite.hasRecurId()) {
+            if (originalInvite.hasRecurId()) {
+                updatingSameComponent = newInvite.getRecurId().equals(originalInvite.getRecurId());
+            } else {
+                updatingSameComponent = false;
+            }
+        }
 
         boolean changed = false;
         ZOrganizer originalOrganizer = originalInvite.getOrganizer();
@@ -2220,51 +2313,83 @@ public abstract class CalendarItem extends MailItem {
                 String newOrgAddr = newInvite.getOrganizer().getAddress();
                 if (originalOrganizer == null) {
                     if (denyChange) {
-                        throw ServiceException.INVALID_REQUEST(
-                                "Changing organizer of an appointment/task to another user is not allowed: old=(unspecified), new=" + newOrgAddr, null);
+                        newInvite.isTodo();
+                        if (updatingSameComponent) {
+                            throw BadOrganizerException.ADD_ORGANIZER_NOT_ALLOWED(newOrgAddr, calDesc(newInvite));
+                        } else {
+                            throw BadOrganizerException.ORGANIZER_INTRODUCED_FOR_EXCEPTION(
+                                    newOrgAddr, calDesc(newInvite));
+                        }
                     } else {
                         changed = true;
                     }
                 } else {
-                    // Both old and new organizers are set.  They must be the
-                    // same address.
+                    // Both old and new organizers are set.  They must be the same address.
                     String origOrgAddr = originalOrganizer.getAddress();
                     if (newOrgAddr == null || !CalendarUtils.belongToSameAccount(origOrgAddr, newOrgAddr)) {
                         if (denyChange) {
-                            throw ServiceException.INVALID_REQUEST(
-                                    "Changing organizer of an appointment/task is not allowed: old=" + origOrgAddr + ", new=" + newOrgAddr, null);
+                            if (updatingSameComponent) {
+                                throw BadOrganizerException.CHANGE_ORGANIZER_NOT_ALLOWED(
+                                        origOrgAddr, newOrgAddr, calDesc(newInvite));
+                            } else {
+                                throw BadOrganizerException.DIFF_ORGANIZER_IN_COMPONENTS(
+                                        origOrgAddr, newOrgAddr, calDesc(newInvite));
+                            }
                         } else {
                             changed = true;
                         }
                     }
                 }
             } else if (originalOrganizer != null) {
+                // No organizer for new newInvite but there is one in the original
+                String origOrgAddr = originalOrganizer.getAddress();
                 if (denyChange) {
-                    throw ServiceException.INVALID_REQUEST(
-                            "Removing organizer of an appointment/task is not allowed", null);
+                    if (updatingSameComponent) {
+                        throw BadOrganizerException.DEL_ORGANIZER_NOT_ALLOWED( origOrgAddr, calDesc(newInvite));
+                    } else {
+                        throw BadOrganizerException.MISSING_ORGANIZER_IN_SINGLE_INSTANCE(
+                                origOrgAddr, calDesc(newInvite));
+                    }
                 } else {
                     changed = true;
                 }
             }
         } else {
-            // Even for the organizer account, don't allow changing the organizer field
-            // to an arbitrary address.
+            // Original invite was created for the organizer account.
+            // Still don't allow changing the organizer field to an arbitrary address.
             if (newInvite.hasOrganizer()) {
                 if (!newInvite.isOrganizer()) {
-                    if (denyChange) {
-                        String newOrgAddr = newInvite.getOrganizer().getAddress();
-                        if (originalOrganizer != null) {
-                            String origOrgAddr = originalOrganizer.getAddress();
-                            throw ServiceException.INVALID_REQUEST(
-                                    "Changing organizer of an appointment/task to another user is not allowed: old=" +
-                                    origOrgAddr + ", new=" + newOrgAddr, null);
+                    String newOrgAddr = newInvite.getOrganizer().getAddress();
+                    String origOrgAddr = (originalOrganizer != null) ? originalOrganizer.getAddress() : null;
+                    if (newOrgAddr.equalsIgnoreCase(origOrgAddr)) {
+                        /* Speculative fix for Bug 83261.  Had gotten to this point with the same address but
+                         * thought that wasn't the organizer for the new invite even though that organizer
+                         * passed the test for originalInvite.  Ideally, should track down why the value was wrong
+                         * but don't have a full repro scenario.
+                         */
+                        newInvite.setIsOrganizer(true);
+                    }
+                    if (!newInvite.isOrganizer()) {
+                        if (denyChange) {
+                            if (originalOrganizer != null) {
+                                if (updatingSameComponent) {
+                                    throw BadOrganizerException.CHANGE_ORGANIZER_NOT_ALLOWED(
+                                            origOrgAddr, newOrgAddr, calDesc(newInvite));
+                                } else {
+                                    throw BadOrganizerException.DIFF_ORGANIZER_IN_COMPONENTS(
+                                            origOrgAddr, newOrgAddr, calDesc(newInvite));
+                                }
+                            } else {
+                                if (updatingSameComponent) {
+                                    throw BadOrganizerException.ADD_ORGANIZER_NOT_ALLOWED(newOrgAddr, calDesc(newInvite));
+                                } else {
+                                    throw BadOrganizerException.ORGANIZER_INTRODUCED_FOR_EXCEPTION(
+                                            newOrgAddr, calDesc(newInvite));
+                                }
+                            }
                         } else {
-                            throw ServiceException.INVALID_REQUEST(
-                                    "Changing organizer of an appointment/task to another user is not allowed: old=(unspecified), new=" +
-                                    newOrgAddr, null);
+                            changed = true;
                         }
-                    } else {
-                        changed = true;
                     }
                 }
             }
@@ -3451,7 +3576,8 @@ public abstract class CalendarItem extends MailItem {
             saveMetadata();
     }
 
-    private static final long MILLIS_IN_YEAR = 365L * 24L * 60L * 60L * 1000L;
+    public static final long MILLIS_IN_YEAR = 365L * 24L * 60L * 60L * 1000L;
+    public static final long MILLIS_IN_DAY = 24L * 60L * 60L * 1000L;
 
     private long getNextAlarmRecurrenceExpansionLimit() {
         long fromTime = Math.max(getStartTime(), System.currentTimeMillis());

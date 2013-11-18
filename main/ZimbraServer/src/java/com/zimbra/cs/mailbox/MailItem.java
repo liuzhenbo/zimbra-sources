@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -64,6 +64,7 @@ import com.zimbra.cs.session.Session;
 import com.zimbra.cs.store.MailboxBlob;
 import com.zimbra.cs.store.StagedBlob;
 import com.zimbra.cs.store.StoreManager;
+import com.zimbra.cs.util.Zimbra;
 import com.zimbra.cs.volume.Volume;
 
 /**
@@ -255,7 +256,7 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         public int imapId   = -1;
         public String locator;
         private String blobDigest;
-        public int date;
+        public int date; /* Seconds since 1970-01-01 00:00:00 UTC */
         public long size;
         public int unreadCount;
         private int flags;
@@ -264,7 +265,7 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         public String name;
         public String metadata;
         public int modMetadata;
-        public int dateChanged;
+        public int dateChanged; /* Seconds since 1970-01-01 00:00:00 UTC */
         public int modContent;
         public String uuid;
 
@@ -424,7 +425,7 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
             return meta;
         }
 
-        void deserialize(Metadata meta) throws ServiceException {
+        public void deserialize(Metadata meta) throws ServiceException {
             this.id = (int) meta.getLong(FN_ID, 0);
             this.type = (byte) meta.getLong(FN_TYPE, 0);
             this.parentId = (int) meta.getLong(FN_PARENT_ID, -1);
@@ -721,6 +722,10 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
     protected ACL                rights;
 
     MailItem(Mailbox mbox, UnderlyingData data) throws ServiceException {
+        this(mbox, data, false);
+    }
+
+    MailItem(Mailbox mbox, UnderlyingData data, boolean skipCache) throws ServiceException {
         if (data == null) {
             throw new IllegalArgumentException();
         }
@@ -731,7 +736,7 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         checkItemCreationAllowed(); // this check may rely on decoded metadata
         mData.metadata = null;
 
-        if ((data.getFlags() & Flag.BITMASK_UNCACHED) == 0) {
+        if (!skipCache && ((data.getFlags() & Flag.BITMASK_UNCACHED) == 0)) {
             mbox.cache(this); // store the item in the mailbox's cache
         }
     }
@@ -872,9 +877,8 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         return mVersion;
     }
 
-    /** Returns the date the item's content was last modified.  For immutable
-     *  objects (e.g. received messages), this will be the same as the date
-     *  the item was created. */
+    /** Returns the date the item's content was last modified as number of milliseconds since 1970-01-01 00:00:00 UTC.
+     *  For immutable objects (e.g. received messages), this will be the same as the date the item was created. */
     public long getDate() {
         return mData.date * 1000L;
     }
@@ -886,9 +890,8 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         return mData.modContent;
     }
 
-    /** Returns the date the item's metadata and/or content was last modified.
-     *  This includes changes in tags and flags as well as folder-to-folder
-     *  moves and recoloring. */
+    /** Returns the date the item's metadata and/or content was last modified as number of milliseconds since
+     * 1970-01-01 00:00:00 UTC. Includes changes in tags and flags as well as folder-to-folder moves and recoloring. */
     public long getChangeDate() {
         return mData.dateChanged * 1000L;
     }
@@ -1600,27 +1603,32 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
      *
      * @param mbox  The {@link Mailbox} the item is created in.
      * @param data  The contents of a <tt>MAIL_ITEM</tt> database row. */
-    public static MailItem constructItem(Mailbox mbox, UnderlyingData data) throws ServiceException {
+    public static MailItem constructItem(Mailbox mbox, UnderlyingData data, boolean skipCache) throws ServiceException {
         if (data == null) {
             throw noSuchItem(-1, Type.UNKNOWN);
         }
         switch (Type.of(data.type)) {
-            case FOLDER:       return new Folder(mbox, data);
-            case SEARCHFOLDER: return new SearchFolder(mbox, data);
-            case TAG:          return new Tag(mbox, data);
-            case CONVERSATION: return new Conversation(mbox,data);
-            case MESSAGE:      return new Message(mbox, data);
-            case CONTACT:      return new Contact(mbox,data);
-            case DOCUMENT:     return new Document(mbox, data);
-            case NOTE:         return new Note(mbox, data);
-            case APPOINTMENT:  return new Appointment(mbox, data);
-            case TASK:         return new Task(mbox, data);
-            case MOUNTPOINT:   return new Mountpoint(mbox, data);
-            case WIKI:         return new WikiItem(mbox, data);
-            case CHAT:         return new Chat(mbox, data);
-            case COMMENT:      return new Comment(mbox, data);
+            case FOLDER:       return new Folder(mbox, data, skipCache);
+            case SEARCHFOLDER: return new SearchFolder(mbox, data, skipCache);
+            case TAG:          return new Tag(mbox, data, skipCache);
+            case CONVERSATION: return new Conversation(mbox,data, skipCache);
+            case MESSAGE:      return new Message(mbox, data, skipCache);
+            case CONTACT:      return new Contact(mbox,data, skipCache);
+            case DOCUMENT:     return new Document(mbox, data, skipCache);
+            case NOTE:         return new Note(mbox, data, skipCache);
+            case APPOINTMENT:  return new Appointment(mbox, data, skipCache);
+            case TASK:         return new Task(mbox, data, skipCache);
+            case MOUNTPOINT:   return new Mountpoint(mbox, data, skipCache);
+            case WIKI:         return new WikiItem(mbox, data, skipCache);
+            case CHAT:         return new Chat(mbox, data, skipCache);
+            case COMMENT:      return new Comment(mbox, data, skipCache);
+            case VIRTUAL_CONVERSATION: return new VirtualConversation(mbox,data, skipCache);
             default:           return null;
         }
+    }
+
+    public static MailItem constructItem(Mailbox mbox, UnderlyingData data) throws ServiceException {
+        return constructItem(mbox, data, false);
     }
 
     /** Returns {@link MailServiceException.NoSuchItemException} tailored
@@ -1863,14 +1871,15 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
 
     /** Changes the item's date.
      *
-     * @param date  The item's new date.
+     * @param date  The item's new date - as number of milliseconds since 1970-01-01 00:00:00 UTC (i.e. Java Date).
      * @perms {@link ACL#RIGHT_WRITE} on the item
      * @throws ServiceException  The following error codes are possible:<ul>
      *    <li><tt>service.PERM_DENIED</tt> - if you don't have sufficient
      *        permissions</ul> */
     void setDate(long date) throws ServiceException {
-        if (mData.date == date)
+        if (mData.date == (int) (date / 1000L)) {
             return;
+        }
 
         if (!canAccess(ACL.RIGHT_WRITE)) {
             throw ServiceException.PERM_DENIED("you do not have the necessary permissions on the item");
@@ -2199,8 +2208,8 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
 
         markItemModified(Change.UNREAD);
         int delta = unread ? 1 : -1;
-        metadataChanged();
         updateUnread(delta, isTagged(Flag.FlagInfo.DELETED) ? delta : 0);
+        metadataChanged();
         DbMailItem.alterUnread(getMailbox(), ImmutableList.of(getId()), unread);
     }
 
@@ -2647,8 +2656,8 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         if (parent != null && parent.getId() > 0) {
             markItemModified(Change.PARENT);
             parent.markItemModified(Change.CHILDREN);
-            metadataChanged();
             mData.parentId = mData.type == Type.MESSAGE.toByte() ? -mId : -1;
+            metadataChanged();
         }
 
         if (!shareIndex) {
@@ -2894,9 +2903,9 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
             return;
         }
         markItemModified(Change.FOLDER);
-        metadataChanged();
         mData.folderId = newFolder.getId();
         mData.imapId   = mMailbox.isTrackingImap() ? imapId : mData.imapId;
+        metadataChanged();
     }
 
     void addChild(MailItem child) throws ServiceException {
@@ -3298,9 +3307,11 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
     }
 
     void purgeCache(PendingDelete info, boolean purgeItem) throws ServiceException {
-        // uncache cascades to uncache children
         if (purgeItem) {
             mMailbox.uncache(this);
+            for (int itemId : info.itemIds.getAllIds()) {
+                mMailbox.uncacheItem(itemId);
+            }
         }
     }
 
@@ -3485,7 +3496,7 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
         return comments.subList(offset, last);
     }
 
-    Metadata serializeUnderlyingData() {
+    public Metadata serializeUnderlyingData() {
         Metadata meta = mData.serialize();
         // metadata
         Metadata metaMeta = new Metadata();
@@ -3739,6 +3750,9 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
     void metadataChanged(boolean updateFolderMODSEQ) throws ServiceException {
         ++mMetaVersion;
         mData.metadataChanged(mMailbox, updateFolderMODSEQ);
+        if (Zimbra.isAlwaysOn()) {
+            mMailbox.cache(this);
+        }
     }
 
     void metadataChanged() throws ServiceException {
@@ -3748,6 +3762,9 @@ public abstract class MailItem implements Comparable<MailItem>, ScheduledTaskRes
     void contentChanged() throws ServiceException {
         ++mMetaVersion;
         mData.contentChanged(mMailbox);
+        if (Zimbra.isAlwaysOn()) {
+            mMailbox.cache(this);
+        }
     }
 
     /**

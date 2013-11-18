@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -874,25 +874,30 @@ S_Dwt_List_XFormItem.prototype.setItems = function (itemArray){
 **/
 ZaAccountMemberOfsourceHeaderList = function(type, nameDefaultWidth) {
 	var sourceHeaderList = new Array();
-	var sortable = 0;
-	
-//	defaultColumnSortable = sortable ;
-    if (!nameDefaultWidth) {
-        nameDefaultWidth = 230;
+
+	sourceHeaderList[0] = new ZaListHeaderItem (
+        ZaAccountMemberOfListView.A_name,
+        ZaMsg.CLV_Name_col,
+        null,
+        null,
+        null,
+        ZaAccountMemberOfListView.A_name,
+        false,
+        true
+    );
+
+    if (type == ZaAccountMemberOfsourceHeaderList.INDIRECT) {
+        sourceHeaderList[1] = new ZaListHeaderItem (
+            ZaAccountMemberOfListView.A_via,
+            ZaMsg.Group_via,
+            null,
+            null,
+            null,
+            ZaAccountMemberOfListView.A_via,
+            false,
+            true
+        );
     }
-	var nameWidth = (type == ZaAccountMemberOfsourceHeaderList.INDIRECT) ? nameDefaultWidth : null ;
-	sourceHeaderList[0] = new ZaListHeaderItem(ZaAccountMemberOfListView.A_name, 	ZaMsg.CLV_Name_col, 	
-												null, nameWidth, null, ZaAccountMemberOfListView.A_name, false, true);
-	
-	/*
-	var isgroupWidth = (type == ZaAccountMemberOfsourceHeaderList.INDIRECT) ? 80 : null ;
-	sourceHeaderList[1] = new ZaListHeaderItem(ZaAccountMemberOfListView.A_isgroup,   	ZaMsg.Account_Group,   	
-	 											null, isgroupWidth,  null,  ZaAccountMemberOfListView.A_isgroup, true, true);
-	*/
-	if (type == ZaAccountMemberOfsourceHeaderList.INDIRECT) { 																							
-		sourceHeaderList[1] = new ZaListHeaderItem(ZaAccountMemberOfListView.A_via,   	ZaMsg.Group_via,   	
-	 											null, "auto",  null,  ZaAccountMemberOfListView.A_via, false, true);
-	}
 	
 	return sourceHeaderList ;
 }
@@ -900,4 +905,3 @@ ZaAccountMemberOfsourceHeaderList = function(type, nameDefaultWidth) {
 ZaAccountMemberOfsourceHeaderList.DIRECT = 1 ; //direct membership group
 ZaAccountMemberOfsourceHeaderList.INDIRECT = 2; //indirect/derived membership group
 ZaAccountMemberOfsourceHeaderList.NON = 3; //non membership groups.
-

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -162,20 +162,6 @@ ZmZimletContext.RE_SCAN_MSG = /(^|[^\\])\$\{msg\.([\$a-zA-Z0-9_]+)\}/g;
 ZmZimletContext.__RE_SCAN_SETTING = /\$\{setting\.([\$a-zA-Z0-9_]+)\}/g;
 
 /**
- * @private
- */
-ZmZimletContext._isArray =
-function(obj){
-    return (!AjxUtil.isUndefined(obj) && appCtxt.isChildWindow && obj.length && AjxUtil.isFunction(obj.sort) && AjxUtil.isFunction(obj.unshift) );
-};
-
-ZmZimletContext._isArrayIE =
-function(obj){
-    //Default Array when borrowed from parent window looses
-    return (AjxEnv.isIE && !AjxUtil.isUndefined(obj) && appCtxt.isChildWindow && obj.length && obj.length>0 && obj[0]);
-}
-
-/**
  * This function creates a 'sane' JSON object, given one returned by the
  * Zimbra server.
  *<p>
@@ -201,7 +187,7 @@ function(obj, tag, wantarray_re) {
 		if (obj instanceof DwtControl) { //Don't recurse into DwtControls, causes too much recursion
 			return obj;
 		}
-		else if (obj instanceof Array || ZmZimletContext._isArray(obj) || ZmZimletContext._isArrayIE(obj)) {
+		else if (obj instanceof Array || AjxUtil.isArray1(obj)) {
 			if (obj.length == 1 && !(wantarray_re && wantarray_re.test(tag))) {
 				cool_json = doit(obj[0], tag);
 			} else {
@@ -512,6 +498,9 @@ function(obj) {
 			var item = menu.createMenuItem(data.id, params);
 			item.setData("xmlMenuItem", data);
 			item.addSelectionListener(this._handleMenuItemSelected);
+			if (data.menuItem) {
+				item.setMenu(this._makeMenu(data.menuItem));
+			}
 		}
 	}
 	return menu;

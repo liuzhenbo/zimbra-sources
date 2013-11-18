@@ -1,10 +1,10 @@
 <%--
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -67,7 +67,7 @@
     </c:if>
     <zm:apptMultiDayLayout timezone="${timezone}"
             schedule=""
-            var="layout" appointments="${appts}" start="${currentDay.timeInMillis}" days="${numdays}" wdays="${wdays}"
+            var="layout" appointments="${appts}" start="${currentDay.timeInMillis}" days="${numdays}" wdays="${wdays}" weekStart="${firstDOW}"
             hourstart="${requestScope.zimbra_target_account_prefCalendarDayHourStart}" hourend="${requestScope.zimbra_target_account_prefCalendarDayHourEnd}"/>
 </rest:handleError>
 
@@ -86,7 +86,7 @@
     </c:choose>
     <c:set var="preDay" value="" />
     <c:forEach var="day" items="${layout.days}">
-        <c:if test="${workDays[day.day % 7] eq true}">
+        <c:if test="${workDays[(day.day + firstDOW)% 7] eq true}">
         <td nowrap class='ZhCalDaySEP ZhCalDayHeader${(day.startTime eq today.timeInMillis and empty day.folderId) ? 'Today':''}' colspan="${day.maxColumns}" width="${day.width}%">
             <c:choose>
                 <c:when test="${not empty day.folderId}">

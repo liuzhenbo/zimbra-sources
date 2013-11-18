@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.ui.mail;
@@ -643,6 +641,23 @@ public class DisplayMail extends AbsDisplay {
 			
 			return (page);
 
+		} else if ( button == Button.B_BRIEFCASE ) {
+			
+		    locator = attachment.getLocator() + "a[id$='_briefcase']";
+			page = new DialogAddToBriefcase(				
+					MyApplication, 
+					((AppAjaxClient) MyApplication).zPageMail);
+
+			this.sClick(locator);
+			
+			this.zWaitForBusyOverlay();
+
+			if ( page != null ) {
+				page.zWaitForActive();
+			}
+			
+			return (page);
+			
 		} else if ( button == Button.B_ADD_TO_MY_FILES ) {
 			
 			locator = "implement me!";
@@ -717,6 +732,41 @@ public class DisplayMail extends AbsDisplay {
 			
 			locator = "implement me!";
 			page = null;
+			
+		} else if ( action == Action.A_HOVEROVER ) {
+			
+			locator = attachment.getLocator() + "a[id$='_main']";
+			page = new TooltipImage(MyApplication);
+			
+			// If another tooltip is active, sometimes it takes a few seconds for the new text to show
+			// So, wait if the tooltip is already active
+			// Don't wait if the tooltip is not active
+			//
+			
+			if (page.zIsActive()) {
+				
+				// Mouse over
+				this.sMouseOver(locator);
+				this.zWaitForBusyOverlay();
+				
+				// Wait for the new text
+				SleepUtil.sleep(5000);
+				
+				// Make sure the tooltip is active
+				page.zWaitForActive();
+
+			} else {
+				
+				// Mouse over
+				this.sMouseOver(locator);
+				this.zWaitForBusyOverlay();
+
+				// Make sure the tooltip is active
+				page.zWaitForActive();
+
+			}
+						
+			return (page);
 			
 		} else {
 			throw new HarnessException("implement me!  action = "+ action);

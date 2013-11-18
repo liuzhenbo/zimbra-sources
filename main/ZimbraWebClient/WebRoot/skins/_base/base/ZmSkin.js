@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -152,7 +152,7 @@ ZmSkin.prototype = {
 	
 	showSidebarAd : function(width) {
 		var id = "skin_td_sidebar_ad";
-		if (width != null) skin._setSize(id, width);
+		if (width != null) Dwt.setSize(id, width);
 		skin._showEl(id);
 		skin._reflowApp();
 	},
@@ -204,18 +204,10 @@ ZmSkin.prototype = {
 		}
 	},
 	
-	_setSize : function(id, width, height) {
-		var el = this._getEl(id);
-		if (!el) return;
-	
-		if (width != null) el.style.width = width;
-		if (height != null) el.style.height = height;
-	},
-	
 	_setContainerSizes : function(containerName, width, height) {
 		var containers = this.hints[containerName].containers;
 		for (var i = 0; i < containers.length; i++) {
-			this._setSize(containers[i], width, null);
+			Dwt.setSize(containers[i], width, null);
 		}
 	},
 	

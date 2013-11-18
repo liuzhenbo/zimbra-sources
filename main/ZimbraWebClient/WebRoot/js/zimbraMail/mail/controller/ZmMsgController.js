@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -340,6 +340,11 @@ function(params) {
 	return this._msg;
 };
 
+ZmMsgController.prototype.getItems =
+function() {
+	return [this._msg];
+};
+
 ZmMsgController.prototype._getLoadedMsg =
 function(params, callback) {
 	callback.run(this._msg);
@@ -364,7 +369,9 @@ function(params) {
 
 ZmMsgController.prototype._checkItemCount =
 function() {
-	this._backListener();
+	if (!appCtxt.isChildWindow) {
+		this._backListener();
+	}
 };
 
 ZmMsgController.prototype._getDefaultFocusItem = 
@@ -418,7 +425,13 @@ function(ev) {
         }
     } else {
         id = item.id;
-        if (item._part) { id+= "&part=" + item._part; }
+        //Fix for bug: 84261. We get sub body part of multi-part attachment e.g. 2.1, 3.1, etc.
+        //Substring body part currently in view e.g. 2, 3, etc.
+        var part = item.getBodyPart().part;
+        if (part) {
+            id+= "&part=" + part.substring(0, part.indexOf('.'));
+        }
+
         if (item.showImages) {
             showImages = true;
         }

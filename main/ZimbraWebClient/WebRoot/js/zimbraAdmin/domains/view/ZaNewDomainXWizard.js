@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -712,10 +712,19 @@ ZaNewDomainXWizard.myXFormModifier = function(xFormObject, entry) {
     };
 
 	xFormObject.items = [
-		{type:_OUTPUT_, colSpan:2, align:_CENTER_, valign:_TOP_, ref:ZaModel.currentStep, choices:this.stepChoices,valueChangeEventSources:[ZaModel.currentStep], labelVisibility: labelVisibility},
+        {
+            type: _OUTPUT_,
+            colSpan: 2,
+            valign: _TOP_,
+            cssStyle:"white-space: normal",
+            ref: ZaModel.currentStep,
+            choices: this.stepChoices,
+            valueChangeEventSources: [ZaModel.currentStep],
+            labelVisibility: labelVisibility
+        },
 		{type:_SEPARATOR_, align:_CENTER_, valign:_TOP_},
 		{type:_SPACER_,  align:_CENTER_, valign:_TOP_},		
-		{type: _SWITCH_,width:"100%", valign:_TOP_,
+		{type: _SWITCH_,width:"100%", valign:_TOP_, cssStyle: "white-space: normal",
 			items: [
 				{type:_CASE_, caseKey:ZaNewDomainXWizard.GENERAL_STEP, colSizes:["200px","*"],numCols:2,
 					items: [{type:_ZAWIZ_TOP_GROUPER_, colSpan:"*", label:ZaMsg.TABT_GeneralPage,

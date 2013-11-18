@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -32,6 +32,7 @@ public enum AttributeClass {
     domain("zimbraDomain",                      true),
     securityGroup("zimbraSecurityGroup",        false),
     server("zimbraServer",                      true),
+    alwaysOnCluster("zimbraAlwaysOnCluster",    true),
     ucService("zimbraUCService",                true),
     mimeEntry("zimbraMimeEntry",                true),
     objectEntry("zimbraObjectEntry",            false),
@@ -73,6 +74,7 @@ public enum AttributeClass {
     public static final String OC_zimbraPop3DataSource = pop3DataSource.getOCName();
     public static final String OC_zimbraRssDataSource = rssDataSource.getOCName();
     public static final String OC_zimbraServer = server.getOCName();
+    public static final String OC_zimbraAlwaysOnCluster = alwaysOnCluster.getOCName();
     public static final String OC_zimbraUCService = ucService.getOCName();
     public static final String OC_zimbraSignature = signature.getOCName();
     public static final String OC_zimbraXMPPComponent = xmppComponent.getOCName();

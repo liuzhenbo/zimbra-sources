@@ -1,45 +1,40 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
- * 
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.cs.dav.resource;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.StringTokenizer;
 
 import javax.servlet.http.HttpServletResponse;
 
-import com.zimbra.common.util.MapUtil;
-
+import com.zimbra.common.account.Key;
+import com.zimbra.common.account.Key.AccountBy;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.util.Constants;
 import com.zimbra.common.util.HttpUtil;
+import com.zimbra.common.util.MapUtil;
 import com.zimbra.common.util.Pair;
 import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.cs.account.Account;
 import com.zimbra.cs.account.Domain;
 import com.zimbra.cs.account.Provisioning;
-import com.zimbra.common.account.Key;
-import com.zimbra.common.account.Key.AccountBy;
 import com.zimbra.cs.account.Server;
 import com.zimbra.cs.dav.DavContext;
 import com.zimbra.cs.dav.DavException;
-import com.zimbra.cs.dav.property.Acl;
 import com.zimbra.cs.dav.service.DavServlet;
-import com.zimbra.cs.mailbox.ACL;
 import com.zimbra.cs.mailbox.CalendarItem;
 import com.zimbra.cs.mailbox.Contact;
 import com.zimbra.cs.mailbox.Document;
@@ -47,10 +42,10 @@ import com.zimbra.cs.mailbox.Folder;
 import com.zimbra.cs.mailbox.MailItem;
 import com.zimbra.cs.mailbox.MailServiceException;
 import com.zimbra.cs.mailbox.Mailbox;
-import com.zimbra.cs.mailbox.OperationContext;
 import com.zimbra.cs.mailbox.MailboxManager;
 import com.zimbra.cs.mailbox.Message;
 import com.zimbra.cs.mailbox.Mountpoint;
+import com.zimbra.cs.mailbox.OperationContext;
 import com.zimbra.cs.mailbox.calendar.Invite;
 
 /**
@@ -72,7 +67,7 @@ public class UrlNamespace {
      * @param url must be passed as decoded
      * @return user and path info as UrlComponents
      */
-    
+
     public static UrlComponents parseUrl(String url) {
         UrlComponents uc = new UrlComponents();
 
@@ -193,7 +188,7 @@ public class UrlNamespace {
             } catch (ServiceException se) {
                 if (path.length() == 1 && path.charAt(0) == '/' && se.getCode().equals(ServiceException.PERM_DENIED)) {
                     // iCal makes this request for delegated calendars. iCal5 doesn't display the contents of
-                    // delegated calendars if the delegator's home collection is not present in the PROPFIND response. 
+                    // delegated calendars if the delegator's home collection is not present in the PROPFIND response.
                     // Since the user does not have permissions on delegator's home collection, return an empty
                     // collection and the list of folders the authUser has access to.
                     rss.add(new Collection("/", user));
@@ -457,9 +452,10 @@ public class UrlNamespace {
             Message.CalendarItemInfo calItemInfo = msg.getCalendarItemInfo(0);
             try {
                 Invite invite = calItemInfo.getInvite();
-                if (invite == null && calItemInfo.getCalendarItemId() != Message.CalendarItemInfo.CALITEM_ID_NONE) {
+                if (invite == null && calItemInfo.calItemCreated()) {
                     // Pre-6.0 data
-                    CalendarItem item = mbox.getCalendarItemById(ctxt.getOperationContext(), calItemInfo.getCalendarItemId());
+                    CalendarItem item = mbox.getCalendarItemById(ctxt.getOperationContext(),
+                            calItemInfo.getCalendarItemId());
                     invite = calItemInfo.getInvite();
                     int compNum = calItemInfo.getComponentNo();
                     invite = item.getInvite(msg.getId(), compNum);
@@ -493,11 +489,6 @@ public class UrlNamespace {
                 // don't expose mounted calendars when using iCal style delegation model.
                 if (!ctxt.useIcalDelegation() && viewType == MailItem.Type.APPOINTMENT) {
                     resource = new RemoteCalendarCollection(ctxt, mp);
-                    // force read permissions on mounted calendars even for writable calendars.
-                    short rights = ((RemoteCalendarCollection)resource).getRights();
-                    // clear the write and delete bits.
-                    rights = (short) (rights & ~(ACL.RIGHT_WRITE | ACL.RIGHT_DELETE | ACL.RIGHT_INSERT | ACL.RIGHT_ACTION | ACL.RIGHT_ADMIN | ACL.RIGHT_SUBFOLDER));
-                   	resource.addProperty(Acl.getCurrentUserPrivilegeSet(rights));                    
                 } else {
                     resource = new RemoteCollection(ctxt, mp);
                 }
@@ -505,9 +496,9 @@ public class UrlNamespace {
             case FOLDER :
                 Folder f = (Folder) item;
                 viewType = f.getDefaultView();
-                if (f.getId() == Mailbox.ID_FOLDER_INBOX && ctxt.isSchedulingEnabled()) {
+                if (f.getId() == Mailbox.ID_FOLDER_INBOX && DavResource.isSchedulingEnabled()) {
                     resource = new ScheduleInbox(ctxt, f);
-                } else if (f.getId() == Mailbox.ID_FOLDER_SENT && ctxt.isSchedulingEnabled()) {
+                } else if (f.getId() == Mailbox.ID_FOLDER_SENT && DavResource.isSchedulingEnabled()) {
                     resource = new ScheduleOutbox(ctxt, f);
                 } else if (viewType == MailItem.Type.APPOINTMENT || viewType == MailItem.Type.TASK) {
                     resource = getCalendarCollection(ctxt, f);

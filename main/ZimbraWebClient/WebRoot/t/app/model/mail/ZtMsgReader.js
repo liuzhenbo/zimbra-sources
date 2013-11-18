@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -39,7 +39,7 @@ Ext.define('ZCS.model.mail.ZtMsgReader', {
 		var data = {},
 			ctxt;
 
-		data.itemId         = node.id;
+		data.zcsId          = node.id;
 		data.type           = ZCS.constant.ITEM_MESSAGE;
 		data.folderId       = node.l;
 		data.fragment       = node.fr;
@@ -57,7 +57,7 @@ Ext.define('ZCS.model.mail.ZtMsgReader', {
 		data.dateStr = ZCS.util.getRelativeDateString(node.d);
 		data.fullDateStr = Ext.Date.format(new Date(node.d), 'F j, Y g:i:s A');
 
-		data.tags = ZCS.model.ZtItem.parseTags(node.t);
+		data.tags = ZCS.model.ZtItem.parseTags(node.t, ZCS.constant.APP_MAIL);
 
 		if (node.mp) {
 			ctxt = {
@@ -75,8 +75,11 @@ Ext.define('ZCS.model.mail.ZtMsgReader', {
 			data.isLoaded = false;
 		}
 
-		if (node.inv) {
-			data.invite = ZCS.model.mail.ZtInvite.fromJson(node.inv[0], node.id);
+        // Fix for bug: 83398. Checking if invite is empty
+		if (node.inv && (Object.keys(node.inv[0]).length !== 0)) {
+
+            var invite = ZCS.model.mail.ZtInvite.fromJson(node.inv[0], node.id);
+ 			data.invite = Ext.Object.merge({}, invite, {});
 			if (node.cif) {
 				data.invite.set('calendarIntendedFor', node.cif);
 			}
@@ -98,7 +101,7 @@ Ext.define('ZCS.model.mail.ZtMsgReader', {
 		var records = [],
 			ln = root.length, i,
 			curFolder = ZCS.session.getCurrentSearchOrganizer(),
-			curFolderId = curFolder ? curFolder.get('itemId') : '';
+			curFolderId = curFolder ? curFolder.get('zcsId') : '';
 
 		// Process each msg from JSON to data
 		for (i = 0; i < ln; i++) {

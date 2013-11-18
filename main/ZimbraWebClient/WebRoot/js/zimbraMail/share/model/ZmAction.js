@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -56,12 +56,28 @@ ZmAction.prototype.redo = function() {
 };
 
 ZmAction.prototype.setComplete = function() {
-	this._complete = true;
-	this._notify(ZmEvent.E_COMPLETE);
+	if (!this._complete) {
+		this._complete = true;
+		this._notify(ZmEvent.E_COMPLETE);
+	}
 };
 
 ZmAction.prototype.getComplete = function() {
 	return this._complete;
+};
+
+ZmAction.prototype.onComplete = function(callback) {
+	if (this._complete) {
+		callback.run(this);
+	} else {
+		this.addChangeListener(new AjxListener(this, this._handleComplete, [callback]));
+	}
+};
+
+ZmAction.prototype._handleComplete = function(callback, event) {
+	if (event.event===ZmEvent.E_COMPLETE) {
+		callback.run(this);
+	}
 };
 
 /**
@@ -180,8 +196,6 @@ ZmItemMoveAction.prototype._doMove = function(callback, errorCallback, folderId)
 		folder:			appCtxt.getById(folderId),
 		noUndo:			true,
 		finalCallback:	this._handleDoMove.bind(this, this._item.folderId, folderId),
-		actionText:		ZmItemMoveAction.UNDO_MSG[this._op],
-
 		fromFolderId: this._toFolderId
 	});
 };
@@ -212,7 +226,7 @@ ZmItemMoveAction.prototype.redo = function(callback, errorCallback) {
 };
 
 ZmItemMoveAction.multipleUndo = function(actions, redo, fromFolderId) {
-	var masterAction = actions && actions.length && actions[0];
+
 	var sortingTable = {};
 	for (var i=0; i<actions.length; i++) {
 		var action = actions[i];
@@ -227,35 +241,42 @@ ZmItemMoveAction.multipleUndo = function(actions, redo, fromFolderId) {
 			sortingTable[from][to][type].push(action);
 		}
 	}
+	var convMsgIds = {};
 	for (var from in sortingTable) {
 		for (var to in sortingTable[from]) {
 			for (var type in sortingTable[from][to]) {
 				var subset = sortingTable[from][to][type];
 				var items = [];
 				var list = null;
-				var hasMasterAction = false;
-				var commonop;
+				var noToast = true;
 				for (var i=0; i<subset.length; i++) {
 					var action = subset[i];
-					if (action == masterAction)
-						hasMasterAction = true;
 					var item = action.getItem();
 					items.push(item);
-					if (!list && item.list)
+					if (!list && item.list) {
 						list = item.list;
-					var op = action.getOp && action.getOp();
-					if (!commonop)
-						commonop = op;
-					else if (commonop != op)
-						commonop = "move";
+					}
+					// undoing a conv move triggers two requests, one for the conv and one for its msgs; we only
+					// want to show toast for the conv move
+					if (type === ZmItem.CONV) {
+						var convMsgs = item.msgs.getArray();
+						for (var j = 0; j < convMsgs.length; j++) {
+							convMsgIds[convMsgs[j].id] = true;
+						}
+					}
+					else if (type === ZmItem.MSG) {
+						if (!convMsgIds[item.id]) {
+							noToast = false;
+						}
+					}
 				}
 				if (list) {
 					list.moveItems({
-						items: items,
-						folder: appCtxt.getById(redo ? to : from),
-						noUndo: true,
-						fromFolderId: fromFolderId,
-						actionText: hasMasterAction ? (commonop && ZmItemMoveAction.UNDO_MSG[commonop]) : null
+						items:          items,
+						folder:         appCtxt.getById(redo ? to : from),
+						noUndo:         true,
+						fromFolderId:   fromFolderId,
+						noToast:        noToast
 					});
 				}
 			}
@@ -305,7 +326,7 @@ ZmOrganizerMoveAction.prototype.getToFolderId = function() {
 ZmOrganizerMoveAction.prototype._doMove = function(callback, errorCallback, folderId) {
 	var folder = appCtxt.getById(folderId);
 	if (folder) {
-		this._organizer.move(folder, true, ZmMsg.actionUndoMove);
+		this._organizer.move(folder, true);
 	}
 };
 

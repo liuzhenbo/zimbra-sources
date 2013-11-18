@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- *
+ * Copyright (C) 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -24,16 +24,29 @@ Ext.define('ZCS.model.mail.ZtEmailAddress', {
 	extend: 'Ext.data.Model',
 	config: {
 		fields: [
-			{ name: 'type',         type: 'string' },
-			{ name: 'email',        type: 'string' },
-			{ name: 'name',         type: 'string' },
-			{ name: 'displayName',  type: 'string' },
+			// from server address node <e>
+			{ name: 'type',         type: 'string' },   // to|from|cc, etc
+			{ name: 'email',        type: 'string' },   // just the address part
+			{ name: 'name',         type: 'string' },   // full name
+			{ name: 'displayName',  type: 'string' },   // usually the first name
+
+			// long name, eg "Johnathan Smith"
 			{
-				name: 'viewName',
+				name: 'longName',
 				type: 'string',
 				convert: function (v, record) {
 					var d = record.data;
 					return d.name || d.displayName || d.email || '';
+				}
+			},
+
+			// short name or nickname, eg "John"
+			{
+				name: 'shortName',
+				type: 'string',
+				convert: function (v, record) {
+					var d = record.data;
+					return d.displayName || d.name || d.email || '';
 				}
 			}
 		]
@@ -59,7 +72,7 @@ Ext.define('ZCS.model.mail.ZtEmailAddress', {
 		 * @param {String}  emailStr    email string
 		 * @param {String}  type        address type
 		 *
-		 * @return {ZtEmailAddress}     an email address object, or null if the email string if invalid
+		 * @return {ZtEmailAddress}     an email address object, or null if the email string is invalid
 		 * @adapts ZCS.model.mail.ZtEmailAddress.parse
 		 */
 		fromEmail: function(emailStr, type) {

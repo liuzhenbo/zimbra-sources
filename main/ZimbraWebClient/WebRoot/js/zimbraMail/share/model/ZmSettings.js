@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -104,6 +104,7 @@ function() {
 	this.getSetting(ZmSetting.SKIN_NAME).addChangeListener(listener);
 	this.getSetting(ZmSetting.LOCALE_NAME).addChangeListener(listener);
 	this.getSetting(ZmSetting.FONT_NAME).addChangeListener(listener);
+	this.getSetting(ZmSetting.FONT_SIZE).addChangeListener(listener);
 	this.getSetting(ZmSetting.SHORTCUTS).addChangeListener(listener);
 	this.getSetting(ZmSetting.CHILD_ACCTS_VISIBLE).addChangeListener(listener);
 	this.getSetting(ZmSetting.ATTACHMENTS_BLOCKED).addChangeListener(listener);
@@ -264,7 +265,7 @@ ZmSettings.prototype.setUserSettings = function(params) {
 
 	appCtxt.createDistListAllowed = false;
 	appCtxt.createDistListAllowedDomains = [];
-	appCtxt.createDistListAllowedDomainsMap = [];
+	appCtxt.createDistListAllowedDomainsMap = {};
 	var rightTargets = info.rights && info.rights.targets;
 	if (rightTargets) {
 		for (var i = 0; i < rightTargets.length; i++) {
@@ -847,6 +848,9 @@ function() {
 	this.registerSetting("MAIL_UPSELL_URL",					{name:"zimbraFeatureMailUpsellURL", type:ZmSetting.T_COS});
 	this.registerSetting("OPTIONS_ENABLED",					{name:"zimbraFeatureOptionsEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
 	this.registerSetting("PORTAL_ENABLED",					{name:"zimbraFeaturePortalEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
+	this.registerSetting("SOCIAL_ENABLED",					{name:"zimbraFeatureSocialEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
+	this.registerSetting("SOCIAL_EXTERNAL_ENABLED",			{name:"zimbraFeatureSocialExternalEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
+	this.registerSetting("SOCIAL_EXTERNAL_URL",				{name:"zimbraFeatureSocialExternalURL", type:ZmSetting.T_COS});
 	this.registerSetting("TASKS_ENABLED",					{name:"zimbraFeatureTasksEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
 	this.registerSetting("VOICE_ENABLED",					{name:"zimbraFeatureVoiceEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
 	this.registerSetting("VOICE_UPSELL_ENABLED",			{name:"zimbraFeatureVoiceUpsellEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
@@ -854,6 +858,7 @@ function() {
 	this.registerSetting("DLS_FOLDER_ENABLED",				{name:"zimbraFeatureDistributionListFolderEnabled", type: ZmSetting.T_COS, dataType: ZmSetting.D_BOOLEAN, defaultValue: true});
 
 	// COS SETTINGS
+    this.registerSetting("ATTACHMENTS_VIEW_IN_HTML_ONLY",	{name:"zimbraAttachmentsViewInHtmlOnly", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
 	this.registerSetting("AVAILABLE_SKINS",					{type:ZmSetting.T_COS, dataType:ZmSetting.D_LIST, isGlobal:true});
 	this.registerSetting("AVAILABLE_CSVFORMATS",			{type:ZmSetting.T_COS, dataType:ZmSetting.D_LIST, isGlobal:true});
 	this.registerSetting("CHANGE_PASSWORD_ENABLED",			{name:"zimbraFeatureChangePasswordEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
@@ -889,6 +894,8 @@ function() {
 	this.registerSetting("SAVED_SEARCHES_ENABLED",			{name:"zimbraFeatureSavedSearchesEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:false});
 	this.registerSetting("SEARCH_TREE_OPEN",				{name:"zimbraPrefSearchTreeOpen", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:true, isImplicit:true});
 	this.registerSetting("SHARING_ENABLED",					{name:"zimbraFeatureSharingEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
+	this.registerSetting("SHARING_PUBLIC_ENABLED",			{name:"zimbraPublicSharingEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
+	this.registerSetting("SHARING_EXTERNAL_ENABLED",		{name:"zimbraExternalSharingEnabled", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
 	this.registerSetting("SHORTCUT_ALIASES_ENABLED",		{name:"zimbraFeatureShortcutAliasesEnabled", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
 	this.registerSetting("SHOW_OFFLINE_LINK",				{name:"zimbraWebClientShowOfflineLink", type:ZmSetting.T_COS, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
 	this.registerSetting("SIGNATURES_ENABLED",				{name:"zimbraFeatureSignaturesEnabled", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
@@ -944,18 +951,20 @@ function() {
 	this.registerSetting("ACCOUNT_TREE_OPEN",				{name:"zimbraPrefAccountTreeOpen", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:false, isImplicit:true});
 	this.registerSetting("CHILD_ACCTS_VISIBLE",				{name:"zimbraPrefChildVisibleAccount", type:ZmSetting.T_PREF, dataType:ZmSetting.D_LIST});
 	this.registerSetting("CLIENT_TYPE",						{name:"zimbraPrefClientType", type:ZmSetting.T_PREF, defaultValue:ZmSetting.CLIENT_ADVANCED});
-	this.registerSetting("COMPOSE_AS_FORMAT",				{name:"zimbraPrefComposeFormat", type:ZmSetting.T_PREF, defaultValue:ZmSetting.COMPOSE_TEXT, isGlobal:true});
+	this.registerSetting("COMPOSE_AS_FORMAT",				{name:"zimbraPrefComposeFormat", type:ZmSetting.T_PREF, defaultValue:ZmSetting.COMPOSE_HTML, isGlobal:true});
 	this.registerSetting("COMPOSE_INIT_FONT_COLOR",			{name:"zimbraPrefHtmlEditorDefaultFontColor", type:ZmSetting.T_PREF, defaultValue:ZmSetting.COMPOSE_FONT_COLOR, isGlobal:true});
 	this.registerSetting("COMPOSE_INIT_FONT_FAMILY",		{name:"zimbraPrefHtmlEditorDefaultFontFamily", type:ZmSetting.T_PREF, defaultValue:ZmSetting.COMPOSE_FONT_FAM, isGlobal:true});
 	this.registerSetting("COMPOSE_INIT_FONT_SIZE",			{name:"zimbraPrefHtmlEditorDefaultFontSize", type:ZmSetting.T_PREF, defaultValue:ZmSetting.COMPOSE_FONT_SIZE, isGlobal:true});
     this.registerSetting("COMPOSE_INIT_DIRECTION",			{name:"zimbraPrefComposeDirection", type:ZmSetting.T_PREF, defaultValue:ZmSetting.LTR, isGlobal:true});
     this.registerSetting("SHOW_COMPOSE_DIRECTION_BUTTONS",	{name:"zimbraPrefShowComposeDirection", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:false, isGlobal:true});
 	this.registerSetting("DEFAULT_TIMEZONE",				{name:"zimbraPrefTimeZoneId", type:ZmSetting.T_PREF, dataType:ZmSetting.D_STRING, defaultValue:AjxTimezone.getServerId(AjxTimezone.DEFAULT), isGlobal:true});
+    this.registerSetting("WEBCLIENT_OFFLINE_ENABLED",		{name:"zimbraPrefWebClientOfflineAccessEnabled", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:false, isImplicit:true});
     this.registerSetting("DEFAULT_PRINTFONTSIZE",	    	{name:"zimbraPrefDefaultPrintFontSize", type:ZmSetting.T_PREF, dataType:ZmSetting.D_STRING, defaultValue:ZmSetting.PRINT_FONT_SIZE, isGlobal:true});    
 	this.registerSetting("GROUPBY_HASH",                    {type: ZmSetting.T_PREF, dataType:ZmSetting.D_HASH});
 	this.registerSetting("GROUPBY_LIST",                    {name:"zimbraPrefGroupByList", type:ZmSetting.T_METADATA, dataType:ZmSetting.D_HASH, isImplicit:true, section:ZmSetting.M_IMPLICIT});
     this.registerSetting("FILTERS",							{type: ZmSetting.T_PREF, dataType: ZmSetting.D_HASH});
 	this.registerSetting("FONT_NAME",						{name:"zimbraPrefFont", type:ZmSetting.T_PREF, defaultValue: ZmSetting.FONT_SYSTEM, isGlobal:true});
+	this.registerSetting("FONT_SIZE",						{name:"zimbraPrefFontSize", type:ZmSetting.T_PREF, defaultValue: ZmSetting.FONT_SIZE_NORMAL, isGlobal:true});
 	this.registerSetting("IDENTITIES",						{type: ZmSetting.T_PREF, dataType: ZmSetting.D_HASH});
 	this.registerSetting("INITIALLY_SEARCH_GAL",			{name:"zimbraPrefGalSearchEnabled", type:ZmSetting.T_PREF, dataType:ZmSetting.D_BOOLEAN, defaultValue:true});
 	this.registerSetting("LIST_VIEW_COLUMNS",				{name:"zimbraPrefListViewColumns", type:ZmSetting.T_PREF, dataType:ZmSetting.D_HASH, isImplicit:true});
@@ -1063,10 +1072,11 @@ function(ev) {
 		var cd = appCtxt.getYesNoMsgDialog();
 		cd.reset();
 		var skin = ev.source.getValue();
+        appCtxt.reloadOfflineAppCache(appCtxt.get(ZmSetting.LOCALE_NAME),skin);
 		cd.registerCallback(DwtDialog.YES_BUTTON, this._newSkinYesCallback, this, [skin, cd]);
 		cd.setMessage(ZmMsg.skinChangeRestart, DwtMessageDialog.WARNING_STYLE);
 		cd.popup();
-	} else if (id == ZmSetting.FONT_NAME) {
+	} else if (id === ZmSetting.FONT_NAME || id === ZmSetting.FONT_SIZE) {
 		var cd = appCtxt.getYesNoMsgDialog();
 		cd.reset();
 		cd.registerCallback(DwtDialog.YES_BUTTON, this._refreshBrowserCallback, this, [cd]);
@@ -1090,6 +1100,7 @@ function(ev) {
 		var cd = appCtxt.getYesNoMsgDialog();
 		cd.reset();
 		var skin = ev.source.getValue();
+        appCtxt.reloadOfflineAppCache(appCtxt.get(ZmSetting.LOCALE_NAME), appCtxt.get(ZmSetting.SKIN_NAME));
 		cd.registerCallback(DwtDialog.YES_BUTTON, this._refreshBrowserCallback, this, [cd]);
 		cd.setMessage(ZmMsg.localeChangeRestart, DwtMessageDialog.WARNING_STYLE);
 		cd.popup();
@@ -1109,6 +1120,9 @@ function(ev) {
 
 ZmSettings.prototype._implicitChangeListener =
 function(ev) {
+	if (!appCtxt.get(ZmSetting.OPTIONS_ENABLED)) {
+		return;
+	}
 	if (ev.type != ZmEvent.S_SETTING) { return; }
 	var id = ev.source.id;
 	var setting = this.getSetting(id);
@@ -1119,7 +1133,10 @@ function(ev) {
 		return;
 	}
 	if (ZmSetting.IS_IMPLICIT[id] && setting) {
-		this.save([setting], null, null, appCtxt.getActiveAccount(), true);
+        if (id === ZmSetting.WEBCLIENT_OFFLINE_ENABLED) {
+            var callback = this._offlineSettingsSaveCallback.bind(this, setting.getValue());
+        }
+		this.save([setting], callback, null, appCtxt.getActiveAccount(), true);
 	}
 };
 
@@ -1193,4 +1210,20 @@ ZmSettings.prototype._hasVoiceFeature = function() {
     }
 
     return false;
+};
+
+/**
+ * @private
+ */
+ZmSettings.prototype._offlineSettingsSaveCallback =
+function(offlineEnabled) {
+    if (!offlineEnabled){
+        ZmOffline.deleteAllOfflineData();
+    }
+    var cd = appCtxt.getYesNoMsgDialog();
+    localStorage.setItem("syncPrefRequired", true);
+    cd.reset();
+    cd.registerCallback(DwtDialog.YES_BUTTON, this._refreshBrowserCallback, this, [cd]);
+    cd.setMessage(ZmMsg.offlineChangeRestart, DwtMessageDialog.WARNING_STYLE);
+    cd.popup();
 };

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -98,6 +98,7 @@ AjxRpcRequest.__msxmlVers	= null;
  */
 AjxRpcRequest.prototype.invoke =
 function(requestStr, serverUrl, requestHeaders, callback, method, timeout) {
+
 
 	var asyncMode = (callback != null);
 	var m = requestStr && requestStr.match(/.*"(\w+Request)"/);
@@ -211,7 +212,6 @@ function(req, callback) {
 		} catch (ex) {
 			// Use default status of 500 above.
 		}
-
 		if (status == 200 || status == 201) {
 			callback.run( {text:req.__httpReq.responseText, xml:req.__httpReq.responseXML, success:true, reqId:req.id} );
 		} else {
@@ -251,3 +251,4 @@ function() {
 	}
 	AjxRpcRequest.__inited = true;
 };
+

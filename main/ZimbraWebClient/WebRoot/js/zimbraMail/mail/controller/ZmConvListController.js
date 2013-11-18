@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -53,8 +53,6 @@ ZmMailListController.GROUP_BY_ICON[ZmId.VIEW_CONVLIST]		= "ConversationView";
 ZmMailListController.GROUP_BY_MSG_KEY[ZmId.VIEW_CONVLIST]	= "byConversation";
 ZmMailListController.GROUP_BY_SHORTCUT[ZmId.VIEW_CONVLIST]	= ZmKeyMap.VIEW_BY_CONV;
 ZmMailListController.GROUP_BY_VIEWS.push(ZmId.VIEW_CONVLIST);
-
-ZmConvListController.FOLDERS_TO_OMIT = [ZmFolder.ID_TRASH, ZmFolder.ID_SPAM];
 
 // Public methods
 
@@ -114,7 +112,7 @@ function(view, force) {
 // Internally we manage two maps, one for CLV and one for CV2 (if applicable)
 ZmConvListController.prototype.getKeyMapName =
 function() {
-	if (this._convView.isActiveQuickReply()) { //if user is quick replying, don't use the mapping of conv/mail list - so Ctrl+Z works
+	if (this._convView && this._convView.isActiveQuickReply()) { //if user is quick replying, don't use the mapping of conv/mail list - so Ctrl+Z works
 		return ZmKeyMap.MAP_QUICK_REPLY;
 	}
 	return ZmKeyMap.MAP_CONVERSATION_LIST;
@@ -210,6 +208,10 @@ function(actionCode, ev) {
 				itemView._cancelListener();
 				break;
 			}
+            else{
+                this._backListener();  //Bug: 83244 - need to close conv window after pressing 'Esc' key.
+                break;
+            }
 
 		default:
 			return ZmDoublePaneController.prototype.handleKeyAction.apply(this, arguments);
@@ -452,20 +454,40 @@ function(ev) {
 		if (!handled) {
 			if (ev.detail == DwtListView.ITEM_DBL_CLICKED) {
 				if (item.type == ZmItem.CONV && item.numMsgs == 1) {
-					var msg = item.getFirstHotMsg();
-					item = msg || item;
+					if (!item._loaded) {
+						//unloaded Conv makes problems.
+						item.load(null, this._handleConvLoaded.bind(this, item));
+						return true;
+					}
+					this._handleConvLoaded(item);
+					return true;
 				}
-				if (item.type == ZmItem.MSG) {
-					AjxDispatcher.run("GetMsgController", item && item.nId).show(item, this, null, true);
-				} else {
-					AjxDispatcher.run("GetConvController").show(item, this, null, true);
-				}
+				this._showItem(item);
 				return true;
 			}
 		}
 	}
 	return false;
 };
+
+ZmConvListController.prototype._handleConvLoaded =
+function(conv) {
+	var msg = conv.getFirstHotMsg();
+	var item = msg || conv;
+	this._showItem(item);
+};
+
+ZmConvListController.prototype._showItem =
+function(item) {
+	if (item.type == ZmItem.MSG) {
+		AjxDispatcher.run("GetMsgController", item && item.nId).show(item, this, null, true);
+	}
+	else {
+		AjxDispatcher.run("GetConvController").show(item, this, null, true);
+	}
+
+};
+
 
 ZmConvListController.prototype._menuPopdownActionListener =
 function(ev) {
@@ -495,7 +517,7 @@ function() {
 				var terms = ["underid:" + rootFolderId];
 				var search = this._currentSearch;
 				if (search) {
-					var foldersToExclude = ZmConvListController.FOLDERS_TO_OMIT;
+					var foldersToExclude = ZmMailListController.FOLDERS_TO_OMIT;
 					for (var i = 0; i < foldersToExclude.length; i++) {
 						var folderId = foldersToExclude[i];
 						if (acctId) {
@@ -815,24 +837,6 @@ function(omit) {
 	return (lv && lv._selectedMsg) ? null : ZmDoublePaneController.prototype._getNextItemToSelect.apply(this, arguments);
 };
 
-// returns lookup hash of folders (starting with Trash/Junk) whose messages aren't included when
-// viewing a conv; if we're in one of those, we still show its messages
-ZmConvListController.prototype.getFoldersToOmit =
-function() {
-
-	var a = ZmConvListController.FOLDERS_TO_OMIT,
-		omit = [],
-		curSearch = appCtxt.getCurrentSearch(),
-		curFolderId = curSearch && curSearch.folderId;
-
-	for (var i = 0; i < a.length; i++) {
-		if (a[i] != curFolderId) {
-			omit.push(a[i]);
-		}
-	}
-	return AjxUtil.arrayAsHash(omit);
-};
-
 /**
  * Splits the given items into two lists, one of convs and one of msgs, and
  * applies the given method and args to each.
@@ -863,8 +867,10 @@ function(items, method, args) {
 };
 
 ZmConvListController.prototype._doFlag =
-function(items) {
-	var on = !items[0].isFlagged;
+function(items, on) {
+	if (on !== true && on !== false) {
+		on = !items[0].isFlagged;
+	}
 	this._applyAction(items, "_doFlag", [on]);
 };
 

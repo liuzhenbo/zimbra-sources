@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * A base class used for both {@link Ext.event.recognizer.VerticalSwipe} and {@link Ext.event.recognizer.HorizontalSwipe}
  * event recognizers.
@@ -23,7 +7,7 @@
 Ext.define('Ext.event.recognizer.Swipe', {
     extend: 'Ext.event.recognizer.SingleTouch',
 
-    handledEvents: ['swipe'],
+    handledEvents: ['swipestart', 'swipe'],
 
     /**
      * @member Ext.dom.Element
@@ -90,20 +74,47 @@ Ext.define('Ext.event.recognizer.Swipe', {
         var touch = e.changedTouches[0],
             x = touch.pageX,
             y = touch.pageY,
+            deltaX = x - this.startX,
+            deltaY = y - this.startY,
             absDeltaX = Math.abs(x - this.startX),
             absDeltaY = Math.abs(y - this.startY),
-            time = e.time;
+            duration = e.time - this.startTime,
+            minDistance = this.getMinDistance(),
+            time = e.time,
+            direction, distance;
 
         if (time - this.startTime > this.getMaxDuration()) {
             return this.fail(this.self.MAX_DURATION_EXCEEDED);
+        }
+
+        if (this.isHorizontal && absDeltaY > this.getMaxOffset()) {
+            this.isHorizontal = false;
         }
 
         if (this.isVertical && absDeltaX > this.getMaxOffset()) {
             this.isVertical = false;
         }
 
-        if (this.isHorizontal && absDeltaY > this.getMaxOffset()) {
-            this.isHorizontal = false;
+        if (!this.isVertical || !this.isHorizontal) {
+            if (this.isHorizontal && absDeltaX < minDistance) {
+                direction = (deltaX < 0) ? 'left' : 'right';
+                distance = absDeltaX;
+            }
+            else if (this.isVertical && absDeltaY < minDistance) {
+                direction = (deltaY < 0) ? 'up' : 'down';
+                distance = absDeltaY;
+            }
+        }
+
+        if (direction && !this.started) {
+            this.started = true;
+
+            this.fire('swipestart', e, [touch], {
+                touch: touch,
+                direction: direction,
+                distance: distance,
+                duration: duration
+            });
         }
 
         if (!this.isHorizontal && !this.isVertical) {
@@ -146,6 +157,8 @@ Ext.define('Ext.event.recognizer.Swipe', {
         else {
             return this.fail(this.self.DISTANCE_NOT_ENOUGH);
         }
+
+        this.started = false;
 
         this.fire('swipe', e, [touch], {
             touch: touch,

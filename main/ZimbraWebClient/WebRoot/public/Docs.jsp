@@ -4,13 +4,17 @@
 <%@ taglib prefix="zm" uri="com.zimbra.zm" %>
 <%@ page import="java.util.Locale" %>
 <%@ page import="com.zimbra.cs.taglib.bean.BeanUtils" %>
+<%
+    // Prevent IE from ever going into compatibility/quirks mode.
+    response.setHeader("X-UA-Compatible", "IE=edge");
+%><!DOCTYPE html>
 <!--
 ***** BEGIN LICENSE BLOCK *****
 Zimbra Collaboration Suite Web Client
-Copyright (C) 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+Copyright (C) 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
 
 The contents of this file are subject to the Zimbra Public License
-Version 1.3 ("License"); you may not use this file except in
+Version 1.4 ("License"); you may not use this file except in
 compliance with the License.  You may obtain a copy of the License at
 http://www.zimbra.com/license.
 
@@ -60,6 +64,8 @@ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
     //  boolean isTinyMce = getParameter(request, "editor", "").equals("tinymce");
     //  Support for TinyMCE suspended.
     boolean isTinyMce = false;
+
+    String authTokenExpires = request.getParameter("authTokenExpires");
 
     final String SKIN_COOKIE_NAME = "ZM_SKIN";
     String skin = application.getInitParameter("zimbraDefaultSkin");
@@ -114,8 +120,8 @@ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
     pageContext.setAttribute("isProdMode", !prodMode.equals(""));
     pageContext.setAttribute("isDebug", isDevMode);
     pageContext.setAttribute("isCoverage", isCoverage);
+    pageContext.setAttribute("authTokenExpires", authTokenExpires);
 %>
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
 <html>
 <head>
     <title>Zimbra Docs</title>
@@ -174,6 +180,7 @@ basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
     window.appDevMode     = ${isDevMode};
     window.appCoverageMode = ${isCoverage};
     window.DBG = new AjxDebug(AjxDebug.NONE, null, false);
+    window.authTokenExpires     = ${authTokenExpires};
 
     if(!ZmCsfeCommand.noAuth){
         ZmDocsEditApp.setFile('${fileId}', '${fileName}', '${folderId}');

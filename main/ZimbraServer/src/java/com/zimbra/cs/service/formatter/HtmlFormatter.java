@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
- * 
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- * 
+ *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -15,6 +15,10 @@
 package com.zimbra.cs.service.formatter;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Enumeration;
+import java.util.List;
 
 import javax.servlet.RequestDispatcher;
 import javax.servlet.Servlet;
@@ -22,9 +26,22 @@ import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
 
 import org.apache.commons.httpclient.Header;
+import org.apache.commons.httpclient.HttpClient;
+import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.httpclient.methods.PostMethod;
+import org.apache.commons.httpclient.methods.multipart.MultipartRequestEntity;
+import org.apache.commons.httpclient.methods.multipart.Part;
+import org.apache.commons.httpclient.methods.multipart.StringPart;
+import org.apache.commons.httpclient.params.HttpMethodParams;
 
+import com.zimbra.common.mailbox.Color;
+import com.zimbra.common.httpclient.HttpClientUtil;
 import com.zimbra.common.service.ServiceException;
+import com.zimbra.common.util.ByteUtil;
+import com.zimbra.common.util.HttpUtil;
 import com.zimbra.common.util.Pair;
+import com.zimbra.common.util.WebSplitUtil;
+import com.zimbra.common.util.ZimbraHttpConnectionManager;
 import com.zimbra.cs.account.Account;
 import com.zimbra.cs.account.AuthToken;
 import com.zimbra.cs.account.AuthTokenException;
@@ -35,9 +52,9 @@ import com.zimbra.cs.mailbox.MailItem;
 import com.zimbra.cs.mailbox.Mountpoint;
 import com.zimbra.cs.service.AuthProvider;
 import com.zimbra.cs.service.UserServlet;
+import com.zimbra.cs.service.UserServlet.HttpInputStream;
 import com.zimbra.cs.service.UserServletContext;
 import com.zimbra.cs.service.UserServletException;
-import com.zimbra.cs.service.UserServlet.HttpInputStream;
 import com.zimbra.cs.service.formatter.FormatterFactory.FormatType;
 
 public class HtmlFormatter extends Formatter {
@@ -149,26 +166,81 @@ public class HtmlFormatter extends Formatter {
             context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_CALENDAR_FIRST_DAY_OF_WEEK, targetAccount.getAttr(Provisioning.A_zimbraPrefCalendarFirstDayOfWeek));
             context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_CALENDAR_DAY_HOUR_START, targetAccount.getAttr(Provisioning.A_zimbraPrefCalendarDayHourStart));
             context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_CALENDAR_DAY_HOUR_END, targetAccount.getAttr(Provisioning.A_zimbraPrefCalendarDayHourEnd));
+        } else {
+            // Useful when faking results - e.g. FREEBUSY html view for non-existent account
+            if (context.fakeTarget != null) {
+                context.req.setAttribute(ATTR_TARGET_ACCOUNT_NAME, context.fakeTarget.getAccount());
+            }
+            com.zimbra.cs.account.Cos defaultCos = Provisioning.getInstance().get(com.zimbra.common.account.Key.CosBy.name, Provisioning.DEFAULT_COS_NAME);
+            context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_TIME_ZONE,
+                        defaultCos.getAttr(Provisioning.A_zimbraPrefTimeZoneId));
+            context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_SKIN, defaultCos.getAttr(Provisioning.A_zimbraPrefSkin));
+            context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_LOCALE, defaultCos.getAttr(Provisioning.A_zimbraPrefLocale));
+            context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_CALENDAR_FIRST_DAY_OF_WEEK, defaultCos.getAttr(Provisioning.A_zimbraPrefCalendarFirstDayOfWeek));
+            context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_CALENDAR_DAY_HOUR_START, defaultCos.getAttr(Provisioning.A_zimbraPrefCalendarDayHourStart));
+            context.req.setAttribute(ATTR_TARGET_ACCOUNT_PREF_CALENDAR_DAY_HOUR_END, defaultCos.getAttr(Provisioning.A_zimbraPrefCalendarDayHourEnd));
         }
         if (targetItem != null) {
             context.req.setAttribute(ATTR_TARGET_ITEM_ID, targetItem.getId());
-            context.req.setAttribute(ATTR_TARGET_ITEM_TYPE, targetItem.getType().toString());
             context.req.setAttribute(ATTR_TARGET_ITEM_PATH, targetItem.getPath());
             context.req.setAttribute(ATTR_TARGET_ITEM_NAME, targetItem.getName());
+            context.req.setAttribute(ATTR_TARGET_ITEM_TYPE, targetItem.getType().toString());
 
             context.req.setAttribute(ATTR_TARGET_ITEM_COLOR, targetItem.getColor());
             if (targetItem instanceof Folder) {
                 context.req.setAttribute(ATTR_TARGET_ITEM_VIEW, ((Folder) targetItem).getDefaultView().toString());
             }
+        } else {
+            context.req.setAttribute(ATTR_TARGET_ITEM_COLOR, Color.getMappedColor(null));
         }
-
+        if (context.fakeTarget != null) {  // Override to avoid address harvesting
+            context.req.setAttribute(ATTR_TARGET_ITEM_PATH, context.fakeTarget.getPath());
+            context.req.setAttribute(ATTR_TARGET_ITEM_NAME, context.fakeTarget.getName());
+        }
         String mailUrl = PATH_MAIN_CONTEXT;
-        try {
-            mailUrl = Provisioning.getInstance().getLocalServer().getMailURL();
-        } catch (Exception e) {
+        List<String> zimbraServiceInstalled = Arrays.asList(Provisioning.getInstance().getLocalServer().getServiceInstalled());
+        if (WebSplitUtil.isZimbraServiceSplitEnabled(zimbraServiceInstalled)) {
+            mailUrl = Provisioning.getInstance().getLocalServer().getWebClientURL() + PATH_JSP_REST_PAGE;
+            HttpClient httpclient = ZimbraHttpConnectionManager.getInternalHttpConnMgr().getDefaultHttpClient();
+            /*
+             * Retest the code with POST to check whether it works
+            PostMethod postMethod = new PostMethod(mailUrl);
+            Enumeration<String> attributeNames = context.req.getAttributeNames();
+            List<Part> parts = new ArrayList<Part>();
+            while(attributeNames.hasMoreElements())
+            {
+                String attrName = (String) attributeNames.nextElement();
+                String attrValue = context.req.getAttribute(attrName).toString();
+                Part part = new StringPart(attrName, attrValue);
+                parts.add(part);
+            }
+            postMethod.setRequestEntity(new MultipartRequestEntity(parts.toArray(new Part[0]), new HttpMethodParams()));
+
+            HttpClientUtil.executeMethod(httpclient, postMethod);
+            ByteUtil.copy(postMethod.getResponseBodyAsStream(), true, context.resp.getOutputStream(), true);
+            */
+
+            Enumeration<String> attributeNames = context.req.getAttributeNames();
+            StringBuilder sb = new StringBuilder(mailUrl);
+            sb.append("?");
+            while(attributeNames.hasMoreElements())
+            {
+                String attrName = (String) attributeNames.nextElement();
+                String attrValue = context.req.getAttribute(attrName).toString();
+                sb.append(attrName).append("=").append(HttpUtil.urlEscape(attrValue)).append("&");
+            }
+            GetMethod postMethod = new GetMethod(sb.toString());
+
+            HttpClientUtil.executeMethod(httpclient, postMethod);
+            ByteUtil.copy(postMethod.getResponseBodyAsStream(), true, context.resp.getOutputStream(), false);
+        } else {
+            try {
+                mailUrl = Provisioning.getInstance().getLocalServer().getMailURL();
+            } catch (Exception e) {
+            }
+            ServletContext targetContext = servlet.getServletConfig().getServletContext().getContext(mailUrl);
+            RequestDispatcher dispatcher = targetContext.getRequestDispatcher(PATH_JSP_REST_PAGE);
+            dispatcher.forward(context.req, context.resp);
         }
-        ServletContext targetContext = servlet.getServletConfig().getServletContext().getContext(mailUrl);
-        RequestDispatcher dispatcher = targetContext.getRequestDispatcher(PATH_JSP_REST_PAGE);
-        dispatcher.forward(context.req, context.resp);
     }
 }

@@ -119,7 +119,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
               mailRecipient, account, alias, distributionList, cos,
               globalConfig, domain, securityGroup, server, mimeEntry,
               objectEntry, zimletEntry, calendarResource;
-              attribute
+              attribute, alwaysOnCluster
 
   flags:
     accountInfo............returned as part of the GetInfo call
@@ -136,6 +136,8 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
 	                           - has idn flag
                            server will convert the values to unicode in utf8
                            encoding in SOAP responses.
+    serverPreferAlwaysOn...if zimbraAlwaysOnClusterId is configured override the server
+                           attributes from the alwaysOnCluster
 
   requiresRestart: server(s) need be to restarted after changing this attribute.
                    values are comma-separated if more than one servers need to be restarted.
@@ -189,11 +191,11 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
     <desc>From Microsoft Schema</desc>
 </attr>
 
-<attr name="cn" type="string" optionalIn="account,alias,distributionList" requiredIn="cos,server,ucService,mimeEntry,objectEntry,zimletEntry,xmppComponent,aclTarget,shareLocator,groupStaticUnit" flags="domainAdminModifiable,accountInfo">
+<attr name="cn" type="string" optionalIn="account,alias,distributionList" requiredIn="cos,server,alwaysOnCluster,ucService,mimeEntry,objectEntry,zimletEntry,xmppComponent,aclTarget,shareLocator,groupStaticUnit" flags="domainAdminModifiable,accountInfo">
     <desc>RFC2256: common name(s) for which the entity is known by</desc>
 </attr>
 
-<attr name="description" type="string" cardinality="multi" optionalIn="account,distributionList,group,groupDynamicUnit,groupStaticUnit,cos,domain,server,ucService,mimeEntry,objectEntry,aclTarget,globalConfig,xmppComponent,zimletEntry" flags="domainAdminModifiable">
+<attr name="description" type="string" cardinality="multi" optionalIn="account,distributionList,group,groupDynamicUnit,groupStaticUnit,cos,domain,server,alwaysOnCluster,ucService,mimeEntry,objectEntry,aclTarget,globalConfig,xmppComponent,zimletEntry" flags="domainAdminModifiable">
     <desc>RFC2256: descriptive information</desc>
 </attr>
 
@@ -338,7 +340,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
 </attr>
 
 
-<attr id="1" name="zimbraId" type="id" immutable="1" cardinality="single" requiredIn="account,alias,distributionList,cos,domain,server,ucService,calendarResource,xmppComponent,group,groupDynamicUnit,groupStaticUnit" flags="accountInfo">
+<attr id="1" name="zimbraId" type="id" immutable="1" cardinality="single" requiredIn="account,alias,distributionList,cos,domain,server,alwaysOnCluster,ucService,calendarResource,xmppComponent,group,groupDynamicUnit,groupStaticUnit" flags="accountInfo">
   <desc>Zimbra Systems Unique ID</desc>
 </attr>
 
@@ -769,7 +771,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   <desc>block all attachment downloading</desc>
 </attr>
 
-<attr id="116" name="zimbraAttachmentsViewInHtmlOnly" type="boolean" cardinality="single" optionalIn="account,cos,globalConfig" flags="accountInherited,domainAdminModifiable">
+<attr id="116" name="zimbraAttachmentsViewInHtmlOnly" type="boolean" cardinality="single" optionalIn="account,cos,globalConfig" flags="accountInfo,accountInherited,domainAdminModifiable">
   <defaultCOSValue>FALSE</defaultCOSValue>
   <globalConfigValue>FALSE</globalConfigValue>
   <desc>view all attachments in html only</desc>
@@ -957,7 +959,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   <desc>LDAP Gal attribute to contact attr mapping</desc>
 </attr>
 
-<attr id="154" name="zimbraMailPort" type="port" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" callback="CheckPortConflict" requiresRestart="mailbox,mta,nginxproxy">
+<attr id="154" name="zimbraMailPort" type="port" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" callback="MailPort" requiresRestart="mailbox,mta,nginxproxy">
   <globalConfigValue>80</globalConfigValue>
   <desc>HTTP port for end-user UI</desc>
 </attr>
@@ -1277,7 +1279,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
 </attr>
 
 <attr id="217" name="zimbraPrefComposeFormat" type="enum" value="text,html" cardinality="single" optionalIn="account,cos" flags="accountInherited,domainAdminModifiable">
-  <defaultCOSValue>text</defaultCOSValue>
+  <defaultCOSValue>html</defaultCOSValue>
   <desc>whether or not to compose in html or text.</desc>
 </attr>
 
@@ -1308,10 +1310,10 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   <desc>provider class name for redo logging</desc>
 </attr>
 
-<attr id="226" name="zimbraMtaRestriction" type="string" max="2048" cardinality="multi" optionalIn="globalConfig" requiresRestart="mta">
+<attr id="226" name="zimbraMtaRestriction" type="string" max="2048" cardinality="multi" optionalIn="globalConfig,server">
   <globalConfigValue>reject_invalid_helo_hostname</globalConfigValue>
   <globalConfigValue>reject_non_fqdn_sender</globalConfigValue>
-  <desc>restrictions to reject some suspect SMTP clients</desc>
+  <desc>smtpd_recipient_restrictions used to reject email in various scenarios</desc>
 </attr>
 
 <attr id="227" name="zimbraFileUploadMaxSize" type="long" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited,accountInfo">
@@ -2358,7 +2360,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
 
 <attr id="454" name="zimbraMailSignatureMaxLength" type="long" min="0" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited">
   <defaultCOSValue>10240</defaultCOSValue>
-  <desc>maximum length of mail signature, 0 means unlimited. If not set, default is 1024</desc>
+  <desc>maximum length of mail signature, 0 means unlimited.</desc>
 </attr>
 
 <attr id="455" name="zimbraDataSourcePollingInterval" type="duration" min="0" cardinality="single" optionalIn="dataSource,account,cos" callback="DataSourceCallback" flags="accountInfo,accountInherited,domainAdminModifiable">
@@ -2573,7 +2575,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
 </attr>
 
 <attr id="498" name="zimbraFeatureBriefcasesEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited">
-  <defaultCOSValue>FALSE</defaultCOSValue>
+  <defaultCOSValue>TRUE</defaultCOSValue>
   <defaultExternalCOSValue>FALSE</defaultExternalCOSValue>
   <desc>whether to allow use of briefcase feature</desc>
 </attr>
@@ -3464,7 +3466,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   <desc>Yahoo ID</desc>
 </attr>
 
-<attr id="659" name="zimbraACE" type="string" cardinality="multi" optionalIn="account,distributionList,cos,domain,globalConfig,server,ucService,zimletEntry,xmppComponent,aclTarget,group" since="5.0.7">
+<attr id="659" name="zimbraACE" type="string" cardinality="multi" optionalIn="account,distributionList,cos,domain,globalConfig,server,alwaysOnCluster,ucService,zimletEntry,xmppComponent,aclTarget,group" since="5.0.7">
   <desc>Zimbra access control list</desc>
 </attr>
 
@@ -4120,7 +4122,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   </desc>
 </attr>
 
-<attr id="790" name="zimbraCreateTimestamp" type="gentime" cardinality="single" immutable="1" optionalIn="account,alias,distributionList,cos,dataSource,domain,identity,globalConfig,server,ucService,signature,calendarResource,xmppComponent,zimletEntry,group,groupDynamicUnit,groupStaticUnit" since="6.0.0_BETA1">
+<attr id="790" name="zimbraCreateTimestamp" type="gentime" cardinality="single" immutable="1" optionalIn="account,alias,distributionList,cos,dataSource,domain,identity,globalConfig,server,alwaysOnCluster,ucService,signature,calendarResource,xmppComponent,zimletEntry,group,groupDynamicUnit,groupStaticUnit" since="6.0.0_BETA1">
   <desc>time object was created</desc>
 </attr>
 
@@ -4148,6 +4150,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   <globalConfigValue>GC</globalConfigValue>
   <globalConfigValue>SocketAcceptor</globalConfigValue>
   <globalConfigValue>Thread</globalConfigValue>
+  <globalConfigValue>qtp</globalConfigValue>
   <desc>
     Prefixes of thread names.  Each value is a column in
     threads.csv that tracks the number of threads whose
@@ -4481,7 +4484,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   </desc>
 </attr>
 
-<attr id="847" name="zimbraMobilePolicyDeviceEncryptionEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="6.0.0_BETA1" deprecatedSince="9.0.0">
+<attr id="847" name="zimbraMobilePolicyDeviceEncryptionEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="6.0.0_BETA1" deprecatedSince="8.5.0">
   <defaultCOSValue>TRUE</defaultCOSValue>
   <desc>
     require data encryption on device;
@@ -4592,7 +4595,7 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   </desc>
 </attr>
 
-<attr id="1014" name="zimbraMemcachedClientServerList" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="5.0.17">
+<attr id="1014" name="zimbraMemcachedClientServerList" type="string" cardinality="multi" optionalIn="globalConfig,server,alwaysOnCluster" flags="serverInherited,serverPreferAlwaysOn" since="5.0.17">
   <desc>list of host:port for memcached servers; set to empty value to disable the use of memcached</desc>
 </attr>
 
@@ -4886,12 +4889,14 @@ TODO - add support for multi-line values in globalConfigValue and defaultCOSValu
   <desc>enable domain mandatory mail signature</desc>
 </attr>
 
-<attr id="1070" name="zimbraDomainMandatoryMailSignatureText" type="string" cardinality="single" optionalIn="globalConfig,domain" flags="domainInherited" since="6.0.4">
+<attr id="1070" name="zimbraDomainMandatoryMailSignatureText" type="string" cardinality="single" optionalIn="globalConfig,domain" flags="domainInherited" since="6.0.4" deprecatedSince="8.5.0">
   <desc>domain mandatory mail plain text signature</desc>
+  <deprecateDesc>deprecated in favor of zimbraAmavisDomainDisclaimerText</deprecateDesc>
 </attr>
 
-<attr id="1071" name="zimbraDomainMandatoryMailSignatureHTML" type="string" cardinality="single" optionalIn="globalConfig,domain" flags="domainInherited" since="6.0.4">
+<attr id="1071" name="zimbraDomainMandatoryMailSignatureHTML" type="string" cardinality="single" optionalIn="globalConfig,domain" flags="domainInherited" since="6.0.4" deprecatedSince="8.5.0">
   <desc>domain mandatory mail html signature</desc>
+  <deprecateDesc>deprecated in favor of zimbraAmavisDomainDisclaimerHTML</deprecateDesc>
 </attr>
 
 <attr id="1072" name="zimbraPrefMailFoldersCheckedForNewMsgIndicator" type="string" max="1024" cardinality="single" optionalIn="account,cos" flags="accountInherited,domainAdminModifiable" since="6.0.5">
@@ -6906,7 +6911,7 @@ TODO: delete them permanently from here
 </attr>
 
 <attr id="1383" name="zimbraThrottleSafeHosts" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mailbox" since="8.0.0">
-  <desc>Hosts to ignore during IP based throttling. Typically should list nginx hostname and any other mailbox servers which can proxy to this server</desc>
+  <desc>Hosts to ignore during IP based throttling. Account and command rate limits will still be applied. Typically should list nginx hostname and any other mailbox servers which can proxy to this server</desc>
 </attr>
 
 <attr id="1384" name="zimbraReverseProxyDnsLookupInServerEnabled" type="boolean" cardinality="single" optionalIn="server,globalConfig" flags="serverInherited" since="8.0.0">
@@ -7095,16 +7100,16 @@ TODO: delete them permanently from here
   <desc>whether ldap based galsync disabled or not</desc>
 </attr>
 
-<attr id="1421" name="zimbraMobileNotificationEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited,domainAdminModifiable" since="9.0.0">
+<attr id="1421" name="zimbraMobileNotificationEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited,domainAdminModifiable" since="8.5.0">
   <defaultCOSValue>TRUE</defaultCOSValue>
   <desc>whether mobile sync notification enabled or not</desc>
 </attr>
 
-<attr id="1422" name="zimbraMobileNotificationAdminAddress" type="email" max="256" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="9.0.0">
+<attr id="1422" name="zimbraMobileNotificationAdminAddress" type="email" max="256" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="8.5.0">
   <desc>admin email address used for receiving notifications</desc>
 </attr>
 
-<attr id="1423" name="zimbraMobileAttachSkippedItemEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited,domainAdminModifiable" since="9.0.0">
+<attr id="1423" name="zimbraMobileAttachSkippedItemEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited,domainAdminModifiable" since="8.5.0">
   <defaultCOSValue>FALSE</defaultCOSValue>
   <desc>whether mobile sync should zip the skipped item and attach it to the notification mail</desc>
 </attr>
@@ -7151,12 +7156,12 @@ TODO: delete them permanently from here
   <desc>Regular Expression for words to ignore during spell check.</desc>
 </attr>
 
-<attr id="1433" name="zimbraTouchJSErrorTrackingEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="9.0.0">
+<attr id="1433" name="zimbraTouchJSErrorTrackingEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
   <defaultCOSValue>FALSE</defaultCOSValue>
   <desc>whether JavaScript error tracking via third party service is enabled</desc>
 </attr>
 
-<attr id="1434" name="zimbraTouchJSErrorTrackingKey" type="string" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="9.0.0">
+<attr id="1434" name="zimbraTouchJSErrorTrackingKey" type="string" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
   <desc>Key to be used for JavaScript error tracking via third party service</desc>
 </attr>
 
@@ -7184,25 +7189,647 @@ TODO: delete them permanently from here
   </desc>
 </attr>
 
-<attr id="1441" name="zimbraConverterHints" type="cstring" cardinality="multi" optionalIn="account,cos" flags="accountInfo,accountInherited" since="9.0.0">
+<attr id="1441" name="zimbraConverterHints" type="cstring" cardinality="multi" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
   <desc>Allows converter hints to be supplied on the COS level. Can be used to enable or disable some converters</desc>
 </attr>
 
-<attr id="1442" name="zimbraFilePreviewMaxSize" type="long" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="9.0.0">
+<attr id="1442" name="zimbraFilePreviewMaxSize" type="long" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
   <defaultCOSValue>20971520</defaultCOSValue>
   <desc>Maximum size in bytes for file preview in web client</desc>
 </attr>
 
-<attr id="1443" name="zimbraPrefWebClientOfflineAccessEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="9.0.0">
+<attr id="1443" name="zimbraPrefWebClientOfflineAccessEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="8.5.0">
   <defaultCOSValue>FALSE</defaultCOSValue>
   <desc>user preference to enable/disable access to his mailbox data in the web client when offline</desc>
 </attr>
 
-<attr id="1444" name="zimbraMobilePolicyRequireStorageCardEncryption" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="9.0.0">
+<attr id="1444" name="zimbraMobilePolicyRequireStorageCardEncryption" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="8.5.0">
   <defaultCOSValue>TRUE</defaultCOSValue>
   <desc>
     require data encryption on storage card;
     ignored if zimbraFeatureMobilePolicyEnabled=FALSE
   </desc>
 </attr>
+
+<attr id="1445" name="zimbraWebClientURL" type="string" max="512" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>weclient URL to directly connect when making service to JS calls from mail server in split mode</desc>
+</attr>
+
+<attr id="1446" name="zimbraAlwaysOnClusterId" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mailbox" since="8.5.0">
+  <desc>AlwaysOn cluster-id to which this server belongs to. If empty, it's not part of AlwaysOn and is a stand-alone server.</desc>
+</attr>
+
+<attr id="1447" name="zimbraZookeeperClientServerList" type="string" cardinality="multi" optionalIn="globalConfig,server,alwaysOnCluster" flags="serverInherited,serverPreferAlwaysOn" since="8.5.0">
+  <desc>list of host:port for zookeeper servers; set to empty value to disable the use of zookeeper</desc>
+</attr>
+
+<attr id="1448" name="zimbraPrefFontSize" type="string" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="8.5.0">
+  <defaultCOSValue>normal</defaultCOSValue>
+  <desc>the font size for the web client</desc>
+</attr>
+
+<attr id="1449" name="zimbraThrottleWhitelist" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mailbox" since="8.0.5">
+  <desc>Hosts to whitelist during IP based throttling. Account and command rate limits will not be applied. This should only be used for internal servers which cannot service end user traffic; e.g. migration or monitoring hosts</desc>
+</attr>
+
+<attr id="1450" name="zimbraDeviceCalendarSoftDeleteExcludePattern" type="cstring" cardinality="single" optionalIn="account,cos" flags="accountInherited" since="8.0.5">
+  <desc>
+    Regex to be matched for preventing devices from soft deletion of out of range calendar items.
+    Suppose device is set to sync calendar item of 2 months range then server will ONLY send softdelete for out of range (expired) calendar items, if device id DOES NOT match to the regex provided. 
+   </desc>
+</attr>
+
+<attr id="1451" name="zimbraItemActionBatchSize" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.0.5">
+  <globalConfigValue>1000</globalConfigValue>
+  <desc>
+    Maximum number of item to perform an ItemAction on at a time.
+  </desc>
+</attr>
+
+<attr id="1452" name="zimbraWebClientOfflineSyncMaxDays" type="integer" cardinality="single" optionalIn="account,cos" flags="accountInherited,accountInfo" since="8.5.0">
+  <defaultCOSValue>30</defaultCOSValue>
+  <desc>limit for the number of days that the web client would use to sync any mail folder's data for offline use</desc>
+</attr>
+
+<attr id="1453" name="zimbraMobileOutlookSyncEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited,domainAdminModifiable" since="8.0.5">
+  <defaultCOSValue>TRUE</defaultCOSValue>
+  <desc>Whether to permit Outlook to sync via Active Sync</desc>
+</attr>
+
+<attr id="1454" name="zimbraReverseProxyExternalRouteIncludeOriginalAuthusername" type="boolean" cardinality="single" optionalIn="domain,globalConfig" flags="domainInherited,domainAdminModifiable" since="8.0.5">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>
+      During migrations Nginx lookup handler rewrites non-qualified username to fully qualified breaking proxy to external legacy mail platform.
+      When zimbraReverseProxyUseExternalRoute is set to TRUE and zimbraReverseProxyExternalRouteIncludeOriginalAuthusername is set to FALSE
+      nginx lookup handler drops the domain name from the userAccount and returns just the username.
+  </desc>
+</attr>
+
+<attr id="1455" name="zimbraFeatureFromDisplayEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.0.5">
+  <defaultCOSValue>TRUE</defaultCOSValue>
+  <desc>whether to display from address control in user preferences</desc>
+</attr>
+
+<attr id="1456" name="zimbraAntispamExtractionBatchSize" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.0.5">
+  <globalConfigValue>25</globalConfigValue>
+  <desc>batch size for zmspamextract</desc>
+</attr>
+
+<attr id="1457" name="zimbraAntispamExtractionBatchDelay" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.0.5">
+  <globalConfigValue>100</globalConfigValue>
+  <desc>delay between each batch for zmspamextract</desc>
+</attr>
+
+<attr id="1458" name="zimbraAmavisDomainDisclaimerText" type="string" cardinality="single" optionalIn="domain" since="8.5.0">
+  <desc>domain mandatory mail plain text signature</desc>
+</attr>
+
+<attr id="1459" name="zimbraAmavisDomainDisclaimerHTML" type="string" cardinality="single" optionalIn="domain" since="8.5.0">
+  <desc>domain mandatory mail html signature</desc>
+</attr>
+
+<attr id="1460" name="zimbraAmavisFinalSpamDestiny" type="enum" value="D_PASS,D_BOUNCE,D_REJECT,D_DISCARD" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>D_DISCARD</globalConfigValue>
+  <desc>Amavis final destination for Spam.  Default is to discard it</desc>
+</attr>
+
+<attr id="1461" name="zimbraAmavisMaxServers" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>10</globalConfigValue>
+  <desc>Maximum number of Amavis servers to run.  Default is 10</desc>
+</attr>
+
+<attr id="1462" name="zimbraClamAVMaxThreads" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>10</globalConfigValue>
+  <desc>Maximum number of ClamAV servers to run.  Default is 10</desc>
+</attr>
+
+<attr id="1463" name="zimbraAmavisEnableDKIMVerification" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>TRUE</globalConfigValue>
+  <desc>Whether or not Amavis should verify DKIM keys.  Defaults to TRUE</desc>
+</attr>
+
+<attr id="1464" name="zimbraAmavisOriginatingBypassSA" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not Amavis should Bypass SpamAsassin for originating email.  Defaults to FALSE</desc>
+</attr>
+
+<attr id="1465" name="zimbraAmavisDSPAMEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not Amavis should use DSPAM as an additional score factor for SPAM. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1466" name="zimbraMtaEnableSmtpdPolicyd" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable zmpostfixpolicyd with MTA. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1467" name="zimbraHttpCompressionEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mailbox" since="7.2.5">
+  <globalConfigValue>TRUE</globalConfigValue>
+  <desc>Whether or not to enable HTTP compression. Defaults to true.</desc>
+</attr>
+
+<attr id="1468" name="zimbraWebGzipEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mailbox" since="7.2.5">
+  <globalConfigValue>TRUE</globalConfigValue>
+  <desc>Whether or not to gzip static web content. Defaults to true.</desc>
+</attr>
+
+<attr id="1469" name="zimbraCBPolicydAccessControlEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd Access Control module. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1470" name="zimbraCBPolicydAccountingEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd Accounting module. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1471" name="zimbraCBPolicydAmavisEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd Amavis module. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1472" name="zimbraCBPolicydCheckHeloEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd Check Helo module. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1473" name="zimbraCBPolicydCheckSPFEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd CheckSPF module. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1474" name="zimbraCBPolicydGreylistingEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd Greylisting module. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1475" name="zimbraCBPolicydGreylistingTrainingEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Whether or not to put CBPolicyd Greylisting module in training only mode. Defaults to FALSE</desc>
+</attr>
+
+<attr id="1476" name="zimbraCBPolicydQuotasEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>TRUE</globalConfigValue>
+  <desc>Whether or not to enable CBPolicyd Quotas module. Defaults to TRUE</desc>
+</attr>
+
+<attr id="1477" name="zimbraCBPolicydMinServers" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>4</globalConfigValue>
+  <desc>Minimum number of CBPolicyd servers to have running. Defaults to 4</desc>
+</attr>
+
+<attr id="1478" name="zimbraCBPolicydMinSpareServers" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>4</globalConfigValue>
+  <desc>Minimum number of spare servers to have on hand. Defaults to 4</desc>
+</attr>
+
+<attr id="1479" name="zimbraCBPolicydMaxSpareServers" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>12</globalConfigValue>
+  <desc>Maximum number of spare servers to have on hand that are idle. Defaults to 12</desc>
+</attr>
+
+<attr id="1480" name="zimbraCBPolicydMaxServers" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>25</globalConfigValue>
+  <desc>Maximum number of servers to allow. Defaults to 25</desc>
+</attr>
+
+<attr id="1481" name="zimbraCBPolicydMaxRequests" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>1000</globalConfigValue>
+  <desc>Maximum number of requests to process per server. Defaults to 1000</desc>
+</attr>
+
+<attr id="1482" name="zimbraCBPolicydTimeoutIdle" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>1020</globalConfigValue>
+  <desc>Timeout when talking to clients and servers are idle. Defaults to 1020 seconds</desc>
+</attr>
+
+<attr id="1483" name="zimbraCBPolicydTimeoutBusy" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>120</globalConfigValue>
+  <desc>Timeout when talking to clients and servers are busy. Defaults to 120 seconds</desc>
+</attr>
+
+<attr id="1484" name="zimbraCBPolicydBypassTimeout" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>30</globalConfigValue>
+  <desc>Bypass timeout. Defaults to 30 seconds</desc>
+</attr>
+
+<attr id="1485" name="zimbraCBPolicydBypassMode" type="enum" value="tempfail,pass" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>tempfail</globalConfigValue>
+  <desc>Bypass fail mode. Default is tempfail</desc>
+</attr>
+
+<attr id="1486" name="zimbraCBPolicydGreylistingDeferMsg" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>Greylisting in effect, please come back later</globalConfigValue>
+  <desc>Message to give when deferring email. Default is Greylisting in effect, please come back later</desc>
+</attr>
+
+<attr id="1487" name="zimbraCBPolicydGreylistingBlacklistMsg" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.5.0">
+  <globalConfigValue>Greylisting in effect, sending server blacklisted</globalConfigValue>
+  <desc>Message to give when client is on blacklist. Default is Greylisting in effect, sending server blacklisted</desc>
+</attr>
+
+<attr id="1488" name="zimbraAmavisLogLevel" type="integer" min="0" max="5" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" requiresRestart="mta" since="8.0.5">
+  <globalConfigValue>1</globalConfigValue>
+  <desc>Loglevel for Amavis. Defaults to 1.  Valid range is 0-5</desc>
+</attr>
+
+<attr id="1489" name="zimbraMtaLmdbMapSize" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>16777216</globalConfigValue>
+  <desc>Maximum Map size for MTA LMDB dbs. Defaults to 16777216 (16MB). Databases will not grow beyond this point.</desc>
+</attr>
+
+<attr id="1490" name="zimbraFeatureSocialEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
+  <defaultCOSValue>FALSE</defaultCOSValue>
+  <defaultExternalCOSValue>FALSE</defaultExternalCOSValue>
+  <desc>internal social features</desc>
+</attr>
+
+<attr id="1491" name="zimbraFeatureSocialExternalEnabled" type="boolean" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
+  <defaultCOSValue>FALSE</defaultCOSValue>
+  <defaultExternalCOSValue>FALSE</defaultExternalCOSValue>
+  <desc>external social features</desc>
+</attr>
+
+<attr id="1492" name="zimbraFeatureSocialExternalURL" type="string" cardinality="single" optionalIn="account,cos" flags="accountInfo,accountInherited" since="8.5.0">
+  <desc>external social URL</desc>
+</attr>
+
+<attr id="1493" name="zimbraMtaAliasMaps" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>lmdb:/etc/aliases</globalConfigValue>
+  <desc>Value for postconf alias_maps</desc>
+</attr>
+
+<attr id="1494" name="zimbraMtaAlwaysAddMissingHeaders" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>yes</globalConfigValue>
+  <desc>Value for postconf always_add_missing_headers</desc>
+</attr>
+
+<attr id="1495" name="zimbraMtaBrokenSaslAuthClients" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>yes</globalConfigValue>
+  <desc>Value for postconf broken_sasl_auth_clients</desc>
+</attr>
+
+<attr id="1496" name="zimbraMtaBounceNoticeRecipient" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>postmaster</globalConfigValue>
+  <desc>Value for postconf bounce_notice_recipient</desc>
+</attr>
+
+<attr id="1497" name="zimbraMtaBounceQueueLifetime" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>5d</globalConfigValue>
+  <desc>Value for postconf bounce_queue_lifetime</desc>
+</attr>
+
+<attr id="1498" name="zimbraMtaCommandDirectory" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/postfix/sbin</globalConfigValue>
+  <desc>Value for postconf command_directory</desc>
+</attr>
+
+<attr id="1499" name="zimbraMtaDaemonDirectory" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/postfix/libexec</globalConfigValue>
+  <desc>Value for postconf daemon_directory</desc>
+</attr>
+
+<attr id="1500" name="zimbraMtaDelayWarningTime" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>0h</globalConfigValue>
+  <desc>Value for postconf delay_warning_time</desc>
+</attr>
+
+<attr id="1501" name="zimbraMtaDefaultProcessLimit" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>100</globalConfigValue>
+  <desc>Value for postconf default_process_limit</desc>
+</attr>
+
+<attr id="1502" name="zimbraMtaHeaderChecks" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>pcre:/opt/zimbra/conf/postfix_header_checks</globalConfigValue>
+  <desc>Value for postconf header_checks</desc>
+</attr>
+
+<attr id="1503" name="zimbraMtaImportEnvironment" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf import_environment</desc>
+</attr>
+
+<attr id="1504" name="zimbraMtaInFlowDelay" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>1s</globalConfigValue>
+  <desc>Value for postconf in_flow_delay</desc>
+</attr>
+
+<attr id="1505" name="zimbraMtaLmtpConnectionCacheDestinations" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf lmtp_connection_cache_destinations</desc>
+</attr>
+
+<attr id="1506" name="zimbraMtaLmtpConnectionCacheTimeLimit" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>4s</globalConfigValue>
+  <desc>Value for postconf lmtp_connection_cache_time_limit</desc>
+</attr>
+
+<attr id="1507" name="zimbraMtaLmtpHostLookup" type="enum" value="dns,native" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>dns</globalConfigValue>
+  <desc>Value for postconf lmtp_host_lookup</desc>
+</attr>
+
+<attr id="1508" name="zimbraMtaMailqPath" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/postfix/sbin/mailq</globalConfigValue>
+  <desc>Value for postconf mailq_path</desc>
+</attr>
+
+<attr id="1509" name="zimbraMtaManpageDirectory" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/postfix/man</globalConfigValue>
+  <desc>Value for postconf manpage_directory</desc>
+</attr>
+
+<attr id="1510" name="zimbraMtaNewaliasesPath" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/postfix/sbin/newaliases</globalConfigValue>
+  <desc>Value for postconf newaliases_path</desc>
+</attr>
+
+<attr id="1511" name="zimbraMtaQueueDirectory" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/data/postfix/spool</globalConfigValue>
+  <desc>Value for postconf queue_directory</desc>
+</attr>
+
+<attr id="1512" name="zimbraMtaSendmailPath" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>/opt/zimbra/postfix/sbin/sendmail</globalConfigValue>
+  <desc>Value for postconf sendmail_path</desc>
+</attr>
+
+<attr id="1513" name="zimbraMtaSmtpTlsCiphers" type="enum" value="export,low,medium,high,null" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>export</globalConfigValue>
+  <desc>Value for postconf smtp_tls_ciphers</desc>
+</attr>
+
+<attr id="1514" name="zimbraMtaSmtpTlsMandatoryCiphers" type="enum" value="export,low,medium,high,null" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>medium</globalConfigValue>
+  <desc>Value for postconf smtp_tls_mandatory_ciphers</desc>
+</attr>
+
+<attr id="1515" name="zimbraMtaSmtpdTlsCiphers" type="enum" value="export,low,medium,high,null" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>export</globalConfigValue>
+  <desc>Value for postconf smtpd_tls_ciphers</desc>
+</attr>
+
+<attr id="1516" name="zimbraMtaSmtpdTlsMandatoryCiphers" type="enum" value="export,low,medium,high,null" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>medium</globalConfigValue>
+  <desc>Value for postconf smtpd_tls_mandatory_ciphers</desc>
+</attr>
+
+<attr id="1517" name="zimbraMtaMaximalBackoffTime" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>4000s</globalConfigValue>
+  <desc>Value for postconf maximal_backoff_time</desc>
+</attr>
+
+<attr id="1518" name="zimbraMtaMinimalBackoffTime" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>300s</globalConfigValue>
+  <desc>Value for postconf minimal_backoff_time</desc>
+</attr>
+
+<attr id="1519" name="zimbraMtaQueueRunDelay" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>300s</globalConfigValue>
+  <desc>Value for postconf queue_run_delay</desc>
+</attr>
+
+<attr id="1520" name="zimbraMtaMilterConnectTimeout" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>30s</globalConfigValue>
+  <desc>Value for postconf milter_connect_timeout</desc>
+</attr>
+
+<attr id="1521" name="zimbraMtaMilterCommandTimeout" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>30s</globalConfigValue>
+  <desc>Value for postconf milter_command_timeout</desc>
+</attr>
+
+<attr id="1522" name="zimbraMtaMilterContentTimeout" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>300s</globalConfigValue>
+  <desc>Value for postconf milter_content_timeout</desc>
+</attr>
+
+<attr id="1523" name="zimbraMtaMilterDefaultAction" type="enum" value="accept,reject,tempfail,quarantine" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>tempfail</globalConfigValue>
+  <desc>Value for postconf milter_default_action</desc>
+</attr>
+
+<attr id="1524" name="zimbraMtaSmtpCnameOverridesServername" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf smtp_cname_overrides_servername</desc>
+</attr>
+
+<attr id="1525" name="zimbraMtaSmtpHeloName" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>$myhostname</globalConfigValue>
+  <desc>Value for postconf smtp_helo_name</desc>
+</attr>
+
+<attr id="1526" name="zimbraMtaSmtpSaslAuthEnable" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf smtp_sasl_auth_enable</desc>
+</attr>
+
+<attr id="1527" name="zimbraMtaSmtpTlsSecurityLevel" type="enum" value="none,may,encrypt,dane,dane-only,fingerprint,verify,secure" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>may</globalConfigValue>
+  <desc>Value for postconf smtp_tls_security_level</desc>
+</attr>
+
+<attr id="1528" name="zimbraMtaSmtpSaslMechanismFilter" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf smtp_sasl_mechanism_filter</desc>
+</attr>
+
+<attr id="1529" name="zimbraMtaSmtpSaslPasswordMaps" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf smtp_sasl_password_maps</desc>
+</attr>
+
+<attr id="1530" name="zimbraMtaPolicyTimeLimit" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>3600</globalConfigValue>
+  <desc>Value for postconf policy_time_limit</desc>
+</attr>
+
+<attr id="1531" name="zimbraMtaMaxUse" type="integer" min="1" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>100</globalConfigValue>
+  <desc>Value for postconf max_use</desc>
+</attr>
+
+<attr id="1532" name="zimbraMtaSmtpdBanner" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>$myhostname ESMTP $mail_name</globalConfigValue>
+  <desc>Value for postconf smtpd_banner</desc>
+</attr>
+
+<attr id="1533" name="zimbraMtaSmtpdProxyTimeout" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>100s</globalConfigValue>
+  <desc>Value for postconf smtpd_proxy_timeout</desc>
+</attr>
+
+<attr id="1534" name="zimbraMtaSmtpdRejectUnlistedRecipient" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf smtpd_reject_unlisted_recipient</desc>
+</attr>
+
+<attr id="1535" name="zimbraMtaSmtpdRejectUnlistedSender" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf smtpd_reject_unlisted_sender</desc>
+</attr>
+
+<attr id="1536" name="zimbraMtaSmtpdSaslAuthenticatedHeader" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf smtpd_sasl_authenticated_header</desc>
+</attr>
+
+<attr id="1537" name="zimbraMtaSmtpdHardErrorLimit" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>20</globalConfigValue>
+  <desc>Value for postconf smtpd_hard_error_limit</desc>
+</attr>
+
+<attr id="1538" name="zimbraMtaStpdSoftErrorLimit" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>10</globalConfigValue>
+  <desc>Value for postconf smtpd_soft_error_limit</desc>
+</attr>
+
+<attr id="1539" name="zimbraMtaSmtpdErrorSleepTime" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>1s</globalConfigValue>
+  <desc>Value for postconf smtpd_error_sleep_time</desc>
+</attr>
+
+<attr id="1540" name="zimbraMtaSmtpdHeloRequired" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>yes</globalConfigValue>
+  <desc>Value for postconf smtpd_helo_required</desc>
+</attr>
+
+<attr id="1541" name="zimbraMtaSmtpdTlsLoglevel" type="integer" min="1" max="4" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>1</globalConfigValue>
+  <desc>Value for postconf smtpd_tls_loglevel.  Default is 1.  Valid range is 1-4.</desc>
+</attr>
+
+<attr id="1542" name="zimbraMtaSmtpdTlsAskCcert" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf smtpd_tls_ask_ccert</desc>
+</attr>
+
+<attr id="1543" name="zimbraMtaSmtpdTlsCcertVerifydepth" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>9</globalConfigValue>
+  <desc>Value for postconf smtpd_tls_ccert_verifydepth</desc>
+</attr>
+
+<attr id="1544" name="zimbraMtaVirtualAliasExpansionLimit" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>10000</globalConfigValue>
+  <desc>Value for postconf virtual_alias_expansion_limit</desc>
+</attr>
+
+<attr id="1545" name="zimbraMtaSmtpdVirtualTransport" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>error</globalConfigValue>
+  <desc>Value for postconf virtual_transport</desc>
+</attr>
+
+<attr id="1546" name="zimbraMtaNotifyClasses" type="enum" value="bounce,2bounce,data,delay,policy,protocol,resource,software" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>resource</globalConfigValue>
+  <globalConfigValue>software</globalConfigValue>
+  <desc>Value for postconf notify_classes</desc>
+</attr>
+
+<attr id="1547" name="zimbraMtaPropagateUnmatchedExtensions" type="enum" value="canonical,virtual,alias,forward,include,generic" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>canonical</globalConfigValue>
+  <desc>Value for postconf propagate_unmatched_extensions</desc>
+</attr>
+
+<attr id="1548" name="zimbraMtaSenderCanonicalMaps" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>proxy:ldap:/opt/zimbra/conf/ldap-scm.cf</globalConfigValue>
+  <desc>Value for postconf sender_canonical_maps</desc>
+</attr>
+
+<attr id="1549" name="zimbraMtaSmtpSaslSecurityOptions" type="enum" value="noplaintext,noactive,nodictionary,noanonymous,mutual_auth" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>noplaintext,noanonymous</globalConfigValue>
+  <desc>Value for postconf smtp_sasl_security_options</desc>
+</attr>
+
+<attr id="1550" name="zimbraMtaSmtpdSaslSecurityOptions" type="enum" value="noplaintext,noactive,nodictionary,noanonymous,mutual_auth" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>noanonymous</globalConfigValue>
+  <desc>Value for postconf smtpd_sasl_security_options</desc>
+</attr>
+
+<attr id="1551" name="zimbraConfiguredServerIDForBlobDirEnabled" type="boolean" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>FALSE</globalConfigValue>
+  <desc>Enabled using the configured server ID for blob dir</desc>
+</attr>
+
+<attr id="1552" name="zimbraMtaSmtpdSaslTlsSecurityOptions" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>$smtpd_sasl_security_options</globalConfigValue>
+  <desc>Value for postconf smtpd_sasl_tls_security_options</desc>
+</attr>
+
+<attr id="1553" name="zimbraMtaSmtpdClientRestrictions" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>reject_unauth_pipelining</globalConfigValue>
+  <desc>Value for postconf smtpd_client_restrictions</desc>
+</attr>
+
+<attr id="1554" name="zimbraMtaSmtpdDataRestrictions" type="string" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>reject_unauth_pipelining</globalConfigValue>
+  <desc>Value for postconf smtpd_data_restrictions</desc>
+</attr>
+
+<attr id="1555" name="zimbraMtaTransportMaps" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>proxy:ldap:/opt/zimbra/conf/ldap-transport.cf</globalConfigValue>
+  <desc>Value for postconf transport_maps</desc>
+</attr>
+
+<attr id="1556" name="zimbraMtaVirtualAliasDomains" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>proxy:ldap:/opt/zimbra/conf/ldap-vad.cf</globalConfigValue>
+  <desc>Value for postconf virtual_alias_domains</desc>
+</attr>
+
+<attr id="1557" name="zimbraMtaVirtualAliasMaps" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>proxy:ldap:/opt/zimbra/conf/ldap-vam.cf</globalConfigValue>
+  <desc>Value for postconf virtual_alias_maps</desc>
+</attr>
+
+<attr id="1558" name="zimbraMtaVirtualMailboxDomains" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>proxy:ldap:/opt/zimbra/conf/ldap-vmd.cf</globalConfigValue>
+  <desc>Value for postconf virtual_mailbox_domains</desc>
+</attr>
+
+<attr id="1559" name="zimbraMtaVirtualMailboxMaps" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>proxy:ldap:/opt/zimbra/conf/ldap-vmm.cf</globalConfigValue>
+  <desc>Value for postconf virtual_mailbox_maps</desc>
+</attr>
+
+<attr id="1560" name="zimbraMtaSaslSmtpdMechList" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>PLAIN</globalConfigValue>
+  <globalConfigValue>LOGIN</globalConfigValue>
+  <desc>Supported SASL mechanisms for use with the MTA.  One attribute value per mechanism.</desc>
+</attr>
+
+<attr id="1561" name="zimbraCBPolicydBindPort" type="integer" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>10031</globalConfigValue>
+  <desc>Port for CBPolicyd to bind to. Defaults to 10031</desc>
+</attr>
+
+<attr id="1562" name="zimbraCBPolicydLogLevel" type="integer" min="0" max="4" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>3</globalConfigValue>
+  <desc>Logging level for CBPolicyd. Defaults to 3. Valid range is 0-4</desc>
+</attr>
+
+<attr id="1563" name="zimbraMtaSmtpdTlsCAfile" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf smtpd_tls_CAfile</desc>
+</attr>
+
+<attr id="1564" name="zimbraMtaSmtpdTlsCApath" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf smtpd_tls_CApath</desc>
+</attr>
+
+<attr id="1565" name="zimbraMtaSmtpTlsCAfile" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf smtp_tls_CAfile</desc>
+</attr>
+
+<attr id="1566" name="zimbraMtaSmtpTlsCApath" type="string" cardinality="multi" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <desc>Value for postconf smtp_tls_CApath</desc>
+</attr>
+
+<attr id="1567" name="zimbraMtaTlsAppendDefaultCA" type="enum" value="yes,no" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>no</globalConfigValue>
+  <desc>Value for postconf tls_append_default_CA</desc>
+</attr>
+
+<attr id="1568" name="zimbraMtaSmtpTlsLoglevel" type="integer" min="0" max="4" cardinality="single" optionalIn="globalConfig,server" flags="serverInherited" since="8.5.0">
+  <globalConfigValue>0</globalConfigValue>
+  <desc>Value for postconf smtp_tls_loglevel. Defaults to 0. Valid range is 0-4</desc>
+</attr>
+
+<attr id="1569" name="zimbraDNSMasterIP" type="string" max="256" cardinality="multi" optionalIn="globalConfig,server" since="8.5.0">
+  <desc>IP Address(es) of the root DNS servers to be used by the DNS cache service</desc>
+</attr>
+
 </attrs>

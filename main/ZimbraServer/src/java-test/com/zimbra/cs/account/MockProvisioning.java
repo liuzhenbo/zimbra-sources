@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2010, 2011, 2012, 2013 VMware, Inc.
- *
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -26,6 +26,7 @@ import java.util.UUID;
 import com.google.common.collect.Maps;
 import com.zimbra.common.account.Key;
 import com.zimbra.common.account.Key.AccountBy;
+import com.zimbra.common.account.Key.AlwaysOnClusterBy;
 import com.zimbra.common.account.Key.ShareLocatorBy;
 import com.zimbra.common.account.Key.UCServiceBy;
 import com.zimbra.common.account.ProvisioningConstants;
@@ -762,6 +763,35 @@ public final class MockProvisioning extends Provisioning {
 
     @Override
     public void renameUCService(String zimbraId, String newName) throws ServiceException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public AlwaysOnCluster createAlwaysOnCluster(String name,
+            Map<String, Object> attrs) throws ServiceException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public AlwaysOnCluster get(AlwaysOnClusterBy keyname, String key)
+            throws ServiceException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void deleteAlwaysOnCluster(String zimbraId) throws ServiceException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<AlwaysOnCluster> getAllAlwaysOnClusters()
+            throws ServiceException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public List<Server> getAllServers(String service, String clusterId)
+            throws ServiceException {
         throw new UnsupportedOperationException();
     }
 

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -1494,7 +1494,7 @@ function(str, bold, fontSize) {
 	}
 
 	if (AjxUtil.isString(fontSize)) {
-		fontSize = fontSize.replace(/px$/,"");
+		fontSize = DwtCssStyle.asPixelCount(fontSize);
 	}
 	var sz = "" + (fontSize || 0); // 0 means "default";
 	
@@ -1529,16 +1529,21 @@ function(str, bold, fontSize) {
  *
  */
 AjxStringUtil.fixCrossDomainReference =
-function(url, restUrlAuthority) {
+function(url, restUrlAuthority, convertToRelativeURL) {
 	var urlParts = AjxStringUtil.parseURL(url);
 	if (urlParts.authority == window.location.host) {
 		return url;
 	}
 
 	if ((restUrlAuthority && url.indexOf(restUrlAuthority) >=0) || !restUrlAuthority) {
-		var oldRef = urlParts.protocol + "://" + urlParts.authority;
-		var newRef = window.location.protocol + "//" + window.location.host;
-		url = url.replace(oldRef, newRef);
+        if (convertToRelativeURL) {
+            url = urlParts.path;
+        }
+        else {
+            var oldRef = urlParts.protocol + "://" + urlParts.authority;
+            var newRef = window.location.protocol + "//" + window.location.host;
+            url = url.replace(oldRef, newRef);
+        }
 	}
 	return url;
 };
@@ -1648,7 +1653,7 @@ function(html) {
 		idoc = AjxStringUtil._htmlContentIframeDoc = Dwt.getIframeDoc(iframe);
 		AjxStringUtil.__curIframeId = AjxEnv.isFirefox ? iframe.id : null;
 	}
-    html = html && html.replace(AjxStringUtil.IMG_SRC_CID_REGEX, '<img pnsrc="cid:');
+    html = html && html.replace(AjxStringUtil.IMG_SRC_CID_REGEX, '<img $1 pnsrc="cid:');
 	idoc.open();
 	idoc.write(html);
 	idoc.close();
@@ -1768,7 +1773,7 @@ function(text, isHtml) {
 
 	// Check for UNKNOWN followed by HEADER
 	var first = results[0], second = results[1];
-	if (first && first.type === AjxStringUtil.ORIG_UNKNOWN && second && second.type === AjxStringUtil.ORIG_HEADER) {
+	if (first && first.type === AjxStringUtil.ORIG_UNKNOWN && second && (second.type === AjxStringUtil.ORIG_HEADER || second.type === AjxStringUtil.ORIG_WROTE_STRONG)) {
 		var originalText = AjxStringUtil._getTextFromBlock(first.block);
 		if (originalText) {
 			return originalText;
@@ -1869,244 +1874,206 @@ function(block) {
 
 AjxStringUtil.SCRIPT_REGEX = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi;
 
+// nodes to ignore; they won't have anything we're interested in
+AjxStringUtil.IGNORE_NODE_LIST = ["#comment", "br", "script", "select", "style"];
+AjxStringUtil.IGNORE_NODE = AjxUtil.arrayAsHash(AjxStringUtil.IGNORE_NODE_LIST);
+
 /**
  * For HTML, we strip off the html, head, and body tags and stick the rest in a temporary DOM node so that
- * we can walk the tree. Instead of going line by line, we go element by element. The easiest way is to figure
- * out which nodes we can remove if the message appears to have quoted and original content.
- * 
+ * we can walk the tree. Instead of going line by line, we go element by element. If we find one that
+ * is recognized as a separator, we remove all subsequent elements.
+ *
  * @param {string}	text		message body content
- * 
+ *
  * @return	{string}	original content if quoted content was found, otherwise NULL
  * @private
  */
-AjxStringUtil._getOriginalHtmlContent =
-function(text) {
-	
+AjxStringUtil._getOriginalHtmlContent = function(text) {
+
 	// strip <script> tags (which should not be there)
 	while (AjxStringUtil.SCRIPT_REGEX.test(text)) {
 		text = text.replace(AjxStringUtil.SCRIPT_REGEX, "");
 	}
-	
-	var htmlNode = AjxStringUtil._writeToTestIframeDoc(text);
-	var ctxt = {
-		curType:	null,
-		count:		{},
-		level:		0,
-		toRemove:	[],
-		done:		false,
-		hasQuoted:	false,
-		sepNode:	null,
-		results:	[],
-		ignore:		false,
-		nodeCount:	0
-	};
-	AjxStringUtil._traverseOriginalHtmlContent(htmlNode, ctxt);
 
-	// check for special case of WROTE preceded by UNKNOWN, followed by mix of UNKNOWN and QUOTED (inline reply)
-	AjxStringUtil._checkInlineWrote(ctxt.count, ctxt.results, true, ctxt);
-	
-	// if there's one UNKNOWN section and some QUOTED, preserve the UNKNOWN
-	if (!ctxt.done) {
-		if (ctxt.count[AjxStringUtil.ORIG_UNKNOWN] === 1 && ctxt.hasQuoted) {
-			for (var i = 0; i < ctxt.toRemove.length; i++) {
-				var el = ctxt.toRemove[i];
-				if (el && el.parentNode) {
-					el.parentNode.removeChild(el);
-				}
+	var htmlNode = AjxStringUtil._writeToTestIframeDoc(text);
+
+	var done = false, nodeList = [];
+	AjxStringUtil._flatten(htmlNode, nodeList);
+
+	var ln = nodeList.length, i, results = [], count = {}, el, prevEl, nodeName, type, prevType, sepNode;
+	for (i = 0; i < ln; i++) {
+		el = nodeList[i];
+		nodeName = el.nodeName.toLowerCase();
+		type = AjxStringUtil._checkNode(nodeList[i]);
+		if (type !== null) {
+			results.push({ type: type, node: el, nodeName: nodeName });
+			count[type] = count[type] ? count[type] + 1 : 1;
+			// definite separator
+			if (type === AjxStringUtil.ORIG_SEP_STRONG || type === AjxStringUtil.ORIG_WROTE_STRONG) {
+				sepNode = el;
+				done = true;
+				break;
 			}
-			ctxt.done = true;
+			// some sort of line followed by a header
+			if (type === AjxStringUtil.ORIG_HEADER && prevType === AjxStringUtil.ORIG_LINE) {
+				sepNode = prevEl;
+				done = true;
+				break;
+			}
+			prevEl = el;
+			prevType = type;
 		}
+	}
+
+	/*
+	 for (i = 0; i < results.length; i++) {
+	 var r = results[i];
+	 var extra = r.nodeName === '#text' ? ' ' + r.node.nodeValue.substr(0, 100) : '';
+	 DBG.println(r.nodeName + ' ' + r.type + extra);
+	 }
+	 */
+
+	if (sepNode) {
+		AjxStringUtil._prune(sepNode, true);
 	}
 
 	// convert back to text, restoring html, head, and body nodes
-	var result = ctxt.done ? "<html>" + htmlNode.innerHTML + "</html>" : text;
+	var result = done ? "<html>" + htmlNode.innerHTML + "</html>" : text;
 
 	AjxStringUtil._removeTestIframeDoc();
-	return result;	
+	return result;
 };
 
-// nodes to ignore; they won't have anything we're interested in
-AjxStringUtil.IGNORE_NODE_LIST = ["#comment", "script", "select", "style"];
-AjxStringUtil.IGNORE_NODE = AjxUtil.arrayAsHash(AjxStringUtil.IGNORE_NODE_LIST);
+/**
+ * Traverse the given node depth-first to produce a list of descendant nodes. Some nodes are
+ * ignored.
+ *
+ * @param {Element}     node        node
+ * @param {Array}       list        result list which grows in place
+ * @private
+ */
+AjxStringUtil._flatten = function(node, list) {
 
-// Walk the tree, looking for a definitive delimiter and determining content types for nodes. If we find a node
-// that's a delimiter, we clip it and all subsequent nodes at its level, and we're done.
-AjxStringUtil._traverseOriginalHtmlContent =
-function(el, ctxt) {
+	list.push(node);
 
-	if (ctxt.done || !el || ctxt.ignore) { return; }
+	var children = node.childNodes || [];
+	for (var i = 0; i < children.length; i++) {
+		var el = children[i],
+			nodeName = el.nodeName.toLowerCase();
+		if (nodeName !== 'blockquote' && !AjxStringUtil.IGNORE_NODE[nodeName]) {
+			this._flatten(el, list);
+		}
+	}
+};
 
-	ctxt.nodeCount++; //keep a count of processed nodes.
-	
+/**
+ * Removes all subsequent siblings of the given node, and then does the same for its parent.
+ * The effect is that all nodes that come after the given node in a depth-first traversal of
+ * the DOM will be removed.
+ *
+ * @param {Element}     node
+ * @param {Boolean}     clipNode    if true, also remove the node
+ * @private
+ */
+AjxStringUtil._prune = function(node, clipNode) {
+
+	var p = node && node.parentNode;
+	// clip all subsequent nodes
+	while (p && p.lastChild && p.lastChild !== node) {
+		p.removeChild(p.lastChild);
+	}
+	// clip the node if asked
+	if (clipNode && p && p.lastChild === node) {
+		p.removeChild(p.lastChild);
+	}
+	var nodeName = p && p.nodeName.toLowerCase();
+	if (p && nodeName !== 'body' && nodeName !== 'html') {
+		AjxStringUtil._prune(p, false);
+	}
+};
+
+/**
+ * Tries to determine the type of the given node.
+ *
+ * @param {Element}     el      a DOM node
+ * @return {String}     type, or null
+ * @private
+ */
+AjxStringUtil._checkNode = function(el) {
+
+	if (!el) { return null; }
+
 	var nodeName = el.nodeName.toLowerCase();
-	DBG.println("html", AjxStringUtil.repeat("&nbsp;&nbsp;&nbsp;&nbsp;", ctxt.level) + nodeName + ((nodeName === "#text" && /\S+/.test(el.nodeValue) ? " - " + el.nodeValue.substr(0, 20) : "")));
-	var type;
-	var processChildren = true;
-	
+	var type = null;
+
 	// Text node: test against our regexes
 	if (nodeName === "#text") {
-		if (!AjxStringUtil._NON_WHITESPACE.test(el.nodeValue)) {
-			return;
+		var content = AjxStringUtil.trim(el.nodeValue);
+		if (AjxStringUtil._NON_WHITESPACE.test(content)) {
+			type = AjxStringUtil._getLineType(content);
 		}
-		var testLine = AjxStringUtil.trim(el.nodeValue);
-		type = AjxStringUtil._getLineType(testLine);
-		if (type === AjxStringUtil.ORIG_SEP_STRONG || type === AjxStringUtil.ORIG_WROTE_STRONG) {
-			ctxt.sepNode = el;	// mark for removal
-		}
-		else if (type !== AjxStringUtil.ORIG_WROTE_STRONG) {
-			// Check for colon in case we have a "wrote:" line or a header
-			if (testLine.indexOf(":") !== -1 && el.parentNode) {
-				// what appears as a single "... wrote:" line may have multiple elements, so gather it all
-				// together into one line and test that
-				testLine = AjxStringUtil.trim(AjxStringUtil.htmlDecode(AjxStringUtil.stripTags(el.parentNode.innerHTML)));
-				type = AjxStringUtil._getLineType(testLine);
-				if (type === AjxStringUtil.ORIG_WROTE_STRONG) {
-					// check for a multinode WROTE; if we find one, gather it into a SPAN so that we
-					// have a single node to deal with later
-					var pn = el.parentNode, nodes = pn.childNodes, startNodeIndex, stopNodeIndex;
-					for (var i = pn.childNodes.length - 1; i >= 0; i--) {
-						var childNode = pn.childNodes[i];
-						var text = childNode.nodeValue;
-						if (!text) { continue; }
-						if (text.match(/(\w+):$/)) {
-							stopNodeIndex = i;
-						}
-						else if ((stopNodeIndex !== null) && text.match(AjxStringUtil.ORIG_INTRO_RE)) {
-							startNodeIndex = i;
-							break;
-						}
-					}
-					if (startNodeIndex !== null && stopNodeIndex !== null) {
-						var span = document.createElement("span");
-						for (var i = 0; i < (stopNodeIndex - startNodeIndex) + 1; i++) {
-							span.appendChild(nodes[startNodeIndex]);
-						}
-						pn.insertBefore(span, nodes[startNodeIndex]);
-						ctxt.sepNode = span;
-					}
-				}
-				else if (type === AjxStringUtil.ORIG_HEADER) {
-					if (ctxt.results.length && ctxt.results[ctxt.results.length - 1].type === AjxStringUtil.ORIG_LINE && ctxt.lineNode) {
-						ctxt.sepNode = ctxt.lineNode;
-						ctxt.done = true;
-					}
-				}
-			}
-		}
-		
+	}
 	// HR: look for a couple different forms that are used to delimit quoted content
-	} else if (nodeName === "hr") {
+	else if (nodeName === "hr") {
 		// see if the HR is ours, or one commonly used by other mail clients such as Outlook
 		if (el.id === AjxStringUtil.HTML_SEP_ID || (el.size === "2" && el.width === "100%" && el.align === "center")) {
 			type = AjxStringUtil.ORIG_SEP_STRONG;
-			ctxt.sepNode = el;	// mark for removal
-		}
-		
-	// PRE: treat as one big line of text (should maybe go line by line)
-	} else if (nodeName === "pre") {
-		var text = AjxStringUtil.htmlDecode(AjxStringUtil.stripTags(el.innerHTML));
-		type = AjxStringUtil._getLineType(text);
-
-	// BR: ignore
-	} else if (nodeName === "br") {
-		return;
-
-	// DIV: check for Outlook class used as delimiter
-	} else if (nodeName === "div") {
-		if (el.className === "OutlookMessageHeader" || el.className === "gmail_quote") {
-			type = AjxStringUtil.ORIG_SEP_STRONG;
-			ctxt.sepNode = el;	// mark for removal
-		}
-		else if (el.outerHTML.toLowerCase().indexOf("border-top") !== -1) {
-			var styleObj = DwtCssStyle.getComputedStyleObject(el);
-			if (styleObj && styleObj.borderTopWidth && parseInt(styleObj.borderTopWidth) > 0) {
-				type = AjxStringUtil.ORIG_LINE;
-				ctxt.lineNode = el;
-			}
-		}
-
-	// SPAN: check for Outlook ID used as delimiter
-	} else if (nodeName === "span") {
-		if (el.id === "OLK_SRC_BODY_SECTION") {
-			type = AjxStringUtil.ORIG_SEP_STRONG;
-			ctxt.sepNode = el;	// mark for removal
-		}
-
-	// IMG: treat as original content
-	} else if (nodeName === "img") {
-		type = AjxStringUtil.ORIG_UNKNOWN;
-
-	// BLOCKQUOTE: treat as quoted section
-	} else if (nodeName === "blockquote") {
-		type = AjxStringUtil.ORIG_QUOTED;
-		ctxt.toRemove.push(el);
-		ctxt.hasQuoted = true;
-		processChildren = false;
-
-	} else if (nodeName === "script") {
-		throw new Error("SCRIPT tag found in AjxStringUtil._traverseOriginalHtmlContent");
-	
-	// node types to ignore
-	} else if (AjxStringUtil.IGNORE_NODE[nodeName]) {
-		return;
-	}
-
-	// see if we've found a new type
-	if (type) {
-		if (ctxt.curType) {
-			if (ctxt.curType !== type) {
-				ctxt.count[ctxt.curType] = ctxt.count[ctxt.curType] ? ctxt.count[ctxt.curType] + 1 : 1;
-				ctxt.results.push({type:ctxt.curType});
-				ctxt.curType = type;
-				ctxt.curBlock = [];
-			}
 		}
 		else {
-			ctxt.curType = type;
+			type = AjxStringUtil.ORIG_LINE;
 		}
 	}
-
-	if (ctxt.hasQuoted && type === AjxStringUtil.ORIG_UNKNOWN && ctxt.count[AjxStringUtil.ORIG_WROTE_STRONG] === 1) {
-		//if we find a UNKNOWN block in the quoted content then it means there are possibly inline comments so do not do
-		//further processing
-		ctxt.ignore = true;
-		ctxt.sepNode = null;
-		return;
+	// PRE: treat as one big line of text (should maybe go line by line)
+	else if (nodeName === "pre") {
+		type = AjxStringUtil._checkNodeContent(el);
 	}
-	// if we found a recognized delimiter, set flag to clip it and subsequent nodes at its level
-	if (type === AjxStringUtil.ORIG_SEP_STRONG) {
-		ctxt.done = true;
-	}
-	
-	if (!processChildren) {
-		return;	// don't visit node's children
-	}
-	
-	ctxt.level++;
-
-	// any element that gets here will get recursed into
-	for (var i = 0, len = el.childNodes.length; i < len; i++) {
-		var childNode = el.childNodes[i];
-		if (ctxt.nodeCount > AjxStringUtil.MAX_HTMLNODE_COUNT) {
-			ctxt.sepNode = null;
-			return;
+	// DIV: check for Outlook class used as delimiter, or a top border used as a separator, and finally just
+	// check the text content
+	else if (nodeName === "div") {
+		if (el.className === "OutlookMessageHeader" || el.className === "gmail_quote") {
+			type = AjxStringUtil.ORIG_SEP_STRONG;
 		}
-		AjxStringUtil._traverseOriginalHtmlContent(childNode, ctxt);
-		// see if we ran into a delimiter
-		if (ctxt.done) {
-			// clip all subsequent nodes
-			while (el && el.lastChild && el.lastChild !== childNode) {
-				el.removeChild(el.lastChild);
+		else if (el.style.borderTop) {
+			var styleObj = DwtCssStyle.getComputedStyleObject(el);
+			if (styleObj && styleObj.borderTopWidth && parseInt(styleObj.borderTopWidth) === 1 && styleObj.borderTopColor) {
+				type = AjxStringUtil.ORIG_SEP_STRONG;
 			}
-			// clip the delimiter node
-			if (el && el.lastChild === ctxt.sepNode) {
-				el.removeChild(el.lastChild);
-			}
-			break;
 		}
+		type = type || AjxStringUtil._checkNodeContent(el);
+	}
+	// SPAN: check for Outlook ID used as delimiter, then check text content
+	else if (nodeName === "span") {
+		if (el.id === "OLK_SRC_BODY_SECTION") {
+			type = AjxStringUtil.ORIG_SEP_STRONG;
+		}
+		type = type || AjxStringUtil._checkNodeContent(el);
+	}
+	// IMG: treat as original content
+	else if (nodeName === "img") {
+		type = AjxStringUtil.ORIG_UNKNOWN;
+	}
+	// BLOCKQUOTE: treat as quoted section
+	else if (nodeName === "blockquote") {
+		type = AjxStringUtil.ORIG_QUOTED;
 	}
 
-	ctxt.level--;
+	return type;
+};
+
+/**
+ * Checks innerText to see if it's a separator.
+ * @param {Element} node
+ * @return {String}
+ * @private
+ */
+AjxStringUtil._checkNodeContent = function(node) {
+	var content = node.innerText || '';
+	if (!AjxStringUtil._NON_WHITESPACE.test(content) || content.length > 200) {
+		return null;
+	}
+	// We're really only interested in SEP_STRONG and WROTE_STRONG
+	var type = AjxStringUtil._getLineType(content);
+	return (type === AjxStringUtil.ORIG_SEP_STRONG || type === AjxStringUtil.ORIG_WROTE_STRONG) ? type : null;
 };
 
 /**
@@ -2118,29 +2085,33 @@ function(el, ctxt) {
  * @param {string}	html			HTML text
  * @param {array}	okTags			whitelist of allowed tags
  * @param {array}	attrsToRemove	list of attributes to remove from each element
- * @param {array}	badStyles		list of forbidden styles (eg "position:absolute")
  */
 AjxStringUtil.checkForCleanHtml =
-function(html, okTags, attrsToRemove, badStyles) {
+function(html, okTags, attrsToRemove) {
+
+    //Bug: 83708 - strip hashed anchor links from email msg
+    html = html.replace(new RegExp("href\s*=\s*['\"]\s*#.*['\"]", "g"), '');
 
 	var htmlNode = AjxStringUtil._writeToTestIframeDoc(html);
 	var ctxt = {
 		tags:	AjxUtil.arrayAsHash(okTags),
-		attrs:	attrsToRemove || [],
-		styles:	badStyles
+		attrs:	attrsToRemove || []
 	}
 	AjxStringUtil._traverseCleanHtml(htmlNode, ctxt);
-	
-	var result = !ctxt.fail && "<html>" + htmlNode.innerHTML + "</html>";
+
+	var result = "<html>" + htmlNode.innerHTML + "</html>";
+
 	var width = Math.max(htmlNode.scrollWidth, htmlNode.lastChild.scrollWidth);
 
 	AjxStringUtil._removeTestIframeDoc();
-	return {html:result, width:width};
+	return {html:result, width:width, useIframe:ctxt.fail};
 };
 
 AjxStringUtil._traverseCleanHtml =
 function(el, ctxt) {
-		
+
+    var isCleanHtml = true;
+
 	var nodeName = el.nodeName.toLowerCase();
 	
 	// useless <style> that we used to add, remove it
@@ -2155,19 +2126,15 @@ function(el, ctxt) {
 	// see if tag is allowed
 	else if (ctxt.tags[nodeName]) {
 
-		// check for styles that force us to use iframe
-		if (ctxt.styles) {
-			var style = el.style && el.style.cssText;
-			if (style) {
-				style = style.toLowerCase();
-				for (var j = 0; j < ctxt.styles.length; j++) {
-					if (style.indexOf(ctxt.styles[j]) != -1) {
-						ctxt.fail = true;
-						break;
-					}
-				}
-			}
-		}
+        //checks for invalid styles and removes them.  Bug: 78875 - bad styles from user = email displays incorrectly
+        if (el.style) {
+            var style = el.style && el.style.cssText;
+            style = style.toLowerCase();
+            if (!AjxStringUtil._checkStyle(style)){
+                isCleanHtml = false;
+            }
+            el.style.cssText = AjxStringUtil._fixStyle(style);
+        }
 
 		if (el.removeAttribute && el.attributes && el.attributes.length) {
 			// check for blacklisted attrs
@@ -2194,8 +2161,7 @@ function(el, ctxt) {
 					// we have global CSS rules for TD that trump table properties, so bail
 					if (nodeName === "table" && (attrName === "cellpadding" || attrName === "cellspacing" ||
 							attrName === "border") && attrValue !== "0") {
-						ctxt.fail = true;
-						break;
+						isCleanHtml = false;
 					}
 				}
 			}
@@ -2204,16 +2170,13 @@ function(el, ctxt) {
 	
 	// disallowed tag - bail
 	else {
-		ctxt.fail = true;
+        isCleanHtml = false;
 	}
-
-	if (ctxt.fail) { return; }
 	
 	// process child nodes
 	for (var i = 0, len = el.childNodes.length; i < len; i++) {
 		var childNode = el.childNodes[i];
 		AjxStringUtil._traverseCleanHtml(childNode, ctxt);
-		if (ctxt.fail) { return; }
 	}
 	
 	// remove nodes marked for deletion
@@ -2223,6 +2186,39 @@ function(el, ctxt) {
 			el.removeChild(childNode);
 		}
 	}
+
+    if (!isCleanHtml){
+        ctxt.fail = true;
+    }
+};
+
+
+AjxStringUtil._checkStyle =
+    function(style) {
+
+        //check for absolute positioning
+        if (style.match(/\bposition\s*:\s*absolute[^;]*;?/)){
+            return false;
+        }
+
+        //check for font-<anything>
+        if (style.match(/\bfont-[^;]*;?/)){
+            return false;
+        }
+
+        return true;
+};
+
+AjxStringUtil._fixStyle =
+function(style) {
+
+    //check for negative margins
+    style = style.replace(/\bmargin-?(top|left|right|bottom)?\s*:[^;]*-\d+[^;]*;?/gi, "");
+
+    //check for negative padding
+    style = style.replace(/\bpadding-?(top|left|right|bottom)?\s*:[^;]*-\d+[^;]*;?/gi, "");
+
+    return style;
 };
 
 /**
@@ -2233,7 +2229,7 @@ function(el, ctxt) {
  * @private
  */
 AjxStringUtil._checkInlineWrote =
-function(count, results, isHtml, ctxt) {
+function(count, results) {
 
 	if (count[AjxStringUtil.ORIG_WROTE_STRONG] > 0) {
 		var unknownBlock, foundSep = false, afterSep = {};
@@ -2247,7 +2243,7 @@ function(count, results, isHtml, ctxt) {
 					return null;
 				}
 				else {
-					unknownBlock = isHtml ? true : result.block;
+					unknownBlock = result.block;
 				}
 			}
 			else if (foundSep) {
@@ -2257,24 +2253,10 @@ function(count, results, isHtml, ctxt) {
 
 		var mixed = (afterSep[AjxStringUtil.ORIG_UNKNOWN] && afterSep[AjxStringUtil.ORIG_QUOTED]);
 		var endsWithUnknown = (count[AjxStringUtil.ORIG_UNKNOWN] === 2 && results[results.length - 1].type === AjxStringUtil.ORIG_UNKNOWN);
-		if (unknownBlock && (!isHtml || ctxt.sepNode) && (!mixed || endsWithUnknown)) {
-			if (isHtml) {
-				// In HTML mode we do DOM surgery rather than returning the original content
-				var el = ctxt.sepNode.parentNode;
-				// clip all subsequent nodes
-				while (el && el.lastChild && el.lastChild != ctxt.sepNode) {
-					el.removeChild(el.lastChild);
-				}
-				// clip the delimiter node
-				if (el && el.lastChild == ctxt.sepNode) {
-					el.removeChild(el.lastChild);
-				}
-			}
-			else {
-				var originalText = AjxStringUtil._getTextFromBlock(unknownBlock);
-				if (originalText) {
-					return originalText;
-				}
+		if (unknownBlock && (!mixed || endsWithUnknown)) {
+			var originalText = AjxStringUtil._getTextFromBlock(unknownBlock);
+			if (originalText) {
+				return originalText;
 			}
 		}
 	}

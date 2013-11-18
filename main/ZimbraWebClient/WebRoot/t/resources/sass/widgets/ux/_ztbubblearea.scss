@@ -1,62 +1,60 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- *
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- *
  * ***** END LICENSE BLOCK *****
  */
+
+@import 'variables/base';
+@import 'compass/css3/border-radius';
+@import 'recipes/background/gradients';
+
 $font-color: $dark-grey;
 $font-size: 11px;
 $font-weight: bold;
 $input-font-size: 14px;
 
-$bubble-border-radius: 10px; // to match other input borders
-$bubble-bkgd-color: #D8D8D8;
 $bubble-height: 18px;
-$bubble-text-color: darken($bubble-bkgd-color,25%);
-$bubble-text-padding: 0 8px;
+$bubble-text-color: $base-color;
 
-$space-between-bubbles: 6px;
+$space-between-bubbles: 16px;
 $space-between-rows: 2px;
-
 
 //Disabling close icon for now.
 $bubble-close-icon-width: 0;
 $bubble-close-icon-height: 0;
 $bubble-close-icon-margin: 0;
 
-
-.vm-area-bubble {
-    border: 1px solid $bubble-text-color;
+.zcs-area-bubble {
     display: inline-block;
-    font-color: $bubble-text-color;
+    cursor: pointer;
+    color: $bubble-text-color;
     font-size: $font-size;
     font-weight: $font-weight;
     line-height: $bubble-height;
-    padding: $bubble-text-padding;
-    @include border-radius($bubble-border-radius);
-    @include background-gradient($bubble-bkgd-color,'glossy');
-
-    &:active {
-        @include background-gradient(darken($bubble-bkgd-color, 25%),'glossy');
+    margin-right: $space-between-bubbles;
+    border-radius: 6px;
+    padding: 0px 5px;
+    span {
+        font-weight: normal;
+        cursor: default;
     }
 }
 
+.menu-open .zcs-area-bubble {
+    background: $bubble-text-color;
+    color: $white;
+}
 
-.vm-bubblearea {
-
-    .vm-area-bubble {
-        margin-right: $space-between-bubbles;
-    }
+.zcs-bubblearea {
 
     background-color: $white;
     @include border-radius($default-textarea-radius);
@@ -67,8 +65,6 @@ $bubble-close-icon-margin: 0;
             margin-top: $space-between-rows;
         }
 
-
-
         .bubble-close-icon {
             display: inline-block;
             width: $bubble-close-icon-width;
@@ -77,7 +73,6 @@ $bubble-close-icon-margin: 0;
             cursor: pointer;
             cursor: hand;
         }
-
     }
 
     .bubble-main-contents {
@@ -120,7 +115,7 @@ $bubble-close-icon-margin: 0;
         display: inline-block;
     }
 
-    &[class~=vm-read-only] {
+    &[class~=zcs-read-only] {
          background: $default-readonly-color !important;
          border-color: $default-border-disabled;
         .bubble-close-icon{
@@ -129,6 +124,6 @@ $bubble-close-icon-margin: 0;
     }
 }
 
-.x-form-invalid .vm-bubblearea {
+.x-form-invalid .zcs-bubblearea {
     background-position: bottom;
 }

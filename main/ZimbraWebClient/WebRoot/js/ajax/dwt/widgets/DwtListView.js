@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -378,14 +378,14 @@ function(htmlArr, idx, headerCol, i, numCols, id, defaultColumnSort) {
 	// ALWAYS add "sash" separators
 	if (i < (numCols - 1)) {
 		htmlArr[idx++] = "<td width=6>";
-		htmlArr[idx++] = "<table align=right width=6 height=100% id='";
+		htmlArr[idx++] = "<table align=right width=4 height=100% id='";
 		htmlArr[idx++] = DwtId.getListViewHdrId(DwtId.WIDGET_HDR_SASH, this._view, field);
 		htmlArr[idx++] = "'><tr>";
 		htmlArr[idx++] = "<td class='DwtListView-Sash'><div style='width: 1px; height: ";
 		htmlArr[idx++] = (DwtListView.HEADERITEM_HEIGHT - 2);
 		htmlArr[idx++] = "px; background-color: #8A8A8A;margin-left:2px'></div></td><td class='DwtListView-Sash'><div style='width: 1px; height: ";
 		htmlArr[idx++] = (DwtListView.HEADERITEM_HEIGHT - 2);
-		htmlArr[idx++] = "px; background-color: #FFFFFF;margin-right:2px'></div></td></tr></table>";
+		htmlArr[idx++] = "px;'></div></td></tr></table>";
 		htmlArr[idx++] = "</td>";
 	}
 
@@ -1173,8 +1173,8 @@ DwtListView.prototype.setListDivHeight =
 function (listViewHeight) {
 	if (this._listDiv && this._listColDiv) {
 		var headerHeight = Dwt.getSize (this._listColDiv).y ;
-		//the 10px allows for the diff between container and list for all browsers and eliminates vertical unnecessary scrolls
-		var listDivHeight = listViewHeight - headerHeight - 10; 
+		//the 25px allows for the diff between container and list for all browsers and eliminates vertical unnecessary scrolls
+		var listDivHeight = listViewHeight - headerHeight - 25;
 		Dwt.setSize(this._listDiv, Dwt.DEFAULT, listDivHeight);
 	}
 };
@@ -1266,6 +1266,11 @@ function(item, params, asHtml, count) {
 	if (asHtml) {
 		idx = this._getDivHtml(item, params, htmlArr, idx, count);
 	} else {
+		if (params.div) {
+			var classes = [this._getDivClass(params.divClass || this._normalClass, item, params),
+				(count % 2) ? DwtListView.ROW_CLASS_EVEN : DwtListView.ROW_CLASS_ODD];
+			params.div.className = classes.join(" ");
+		}
 		div = params.div || this._getDiv(item, params);
 	}
 
@@ -1833,7 +1838,7 @@ function(mouseEv, div) {
 	if (type == DwtListView.TYPE_HEADER_ITEM){
 		var hdr = this.getItemFromElement(div);
 		if (hdr && this.sortingEnabled && hdr._sortable && !this._headerClone) {
-			div.className = "DwtListView-Column DwtListView-ColumnHover";
+			div.className += " DwtListView-ColumnHover";
 		}
 	} else if (type == DwtListView.TYPE_HEADER_SASH) {
 		div.style.cursor = AjxEnv.isIE ? "col-resize" : "e-resize";

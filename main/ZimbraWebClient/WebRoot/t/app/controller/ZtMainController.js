@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  *
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  *
@@ -27,30 +27,32 @@ Ext.define('ZCS.controller.ZtMainController', {
 		'Ext.MessageBox'
 	],
 
+	mixins: {
+		organizerNotificationHandler: 'ZCS.common.ZtOrganizerNotificationHandler'
+	},
+
 	config: {
 
 		refs: {
 			tabBar: 'tabbar',
-			mainView: 'ztmain'
+			mainView: 'ztmain',
+			settingsMenu: 'list[itemId=settingsMenu]'
 		},
 
 		control: {
 			tabBar: {
-				showMenu: 'doShowMenu'
+				showMenu: 'showMenu'
 			},
 			mainView: {
 				activeitemchange: function (tabPanel, tab, oldTab) {
 				    ZCS.app.fireEvent('applicationSwitch', tab.config.app);
 				    ZCS.session.setActiveApp(tab.config.app);
-				}
+				},
+				logout:     'doLogout'
+			},
+			settingsMenu: {
+				itemtap:    'onMenuItemSelect'
 			}
-		},
-
-		// settings menu
-		menuConfigs: {
-			settings: [
-				{ label: ZtMsg.logout, action: ZCS.constant.OP_LOGOUT, listener: 'doLogout' }
-			]
 		}
 	},
 
@@ -59,6 +61,22 @@ Ext.define('ZCS.controller.ZtMainController', {
 		// Initialize the main view
 		Ext.Viewport.add(Ext.create('ZCS.view.ZtMain'));
 		ZCS.app.on('serverError', this.handleError, this);
+		window.onbeforeunload = this.unloadHandler;
+
+		// handle organizer notifications
+		ZCS.app.on('notifyFolderCreate', this.handleOrganizerCreate, this);
+		ZCS.app.on('notifySearchCreate', this.handleOrganizerCreate, this);
+		ZCS.app.on('notifyTagCreate', this.handleOrganizerCreate, this);
+
+		ZCS.app.on('notifyFolderDelete', this.handleOrganizerDelete, this);
+		ZCS.app.on('notifySearchDelete', this.handleOrganizerDelete, this);
+		ZCS.app.on('notifyTagDelete', this.handleOrganizerDelete, this);
+
+		ZCS.app.on('notifyFolderChange', this.handleOrganizerChange, this);
+		ZCS.app.on('notifySearchChange', this.handleOrganizerChange, this);
+		ZCS.app.on('notifyTagChange', this.handleOrganizerChange, this);
+
+		ZCS.app.on('notifyRefresh', this.handleRefresh, this);
 	},
 
 	/**
@@ -82,6 +100,8 @@ Ext.define('ZCS.controller.ZtMainController', {
         }  else {
             logoutUrl = "/?loginOp=logout";
         }
+        //Append client=touch param to the logout url
+        logoutUrl += "&client=touch";
 		window.location.href = logoutUrl;
 	},
 
@@ -156,5 +176,69 @@ Ext.define('ZCS.controller.ZtMainController', {
 		else {
 			Ext.Msg.alert(title, text);
 		}
+	},
+
+	/**
+	 * Note: Mobile Safari doesn't support onbeforeunload, so this is semi-useless (should work on
+	 * Android). See http://stackoverflow.com/questions/3239834/window-onbeforeunload-not-working-on-the-ipad.
+	 *
+	 * @return {String|false}   a string if there are unsaved changes
+	 */
+	unloadHandler: function() {
+
+		var composeCtlr = ZCS.app.getComposeController(),
+			contactCtlr = ZCS.app.getContactController(),
+			isDirty = (composeCtlr && composeCtlr.isDirty()) || (contactCtlr && contactCtlr.isDirty());
+
+		if (isDirty) {
+			return ZtMsg.appExitWarning;
+		}
+	},
+
+	/**
+	 * Returns a list of known overviews.
+	 * @return {Array}  list of ZtOverview
+	 * @private
+	 */
+	getOverviewList: function() {
+		return Ext.ComponentQuery.query('overview');
+	},
+
+	/**
+	 * An organizer has just been created. We need to add it to our session data,
+	 * and insert it into the organizer list component.
+	 *
+	 * @param {ZtOrganizer}     folder          undefined (arg not passed)
+	 * @param {Object}          notification    JSON with organizer data
+	 */
+	handleOrganizerCreate: function(folder, notification) {
+		this.addOrganizer(this.getOverviewList(), notification, 'overview');
+	},
+
+	/**
+	 * An organizer has just changed. If it is a move, we need to relocate it within
+	 * the organizer nested list.
+	 *
+	 * @param {ZtOrganizer}     folder          organizer that changed
+	 * @param {Object}          notification    JSON with new data
+	 */
+	handleOrganizerChange: function(folder, notification) {
+		this.modifyOrganizer(this.getOverviewList(), folder, notification, 'overview');
+	},
+
+	/**
+	 * An organizer has been hard-deleted. Remove it from overview stores.
+	 *
+	 * @param {ZtOrganizer}     folder          organizer that changed
+	 */
+	handleOrganizerDelete: function(folder) {
+		this.removeOrganizer(this.getOverviewList(), folder);
+	},
+
+	/**
+	 * We got a <refresh> block. Reload the overviews.
+	 */
+	handleRefresh: function() {
+		this.reloadOverviews(this.getOverviewList(), 'overview');
 	}
 });

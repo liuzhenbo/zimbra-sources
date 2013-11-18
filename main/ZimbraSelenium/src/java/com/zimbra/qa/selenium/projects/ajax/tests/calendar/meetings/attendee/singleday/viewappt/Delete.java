@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.attendee.singleday.viewappt;
@@ -95,7 +93,7 @@ public class Delete extends CalendarWorkWeekTest {
 		
 		String attendeeStatus = ZimbraAccount.AccountA().soapSelectValue("//mail:at[@a='"+ app.zGetActiveAccount().EmailAddress +"']", "ptst");
 
-		// Verify attendee status shows as psts=NE (because "Don't notify organizer)
+		// Verify attendee status shows as ptst=NE (because "Don't notify organizer)
 		ZAssert.assertEquals(attendeeStatus, "NE", "Verify that the attendee status shows as 'NEEDS ACTION' instead of 'DECLINED'");
 		
 		// Organizer: Search for the appointment response
@@ -162,9 +160,10 @@ public class Delete extends CalendarWorkWeekTest {
 		DialogConfirmationDeclineAppointment declineAppt = (DialogConfirmationDeclineAppointment) app.zPageCalendar.zListItem(Action.A_DOUBLECLICK, Button.O_DELETE_MENU, apptSubject);
 		declineAppt.zClickButton(Button.B_NOTIFY_ORGANIZER);
 		declineAppt.zClickButton(Button.B_YES);
-		SleepUtil.sleepVeryLong(); //psts returns wrong value without long delay
+		SleepUtil.sleepVeryLong(); //ptst returns wrong value without long delay
 		
 		// Verify appointment is deleted and read-only view closed
+		app.zPageMail.zToolbarPressButton(Button.B_REFRESH);
 		ZAssert.assertFalse(app.zPageCalendar.zGetViewApptLocator(), "Verify appointment read-only view closed");
 		ZAssert.assertEquals(app.zPageCalendar.zGetViewApptLocator(apptSubject), false, "Verify appointment is deleted");
 		
@@ -187,7 +186,7 @@ public class Delete extends CalendarWorkWeekTest {
 		
 		String attendeeStatus = ZimbraAccount.AccountA().soapSelectValue("//mail:at[@a='"+ app.zGetActiveAccount().EmailAddress +"']", "ptst");
 
-		// Verify attendee status shows as psts=DE (because "Notify organizer)
+		// Verify attendee status shows as ptst=DE (because "Notify organizer)
 		ZAssert.assertEquals(attendeeStatus, "DE", "Verify that attendee status showing as 'DECLINED'");
 		
 		// Organizer: Search for the appointment response

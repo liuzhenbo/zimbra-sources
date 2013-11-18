@@ -1,13 +1,13 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012, 2013 VMware, Inc.
- *
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
+ * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
- *
+ * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
  * ***** END LICENSE BLOCK *****
@@ -29,9 +29,9 @@ Ext.define('ZCS.model.ZtSoapProxy', {
 	 * that we only do this once.
 	 */
 	doRequest: function(operation, callback, scope) {
+
 		var me = this,
 			inlineResults = ZCS.session.getInitialSearchResults();
-
 
 		if (inlineResults) {
 
@@ -89,6 +89,21 @@ Ext.define('ZCS.model.ZtSoapProxy', {
 	 */
 	processResponse: function(success, operation, request, response, callback, scope) {
 
+		var query = operation.config.query;
+
+		if (query) {
+			var search = operation.config.search = Ext.create('ZCS.common.ZtSearch', {
+					query: query
+				}),
+				orgId = search.getOrganizerId(),
+				org = orgId && ZCS.cache.get(orgId),
+				app = (org && ZCS.constant.FOLDER_APP[org.get('type')]) || ZCS.session.getActiveApp();
+
+			ZCS.session.setSetting(ZCS.constant.SETTING_CUR_SEARCH, search, app);
+			if (ZCS.session.getSetting(ZCS.constant.SETTING_SHOW_SEARCH)) {
+				ZCS.session.getCurrentSearchField().setValue(query);
+			}
+		}
 		if (success) {
 			this.callParent(arguments);
 		}
@@ -104,38 +119,56 @@ Ext.define('ZCS.model.ZtSoapProxy', {
 			ZCS.app.getMainController().schedulePoll();
 		}
 		else {
-			ZCS.app.fireEvent('serverError', data.Body.Fault);
+			ZCS.app.fireEvent('serverError', (data.Body && data.Body.Fault) || data.statusText || "Unknown error");
 		}
 	},
 
 	processHeader: function(header) {
 
 		var context = header && header.context,
+			session = context && context.session,
+			changeToken = context && context.change && context.change.token,
 			notifications = context && context.notify,
 			refresh = context && context.refresh;
 
-		if (notifications) {
+		if (session) {
+			ZCS.session.setSessionId(session.id);
+		}
+
+		if (changeToken) {
+			ZCS.session.setChangeToken(changeToken);
+		}
+
+		if (refresh) {
+			ZCS.session.loadFolders(refresh);
+			ZCS.session.setNotifySeq(0);
+		}
+
+		if (notifications && !ZCS.session.isStaleSession(session)) {
 			this.handleNotifications(notifications);
 		}
 
 		if (refresh) {
-			this.handleRefresh(refresh);
+			ZCS.app.getMainController().sendPoll();
+			ZCS.app.fireEvent('notifyRefresh');
 		}
 	},
 
 	handleNotifications: function(notifications) {
 
 		Ext.each(notifications, function(notify) {
-			ZCS.session.setNotifySeq(notify.seq);
-			this.normalizeNotifications(notify);
-			if (notify.deleted) {
-				this.handleDeletes(notify.deleted);
-			}
-			if (notify.created) {
-				this.handleCreates(notify.created);
-			}
-			if (notify.modified) {
-				this.handleModifies(notify.modified);
+			if (notify.seq > ZCS.session.getNotifySeq()) {
+				ZCS.session.setNotifySeq(notify.seq);
+				this.normalizeNotifications(notify);
+				if (notify.deleted) {
+					this.handleDeletes(notify.deleted);
+				}
+				if (notify.created) {
+					this.handleCreates(notify.created);
+				}
+				if (notify.modified) {
+					this.handleModifies(notify.modified);
+				}
 			}
 		}, this);
 	},
@@ -193,20 +226,6 @@ Ext.define('ZCS.model.ZtSoapProxy', {
 				ZCS.app.fireEvent('notify', notification);
 			}, this);
 		}, this);
-	},
-
-	/**
-	 * Handle receipt of a {refresh} block, which typically happens when a new session
-	 * on the server has been started (for example at login).
-	 *
-	 * @param {object}  refresh     JSON folder data
-	 */
-	handleRefresh: function(refresh) {
-		//<debug>
-		Ext.Logger.info('Handling refresh block');
-		//</debug>
-		ZCS.session.loadFolders(refresh);
-		ZCS.session.setNotifySeq(0, true);
 	},
 
 	/**
@@ -334,6 +353,18 @@ Ext.define('ZCS.model.ZtSoapProxy', {
 			notifications.created.c = tmp;
 		} else {
 			delete notifications.created.c;
+		}
+
+		// If the conv's first msg didn't match the current search, then we won't have created
+		// a ZtConv for it. Save the conv create node so we can use it to create a ZtConv if
+		// the second msg matches the search.
+		var msgCreate, convCreate;
+		for (id in createdMsgs) {
+			msgCreate = createdMsgs[id];
+			convCreate = createdConvs[msgCreate.cid];
+			if (convCreate && convCreate._wasVirtConv) {
+				msgCreate.convCreateNode = convCreate;
+			}
 		}
 
 		// Create modified notifs for the virtual convs that have been promoted, using

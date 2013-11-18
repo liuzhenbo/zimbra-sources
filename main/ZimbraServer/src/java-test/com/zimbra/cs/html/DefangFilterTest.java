@@ -1,17 +1,15 @@
  /*
   * ***** BEGIN LICENSE BLOCK *****
-  *
   * Zimbra Collaboration Suite Server
-  * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+  * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
   *
   * The contents of this file are subject to the Zimbra Public License
-  * Version 1.3 ("License"); you may not use this file except in
+  * Version 1.4 ("License"); you may not use this file except in
   * compliance with the License.  You may obtain a copy of the License at
   * http://www.zimbra.com/license.
   *
   * Software distributed under the License is distributed on an "AS IS"
   * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
-  *
   * ***** END LICENSE BLOCK *****
   */
 package com.zimbra.cs.html;
@@ -19,6 +17,7 @@ package com.zimbra.cs.html;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Set;
@@ -31,6 +30,8 @@ import com.zimbra.common.util.ByteUtil;
 import com.zimbra.cs.mime.MPartInfo;
 import com.zimbra.cs.mime.Mime;
 import com.zimbra.cs.mime.ParsedMessage;
+import com.zimbra.cs.servlet.ZThreadLocal;
+import com.zimbra.soap.RequestContext;
 
 /**
  * Tired of regressions in the defang filter. Unit test based on fixes I found in bugzilla over the years for different
@@ -694,4 +695,224 @@ public class DefangFilterTest {
 
     }
 
+    @Test
+    public void testBug82303() throws Exception {
+        String html = "<a href=\"http://ebobby.org/2013/05/18/"
+            + "Fun-with-Javascript-and-function-tracing.html\" "
+            + "style=\"color: #187AAB; text-decoration: none\" target=\"_blank\">";
+        InputStream htmlStream = new ByteArrayInputStream(html.getBytes());
+        String result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(result.contains("Fun-with-Javascript-and-function-tracing.html"));
+
+        html = "<a href=\"javascript-and-function-tracing.html\" "
+            + "style=\"color: #187AAB; text-decoration: none\" target=\"_blank\">";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(result.contains("javascript-and-function-tracing.html"));
+
+        html = "<a href=\"javascript:myJsFunc()\">Link Text</a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href=\"javascriptlessDestination.html\" onclick=\"myJSFunc(); "
+            + "return false;\">Link text</a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("javascriptlessDestination.html"));
+
+        html = "<a href=\"javascript:alert('Hello');\"></a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href=\"http://ebobby.org/2013/05/18/" + "javascript/Lessonsinjavascript.html\" "
+            + "style=\"color: #187AAB; text-decoration: none\" target=\"_blank\">";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("javascript/Lessonsinjavascript.html"));
+
+        html = "<a href='javascript:myFunction()'> Click Me! <a/>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = " <a href=\"javascript:void(0)\" onclick=\"loadProducts(<?php echo $categoryId ?>)\"> ";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href=\"#\" onclick=\"someFunction();\" return false;\">LINK</a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.equals("<a href=\"#\">LINK</a>"));
+
+        html = "<a href='javascript:my_Function()'> Click Me! <a/>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href='javascript:myFunction(field1, field2)'> Click Me! <a/>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href='javaScript:document.f1.findString(this.t1.value)'>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href='javaScript:document.f1.findString(this.t1.value)'>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href=\"#\" onclick=\"findString(document.getElementById('t1').value); return false;\">Click Me</a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("<a href=\"#\">Click Me</a>"));
+
+        html = "<a href=\"javascript:alert('0');\">Click Me</a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+        html = "<a href=\"  javascript:alert('0');\">Click Me</a>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream, true);
+        Assert.assertTrue(result.contains("JAVASCRIPT-BLOCKED"));
+
+    }
+
+    @Test
+    public void testBug83999() throws IOException {
+
+        RequestContext reqContext = new RequestContext();
+        reqContext.setVirtualHost("mail.zimbra.com");
+        ZThreadLocal.setContext(reqContext);
+
+        String html = "<FORM NAME=\"buy\" ENCTYPE=\"text/plain\" " +
+        		"action=\"http://mail.zimbra.com:7070/service/soap/ModifyFilterRulesRequest\" METHOD=\"POST\">";
+        InputStream htmlStream = new ByteArrayInputStream(html.getBytes());
+        String result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(result.contains("SAMEHOSTFORMPOST-BLOCKED"));
+
+
+        html = "<FORM NAME=\"buy\" ENCTYPE=\"text/plain\" "
+            + "action=\"http://zimbra.vmware.com:7070/service/soap/ModifyFilterRulesRequest\" METHOD=\"POST\">";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(!result.contains("SAMEHOSTFORMPOST-BLOCKED"));
+
+        html = "<FORM NAME=\"buy\" ENCTYPE=\"text/plain\" "
+            + "action=\"http://mail.zimbra.com/service/soap/ModifyFilterRulesRequest\" METHOD=\"POST\">";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(result.contains("SAMEHOSTFORMPOST-BLOCKED"));
+
+        html = "<FORM NAME=\"buy\" ENCTYPE=\"text/plain\" "
+            + "action=\"/service/soap/ModifyFilterRulesRequest\" METHOD=\"POST\">";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(result.contains("SAMEHOSTFORMPOST-BLOCKED"));
+
+
+        ZThreadLocal.unset();
+    }
+
+    //Privacy leak and possible XSS in ZWC with Chrome 30 on Win 7 x64 when viewing a conversation
+
+    @Test
+    public void testBug84337() throws Exception {
+        String html = "<style type=\"text/css=\">@import \"https://emailprivacytester." +
+        		"com/cb/55fa19d5db052ced/\";</style>";
+        InputStream htmlStream = new ByteArrayInputStream(html.getBytes());
+        String result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+            true);
+        Assert.assertTrue(!result.contains("@import 'https://emailprivacytester"));
+
+        html = "<style type=\"text/css=\">@import url(\'newstyles.css\');</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(!result.contains("@import"));
+
+        html = "<style type=\"text/css=\">@import \"style2.css\";</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(!result.contains("@import"));
+
+        html = "<style type=\"text/css=\">@import \"style2.css\"</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(!result.contains("@import"));
+
+        html = "<style type=\"text/css=\">@import \"  style1.css  \";</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(!result.contains("@import"));
+
+        html = "<style> "
+        + "@import url('a.css'); "
+        + "@import url('b.css');"
+        + "@import url('c.css');"
+        + "@import url('d.css');"
+        + "@import url('e.css');"
+        + "@import url('f.css');"
+        + "</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(!result.contains("@import"));
+
+        html = "<style type=\"text/css\">  @import url(\"import3.css\");  p { color : #f00; }"
+            + "</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(result.contains("p { color : #f00; }"));
+
+        html = "<style type=\"text/css\">  @import 'import3.css';  p { color : #f00; }"
+            + "</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(result.contains("p { color : #f00; }"));
+        Assert.assertTrue(!result.contains("import3.css"));
+
+        html = "<style type=\"text/css\">  @import \" import3.css \";  p { color : #f00; }"
+            + "</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(result.contains("p { color : #f00; }"));
+        Assert.assertTrue(!result.contains("import3.css"));
+
+        // adding spaces before the semicolon
+        html = "<style type=\"text/css\">  @import \" import3.css \"   ;  p { color : #f00; }"
+            + "</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(result.contains("p { color : #f00; }"));
+        Assert.assertTrue(!result.contains("import3.css"));
+
+
+        html = "<style type=\"text/css\">  @import \" import3.css \"     p { color : #f00; }"
+            + "</style>";
+        htmlStream = new ByteArrayInputStream(html.getBytes());
+        result = DefangFactory.getDefanger(MimeConstants.CT_TEXT_HTML).defang(htmlStream,
+        true);
+        Assert.assertTrue(result.contains("p { color : #f00; }"));
+        Assert.assertTrue(!result.contains("import3.css"));
+    }
 }

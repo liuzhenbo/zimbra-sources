@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * This class encapsulates a _collection_ of DOM elements, providing methods to filter members, or to perform collective
  * actions upon the whole set.
@@ -51,22 +35,4 @@ Ext.define('Ext.dom.CompositeElement', {
         return Ext.get(el);
     }
 
-}, function() {
-    Ext.dom.Element.select = function(selector, unique, root) {
-        var elements;
-
-        if (typeof selector == "string") {
-            elements = Ext.dom.Element.selectorFunction(selector, root);
-        }
-        else if (selector.length !== undefined) {
-            elements = selector;
-        }
-        else {
-            //<debug>
-            throw new Error("[Ext.select] Invalid selector specified: " + selector);
-            //</debug>
-        }
-
-        return (unique === true) ? new Ext.CompositeElement(elements) : new Ext.CompositeElementLite(elements);
-    };
 });

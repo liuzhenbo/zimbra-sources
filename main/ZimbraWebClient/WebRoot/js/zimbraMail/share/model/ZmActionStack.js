@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2010, 2012 VMware, Inc.
+ * Copyright (C) 2010, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -160,6 +160,24 @@ ZmActionStack.prototype.canRedo = function() {
 	return this._pointer < this._stack.length - 1;
 };
 
+
+/**
+ * Returns whether the next undo action has completed
+ */
+ZmActionStack.prototype.actionIsComplete = function() {
+	return this.canUndo() && this._current().getComplete();
+};
+
+/**
+ * Attaches a completion callback to the current action
+ */
+ZmActionStack.prototype.onComplete = function(callback) {
+	var action = this._current();
+	if (action) {
+		action.onComplete(callback);
+	}
+};
+
 /**
  * Undoes the current action (if applicable) and moves the internal pointer
  */
@@ -203,4 +221,11 @@ ZmActionStack.prototype._push = function(action) {
  */
 ZmActionStack.prototype._pop = function() {
 	return this.canUndo() ? this._stack[this._pointer--] : null;
+};
+
+/**
+ * Returns the action at the current position, does not move the pointer
+ */
+ZmActionStack.prototype._current = function() {
+	return this.canUndo() ? this._stack[this._pointer] : null;
 };

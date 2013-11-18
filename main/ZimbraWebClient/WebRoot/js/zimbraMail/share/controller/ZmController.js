@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -231,6 +231,50 @@ function(msg, ex, noExecReset, hideReportButton, expanded, noEncoding) {
 		errorDialog.showDetail();
 };
 
+/**
+ * Pops-up an error dialog describing an upload error.
+ *
+ * @param	{constant}	type		the type of the uploaded item, e.g. <code>ZmItem.MSG</code>.
+ * @param	{Number}	respCode		the HTTP reponse status code
+ * @param	{String}	extraMsg		optional message to append to the status
+ */
+ZmController.prototype.popupUploadErrorDialog =
+function(type, respCode, extraMsg) {
+    var warngDlg = appCtxt.getMsgDialog();
+    var style = DwtMessageDialog.CRITICAL_STYLE;
+    var msg;
+
+    switch (respCode) {
+    case AjxPost.SC_OK:
+        return true;
+
+    case AjxPost.SC_REQUEST_ENTITY_TOO_LARGE:
+        var basemsg =
+            type && ZmMsg['attachmentSizeError_' + type] ||
+            ZmMsg.attachmentSizeError;
+        var sizelimit =
+            AjxUtil.formatSize(appCtxt.get(ZmSetting.MESSAGE_SIZE_LIMIT));
+		msg = AjxMessageFormat.format(basemsg, sizelimit);
+
+        break;
+
+    default:
+        var basemsg =
+            type && ZmMsg['errorAttachment_' + type] ||
+            ZmMsg.errorAttachment;
+        msg = AjxMessageFormat.format(basemsg, respCode || AjxPost.SC_NO_CONTENT);
+
+        break;
+    }
+
+    if (extraMsg) {
+        msg += '<br /><br />';
+        msg += extraMsg;
+    }
+    warngDlg.setMessage(msg, style);
+    warngDlg.popup();
+};
+
 ZmController.handleScriptError =
 function(ex) {
 
@@ -337,6 +381,7 @@ function(actionCode, ev) {
 			var params = {treeIds:		[orgType],
 						  overviewId:	dlg.getOverviewId(ZmOrganizer.APP[orgType]),
 						  appName:		this._app._name,
+						  noRootSelect: true,
 						  title:		AjxMessageFormat.format(ZmMsg.goToFolder, ZmMsg[ZmOrganizer.MSG_KEY[orgType]])};
 			ZmController.showDialog(dlg, new AjxCallback(null, ZmController._visitOrgCallback, [dlg, orgType]), params);
 			break;

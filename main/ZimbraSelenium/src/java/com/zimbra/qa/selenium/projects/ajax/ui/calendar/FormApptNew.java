@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.ui.calendar;
@@ -56,6 +54,9 @@ public class FormApptNew extends AbsForm {
 		public static final String FolderDisabled = "css=div[id^='APPT_COMPOSE_'] td[id$='_folderSelect'] div[class$='ZHasDropDown ZDisabled ZHasLeftIcon']";
 		public static final String PrivateDisabled = "css=div[id^='APPT_COMPOSE_'] td input[id$='_privateCheckbox'][type='checkbox'][disabled]";
 		
+		public static final String RepeatOptionsDisabled = "css=td[id$='_repeat_options'] div[id^='DWT'][class$='ZHasDropDown ZDisabled']";
+		public static final String RepeatDescriptionDisabled = "css=div[id$='_repeatDesc'][class='DisabledText']";
+
 		public static final String ShowOptionalLink = "css=td[id$='_show_optional']";
 		public static final String ShowEquipmentLink = "css=td[id$='_show_resources']";
 		public static final String CustomizeLink = "css=div[id$='repeatDesc']:contains('Customize')";
@@ -83,7 +84,7 @@ public class FormApptNew extends AbsForm {
 		public static final String CancelButtonSuggestionPreferencesDialog = "css=div[class='ZmTimeSuggestionPrefDialog'] td[id$='_button1_title']";
 
 		public static final String NoneMenuItem = "css=div[id*='_Menu'] div[id^='NON'] td[id$='title']:contains('None')";
-		public static final String NoneButton = "css=td[id$='_title']:contains('None')";
+		public static final String NoneButton = "css=div[id$='_repeatSelect'] td[id$='_select_container'] td[id$='_title']";
 		public static final String EveryDayMenuItem = "css=div[id*='_Menu'] div[id^='DAI'] td[id$='title']:contains('Every Day')";
 		public static final String EveryDayButton = "css=td[id$='_title']:contains('Every Day')";
 		public static final String EveryWeekMenuItem = "css=div[id*='_Menu'] div[id^='WEE'] td[id$='title']:contains('Every Week')";
@@ -131,8 +132,8 @@ public class FormApptNew extends AbsForm {
 		public static final String ExpandZimletContextMenu = "css=div[id^='POPUP_'] td[id='EXPAND_title']";
 		public static final String AddToContactsZimletContextMenu = "css=div[id^='POPUP_'] td[id='CONTACT_title']";
 
-		public static final String SendUpdatesToAddedRemovedRadioButton = "css=div[class='DwtDialog'] div[id$='_content'] p table tr:nth-child(1) input";
-		public static final String SendUpdatesToAllRadioButton = "css=div[class='DwtDialog'] div[id$='_content'] p table tr:nth-child(2) input";
+		public static final String SendUpdatesToAddedRemovedRadioButton = "css=div[id='SEND_NOTIFY_DIALOG'] div[id='SEND_NOTIFY_DIALOG_content']>table tbody tr:nth-child(1) input";
+		public static final String SendUpdatesToAllRadioButton = "css=div[id='SEND_NOTIFY_DIALOG'] div[id='SEND_NOTIFY_DIALOG_content']>table tbody tr:nth-child(2) input";
 
 		public static final String Ok_changes = "css=td[id='CHNG_DLG_ORG_1_button2_title']";
 		public static final String Cancel_changes = "css=td[id='CHNG_DLG_ORG_1_button1_title']";
@@ -376,6 +377,11 @@ public class FormApptNew extends AbsForm {
 		ZAssert.assertTrue(this.sIsElementPresent(Locators.DisplayDisabled), "Verify display is disabled while attendee propose new time");
 		ZAssert.assertTrue(this.sIsElementPresent(Locators.FolderDisabled), "Verify folder is disabled while attendee propose new time");
 		ZAssert.assertTrue(this.sIsElementPresent(Locators.PrivateDisabled), "Verify private is disabled while attendee propose new time");
+	}
+	
+	public void zVerifyDisabledControlInOpenInstance() throws HarnessException {
+		ZAssert.assertTrue(this.sIsElementPresent(Locators.RepeatOptionsDisabled), "Verify repeat dropdown remains disabled");
+		ZAssert.assertTrue(this.sIsElementPresent(Locators.RepeatDescriptionDisabled), "Verify repeat description remains disabled");
 	}
 	
 	/**
@@ -954,7 +960,7 @@ public class FormApptNew extends AbsForm {
 				// iframes. Also there is a a bug in iframe counting if single test
 				// logouts multiple time for e.g. run 2 Accept propose new time tests
 				if (this
-						.sIsElementPresent("css=textarea[class='DwtHtmlEditorTextArea']")) {
+						.sIsElementPresent("css=textarea[class='DwtHtmlEditorTextArea']") && frames == 1) {
 					locator = "css=textarea[class='DwtHtmlEditorTextArea']";
 					
 					this.sFocus(locator);
@@ -986,9 +992,11 @@ public class FormApptNew extends AbsForm {
 
 					try {
 
-						this.sSelectFrame("css=iframe[id$='_content_ifr']");
+						//this.sSelectFrame("css=iframe[id$='_content_ifr']");
 
-						locator = "css=body[id='tinymce']";
+						//locator = "css=body[id='tinymce']";
+
+						locator = "css=iframe[id$='_content_ifr']";
 
 						if (!this.sIsElementPresent(locator))
 							throw new HarnessException(
@@ -1004,7 +1012,9 @@ public class FormApptNew extends AbsForm {
 						 * right now.
 						 */
 						// this.sType(locator, value);
-						this.zKeyboard.zTypeCharacters(value);
+						//this.zKeyboard.zTypeCharacters(value);
+						
+						zTypeFormattedText(locator, value);
 
 					} finally {
 						// Make sure to go back to the original iframe
@@ -1022,23 +1032,26 @@ public class FormApptNew extends AbsForm {
 
 					try {
 
-						this.sSelectFrame("css=iframe[id$='_content_ifr']"); // iframe
-																				// index
-																				// is
-																				// 0
-																				// based
+						if (this.sIsElementPresent("css=iframe[id$='_content_ifr']")) {
+							locator = "css=html body";
+							this.sSelectFrame("css=iframe[id$='_content_ifr']"); // iframe index is 0 based
+							this.sFocus(locator);
+							this.zClick(locator);
+							//this.sType(locator, value);
+							this.zKeyboard.zTypeCharacters(value);
 
-						locator = "css=html body";
-
-						if (!this.sIsElementPresent(locator))
-							throw new HarnessException(
-									"Unable to locate compose body");
-
-						this.sFocus(locator);
-						this.zClick(locator);
-						this.sType(locator, value);
+						} else if (this.sIsElementPresent("css=textarea[class='DwtHtmlEditorTextArea']")) {	
+							locator = "css=textarea[class='DwtHtmlEditorTextArea']";
+							this.sFocus(locator);
+							this.zClick(locator);
+							this.sType(locator, value);
+						
+						} else {
+							throw new HarnessException("Unable to locate compose body");
+						}
 
 					} finally {
+						
 						// Make sure to go back to the original iframe
 						this.sSelectFrame("relative=top");
 
@@ -1063,9 +1076,6 @@ public class FormApptNew extends AbsForm {
 			throw new HarnessException("locator was null for field " + field);
 		}
 
-		// Default behavior, enter value into locator field
-		//
-
 		// Make sure the button exists
 		if (!this.sIsElementPresent(locator))
 			throw new HarnessException("Field is not present field=" + field
@@ -1080,14 +1090,23 @@ public class FormApptNew extends AbsForm {
 				this.clearField(locator);
 				this.sClickAt(locator, "");
 			}
-			this.sType(locator, value);
-			SleepUtil.sleepSmall();
+			
+			if (field == Field.StartDate || field == Field.EndDate
+					|| field == Field.StartTime || field == Field.EndTime) {
+				this.zKeyboard.zSelectAll();
+				this.sTypeDateTime(locator, value);
+			} else {
+				this.sType(locator, value);				
+			}
 
 			if (field == Field.Attendees || field == Field.Optional
 					|| field == Field.Location || field == Field.Equipment) {
+				SleepUtil.sleepMedium();
 				this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_TAB);
+				SleepUtil.sleepSmall();
 			}
 		}
+		SleepUtil.sleepSmall();
 		this.zWaitForBusyOverlay();
 	}
 
@@ -1114,6 +1133,7 @@ public class FormApptNew extends AbsForm {
 			zFillField(Field.Attendees, appt.getAttendees());
 			SleepUtil.sleepSmall();
 			this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_ENTER);
+			SleepUtil.sleepSmall();
 			this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_TAB);
 		}
 
@@ -1123,6 +1143,7 @@ public class FormApptNew extends AbsForm {
 			zFillField(Field.Optional, appt.getOptional());
 			SleepUtil.sleepSmall();
 			this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_ENTER);
+			SleepUtil.sleepSmall();
 		}
 
 		// Location
@@ -1130,6 +1151,10 @@ public class FormApptNew extends AbsForm {
 			zFillField(Field.Location, appt.getLocation());
 			SleepUtil.sleepSmall();
 			this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_ENTER);
+			SleepUtil.sleepSmall();
+			this.sClickAt("css= input[id$='_location_input']", "");
+			this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_TAB);
+			
 		}
 
 		// Equipment
@@ -1138,6 +1163,7 @@ public class FormApptNew extends AbsForm {
 			zFillField(Field.Equipment, appt.getEquipment());
 			SleepUtil.sleepSmall();
 			this.zKeyboard.zTypeKeyEvent(KeyEvent.VK_ENTER);
+			SleepUtil.sleepSmall();
 		}
 
 		// Start date-time
@@ -1169,9 +1195,16 @@ public class FormApptNew extends AbsForm {
 
 		// Is private
 		if (appt.getIsPrivate() == true) {
-			zFillField(Field.Private);
+			String locator = "css=input[id$='_privateCheckbox']";
+			 this.sCheck(locator);
+			 this.zWaitForBusyOverlay();
 		}
-
+		
+		if (appt.getIsPrivate() == false) {
+		 String locator = "css=input[id$='_privateCheckbox']";
+		 this.sUncheck(locator);
+		 this.zWaitForBusyOverlay();
+		}
 		// Body
 		if (appt.getContent() != null) {
 			zFillField(Field.Body, appt.getContent());
@@ -1323,8 +1356,7 @@ public class FormApptNew extends AbsForm {
 		// TODO: temporary workaround for
 		// main.projects.ajax.tests.calendar.appointments.views.day.allday.
 		// CreateAppointment.CreateAllDayAppointment_01
-		// REF: http://zqa-
-		// 004.eng.vmware.com/testlogs/UBUNTU10_64/IRONMAIDEN-800/20120807000101_FOSS/SelNG-projects-ajax-tests/134432857672933/zqa-429.eng.vmware.com/AJAX/firefox/en_US/debug/projects/ajax/tests/calendar/appointments/views/day/allday/CreateAppointment/CreateAllDayAppointment_01ss191.png
+		// REF: http://server/testlogs/UBUNTU10_64/IRONMAIDEN-800/20120807000101_FOSS/SelNG-projects-ajax-tests/134432857672933/server/AJAX/firefox/en_US/debug/projects/ajax/tests/calendar/appointments/views/day/allday/CreateAppointment/CreateAllDayAppointment_01ss191.png
 		// which is failing to click the save/close button.
 		// It seems that the appointment compose is taking a long time to open
 		// instead of waiting for an element to appear (which is the preferred
@@ -1431,4 +1463,16 @@ public class FormApptNew extends AbsForm {
 	    confirmClose.zClickButton(Button.B_CANCEL);	
 	}
 	
+	public boolean zVerifyComposeFormatHTML()throws HarnessException {
+		String disappeared = sGetEval("window.document.getElementsByClassName('DwtHtmlEditorTextArea')[0].style.display");
+		
+		// if display proerty returns 'none' it is HTML compose format else it is Plain text format
+		if (disappeared.equalsIgnoreCase("none")){
+			return true;
+		}else{
+		   return false;
+		
+		}
+		
+	}
 }

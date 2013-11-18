@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -43,6 +43,7 @@ AjxPackage.require("ajax.dwt.widgets.DwtRadioButton");
 AjxPackage.require("ajax.dwt.widgets.DwtRadioButtonGroup");
 AjxPackage.require("ajax.dwt.widgets.DwtForm");
 AjxPackage.require("ajax.dwt.widgets.DwtCalendar");
+AjxPackage.require("ajax.dwt.widgets.DwtMessageComposite");
 
 AjxPackage.require("ajax.util.AjxDateUtil");
 AjxPackage.require("ajax.util.AjxPluginDetector");
@@ -114,6 +115,7 @@ AjxPackage.require("zimbraMail.share.view.dialog.ZmQuickAddDialog");
 AjxPackage.require("zimbraMail.share.view.htmlEditor.ZmHtmlEditor");
 AjxPackage.require("zimbraMail.share.view.htmlEditor.ZmAdvancedHtmlEditor");
 AjxPackage.require("zimbraMail.share.view.ZmDragAndDrop");
+AjxPackage.require("zimbraMail.share.view.ZmFolderChooser");
 
 AjxPackage.require("zimbraMail.share.controller.ZmController");
 AjxPackage.require("zimbraMail.share.controller.ZmBaseController");
@@ -135,6 +137,7 @@ AjxPackage.require("zimbraMail.calendar.ZmCalendarApp");
 AjxPackage.require("zimbraMail.tasks.ZmTasksApp");
 AjxPackage.require("zimbraMail.abook.ZmContactsApp");
 AjxPackage.require("zimbraMail.abook.model.ZmContact");
+AjxPackage.require("zimbraMail.abook.model.ZmContactList");
 AjxPackage.require("zimbraMail.briefcase.ZmBriefcaseApp");
 
 AjxPackage.require("zimbraMail.calendar.model.ZmCalBaseItem");
@@ -172,3 +175,4 @@ AjxPackage.require("zimbraMail.mail.view.ZmMailRedirectDialog");
 AjxPackage.require("zimbraMail.mail.view.object.ZmImageAttachmentObjectHandler");
 
 AjxPackage.require("zimbra.common.ZmErrorDialog");
+AjxPackage.require("zimbraMail.offline.ZmOffline");

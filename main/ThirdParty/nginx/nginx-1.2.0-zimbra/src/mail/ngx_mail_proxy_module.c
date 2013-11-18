@@ -5,7 +5,7 @@
  */
 
 /*
- * Portions Copyright (c) VMware, Inc. [1998-2011]. All Rights Reserved.
+ * Portions Copyright (c) Zimbra Software, LLC. [1998-2011]. All Rights Reserved.
  */
 
 #include <nginx.h>
@@ -607,15 +607,15 @@ ngx_mail_proxy_pop3_handler(ngx_event_t *rev)
 static void
 ngx_mail_proxy_imap_handler(ngx_event_t *rev)
 {
-    u_char                     *p;
-    ngx_int_t                   rc;
-    ngx_uint_t                  family;
-    size_t                      len;
-    ngx_str_t                   line, proxy_ip;
-    ngx_connection_t           *c;
-    ngx_mail_session_t         *s;
-    ngx_mail_proxy_conf_t      *pcf;
-    struct sockaddr_in         *sin;
+    u_char                 *p;
+    ngx_int_t               rc;
+    ngx_uint_t              family;
+    size_t                  len;
+    ngx_str_t               line, proxy_ip;
+    ngx_connection_t       *c;
+    ngx_mail_session_t     *s;
+    ngx_mail_proxy_conf_t  *pcf;
+    struct sockaddr_in     *sin;
 
 #if (NGX_HAVE_INET6)
     struct sockaddr_in6        *sin6;
@@ -742,7 +742,7 @@ ngx_mail_proxy_imap_handler(ngx_event_t *rev)
         } else {
             proxy_ip.len = NGX_INET6_ADDRSTRLEN;
         }
-        proxy_ip.data = ngx_palloc(c->pool, NGX_INET_ADDRSTRLEN);
+        proxy_ip.data = ngx_palloc(c->pool, proxy_ip.len);
         proxy_ip.len = ngx_sock_ntop((struct sockaddr*)sockaddr, proxy_ip.data, proxy_ip.len, 0);
         line.len += proxy_ip.len;
 

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -551,7 +551,7 @@ function() {
 	var contact = this._actionEv.contact;
 	if (contact) {
 		if (contact.isDistributionList()) {
-			this._editListener(this._actionEv, false, contact);
+			this._editListener(this._actionEv, contact);
 			return;
 		}
 		if (contact.isLoaded) {
@@ -592,8 +592,15 @@ function(resp, contact) {
  */
 ZmListController.prototype._dragListener =
 function(ev) {
-	if (ev.action == DwtDragEvent.SET_DATA) {
+
+	if (this.isSearchResults && ev.action == DwtDragEvent.DRAG_START) {
+		this.searchResultsController.showOverview(true);
+	}
+	else if (ev.action == DwtDragEvent.SET_DATA) {
 		ev.srcData = {data: ev.srcControl.getDnDSelection(), controller: this};
+	}
+	else if (this.isSearchResults && (ev.action == DwtDragEvent.DRAG_END || ev.action == DwtDragEvent.DRAG_CANCEL)) {
+		this.searchResultsController.showOverview(false);
 	}
 };
 
@@ -650,20 +657,51 @@ function(ev) {
 
 /**
  * Sets text to "add" or "edit" based on whether a participant is a contact or not.
- * isContact - basically true if not a GAL item, I think.
- * isGroup - true if this is a group (and it is passed here...)
+ * contact - the contact (or null)
+ * extraMenu - see ZmMailListController.prototype._setContactText
  *
  * @private
  */
 ZmListController.prototype._setContactText =
-function(isContact, isGroup) {
-	var newOp = (isContact || isGroup) ? ZmOperation.EDIT_CONTACT : ZmOperation.NEW_CONTACT;
-	var newText = isGroup ? ZmMsg.AB_EDIT_GROUP :
-				isContact ? null :
-				ZmMsg.AB_ADD_CONTACT;
-	ZmOperation.setOperation(this.getCurrentToolbar(), ZmOperation.CONTACT, newOp, ZmMsg.AB_ADD_CONTACT);
-	ZmOperation.setOperation(this.getActionMenu(), ZmOperation.CONTACT, newOp, newText);
+function(contact, extraMenu) {
+	var menus = [this.getActionMenu()];
+	if (extraMenu) {
+		menus.push(extraMenu);
+	}
+	ZmListController.setContactTextOnMenus(contact, menus);
 };
+
+/**
+ * Sets text to "add" or "edit" based on whether a participant is a contact or not.
+ * contact - the contact (or null)
+ * menus - array of one or more menus
+ *
+ * @private
+ */
+ZmListController.setContactTextOnMenus =
+function(contact, menus) {
+	menus = AjxUtil.toArray(menus);
+	var newOp = ZmOperation.EDIT_CONTACT;
+	var newText = null; //no change ("edit contact")
+
+	if (contact && contact.isDistributionList()) {
+		newText = ZmMsg.AB_EDIT_DL;
+	}
+	else if (contact && contact.isGroup()) {
+		newText = ZmMsg.AB_EDIT_GROUP;
+	}
+	else if (!contact || contact.isGal) {
+		// if there's no contact, or it's a GAL contact - there's no "edit" - just "add".
+		newText = ZmMsg.AB_ADD_CONTACT;
+		newOp = ZmOperation.NEW_CONTACT;
+	}
+
+	for (var i = 0; i < menus.length; i++) {
+		var menu = menus[i];
+		ZmOperation.setOperation(menu, ZmOperation.CONTACT, newOp, newText);
+	}
+};
+
 
 /**
  * This method gets overloaded if folder id is retrieved another way
@@ -696,6 +734,18 @@ function() {
 		return false;
 	}
 	return folder.nId ==  ZmFolder.ID_DRAFTS;
+};
+
+/**
+ * returns true if the search folder is drafts
+ */
+ZmListController.prototype.isOutboxFolder =
+function() {
+    var folder = this._getSearchFolder();
+    if (!folder) {
+        return false;
+    }
+    return folder.nId == ZmFolder.ID_OUTBOX;
 };
 
 /**
@@ -1239,12 +1289,15 @@ function() {
 
 	var size = this._getItemCount();
 	if (size == null) { return ""; }
-	var lv = this._view[this._currentViewId];
-	var list = lv && lv._list;
-	var type = lv._getItemCountType();
-	var total = this._getNumTotal();
-	var num = total || size;
-    var typeText = type ? AjxMessageFormat.format(ZmMsg[ZmItem.COUNT_KEY[type]], num) : "";
+
+	var lv = this._view[this._currentViewId],
+		list = lv && lv._list,
+		type = lv._getItemCountType(),
+		total = this._getNumTotal(),
+		num = total || size,
+		countKey = 'type' + AjxStringUtil.capitalizeFirstLetter(ZmItem.MSG_KEY[type]),
+        typeText = type ? AjxMessageFormat.format(ZmMsg[countKey], num) : "";
+
 	if (total && (size != total)) {
 		return AjxMessageFormat.format(ZmMsg.itemCount1, [size, total, typeText]);
 	} else {
@@ -1370,8 +1423,13 @@ function(params, actionParams) {
 		if (contResult) {
 			if (lv.allSelected) {
 				// items beyond page were acted on, give user a total count
-				if (actionParams.actionText) {
-					actionParams.actionSummary = ZmList.getActionSummary(actionParams.actionText, this._continuation.totalItems, contResult.type, actionParams.actionArg);
+				if (actionParams.actionTextKey) {
+					actionParams.actionSummary = ZmList.getActionSummary({
+						actionTextKey:  actionParams.actionTextKey,
+						numItems:       this._continuation.totalItems,
+						type:           contResult.type,
+						actionArg:      actionParams.actionArg
+					});
 				}
 				lv.deselectAll();
 			}

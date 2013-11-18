@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -288,6 +288,19 @@ function(enable) {
 };
 
 /**
+ * shows/hides the alphabet bar.
+ *
+ * @param	{Boolean}	visible		if <code>true</code>, show the alphabet bar
+ */
+ZmContactSplitView.prototype.showAlphabetBar =
+function(visible) {
+	if (this._alphabetBar) {
+		this._alphabetBar.setVisible(visible);
+	}
+};
+
+
+/**
  * @private
  */
 ZmContactSplitView.prototype._initialize =
@@ -430,7 +443,7 @@ function(contact, isGal, oldContact, expandDL, isBack) {
 	//it is done with isBack set to true.
 	if (contact.isDistributionList() && !isBack) {
 		var callbackHere = this._setContact.bind(this, contact, isGal, oldContact, expandDL, true);
-		this._controller.gatherContactExtraDlStuff(contact, callbackHere);
+		contact.gatherExtraDlStuff(callbackHere);
 		return;
 	}
 
@@ -604,7 +617,7 @@ function(data, label, objectType) {
 };
 
 ZmContactSplitView._showContactList =
-function(data, names, typeFunc) {
+function(data, names, typeFunc, hideType) {
 
 	data.names = names;
 	var html = [];
@@ -612,6 +625,7 @@ function(data, names, typeFunc) {
 		var name = names[i];
 		data.name = name;
 		data.type = (typeFunc && typeFunc(data, name)) || ZmMsg["AB_FIELD_" + name];
+		data.type = hideType ? "" : data.type;
 		html.push(ZmContactSplitView._showContactListItem(data));
 	}
 
@@ -665,7 +679,7 @@ ZmContactSplitView.showContactEmails =
 function(data) {
 	var itemListData = ZmContactSplitView._getListData(data, ZmMsg.emailLabel, ZmObjectManager.EMAIL);
 	var typeFunc = function(data, name) { return data.isDL && ZmMsg.distributionList; };
-	return ZmContactSplitView._showContactList(itemListData, ZmEditContactView.LISTS.EMAIL.attrs, typeFunc);
+	return ZmContactSplitView._showContactList(itemListData, ZmEditContactView.LISTS.EMAIL.attrs, typeFunc, !data.isDL);
 };
 
 ZmContactSplitView.showContactPhones =
@@ -1040,9 +1054,10 @@ ZmContactSimpleView.prototype.toString = function() { return "ZmContactSimpleVie
  * @param	{ZmContactList}		list		the list
  * @param	{String}	defaultColumnSort		the sort field
  * @param	{String}	folderId		the folder id
+ * @param	{Boolean}	isSearchResults	is this a search tab?
  */
 ZmContactSimpleView.prototype.set =
-function(list, defaultColumnSort, folderId) {
+function(list, defaultColumnSort, folderId, isSearchResults) {
 	var fid = folderId || this._controller.getFolderId();
 	ZmContactsBaseView.prototype.set.call(this, list, defaultColumnSort, fid);
 
@@ -1050,7 +1065,7 @@ function(list, defaultColumnSort, folderId) {
 		this.parent.clear();
 	}
 
-	this.parent.enableAlphabetBar(!(list && list.isGal));
+	this.parent.showAlphabetBar(!isSearchResults);
 };
 
 /**

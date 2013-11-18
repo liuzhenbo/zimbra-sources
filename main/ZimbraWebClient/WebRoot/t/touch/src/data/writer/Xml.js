@@ -1,19 +1,3 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * @author Ed Spencer
  * @class Ext.data.writer.Xml
@@ -24,14 +8,14 @@
  * up the XML document.
  */
 Ext.define('Ext.data.writer.Xml', {
-    
+
     /* Begin Definitions */
-    
+
     extend: 'Ext.data.writer.Writer',
     alternateClassName: 'Ext.data.XmlWriter',
-    
+
     alias: 'writer.xml',
-    
+
     /* End Definitions */
 
     config: {
@@ -60,8 +44,8 @@ Ext.define('Ext.data.writer.Xml', {
     },
 
     /**
-     * @param request
-     * @param data
+     * @param {Object} request
+     * @param {Array} data
      * @return {Object}
      */
     writeRecords: function(request, data) {
@@ -74,18 +58,18 @@ Ext.define('Ext.data.writer.Xml', {
             needsRoot = data.length !== 1,
             item,
             key;
-            
+
         // may not exist
         xml.push(me.getHeader() || '');
-        
+
         if (!root && needsRoot) {
             root = me.getDefaultDocumentRoot();
         }
-        
+
         if (root) {
             xml.push('<', root, '>');
         }
-            
+
         for (; i < len; ++i) {
             item = data[i];
             xml.push('<', record, '>');
@@ -96,11 +80,11 @@ Ext.define('Ext.data.writer.Xml', {
             }
             xml.push('</', record, '>');
         }
-        
+
         if (root) {
             xml.push('</', root, '>');
         }
-            
+
         request.setXmlData(xml.join(''));
         return request;
     }

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -16,13 +16,14 @@
 package com.zimbra.cs.account;
 
 public enum AttributeFlag {
-    accountInfo, 
-    accountInherited, 
-    accountCosDomainInherited, 
-    domainAdminModifiable, 
-    domainInfo, 
-    domainInherited, 
-    serverInherited, 
-    idn, 
+    accountInfo,
+    accountInherited,
+    accountCosDomainInherited,
+    domainAdminModifiable,
+    domainInfo,
+    domainInherited,
+    serverInherited,
+    idn,
+    serverPreferAlwaysOn,
     octopus  // for tracking octopus specific attributes
 }

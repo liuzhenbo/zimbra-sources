@@ -1,22 +1,8 @@
-/*
- * ***** BEGIN LICENSE BLOCK *****
- * 
- * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2013 VMware, Inc.
- * 
- * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
- * compliance with the License.  You may obtain a copy of the License at
- * http://www.zimbra.com/license.
- * 
- * Software distributed under the License is distributed on an "AS IS"
- * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
- * ***** END LICENSE BLOCK *****
- */
 /**
  * @private
  * @author Jacky Nguyen <jacky@sencha.com>
+ *
+ * This class is a factory class that will create and return an animation class based on the {@link #type} configuration.
  */
 Ext.define('Ext.fx.Animation', {
 
@@ -28,8 +14,19 @@ Ext.define('Ext.fx.Animation', {
         'Ext.fx.animation.Flip',
         'Ext.fx.animation.Pop',
         'Ext.fx.animation.PopOut'
-//        'Ext.fx.animation.Cube'
     ],
+
+    /**
+     * @cfg {String} type The type of animation to use. The possible values are:
+     *
+     *  - `fade` - {@link Ext.fx.animation.Fade}
+     *  - `fadeOut` - {@link Ext.fx.animation.FadeOut}
+     *  - `flip` - {@link Ext.fx.animation.Flip}
+     *  - `pop` - {@link Ext.fx.animation.Pop}
+     *  - `popOut` - {@link Ext.fx.animation.PopOut}
+     *  - `slide` - {@link Ext.fx.animation.Slide}
+     *  - `slideOut` - {@link Ext.fx.animation.SlideOut}
+     */
 
     constructor: function(config) {
         var defaultClass = Ext.fx.animation.Abstract,
@@ -44,7 +41,7 @@ Ext.define('Ext.fx.Animation', {
         }
 
         if (type) {
-            if (Ext.os.is.Android2) {
+            if (Ext.browser.is.AndroidStock2) {
                 if (type == 'pop') {
                     type = 'fade';
                 }

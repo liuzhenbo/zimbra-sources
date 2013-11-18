@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.singleday.modify;
@@ -84,8 +82,7 @@ public class ModifyMeetingPrivateToPublic extends CalendarWorkWeekTest {
 		ZAssert.assertTrue(app.zPageCalendar.sIsElementPresent(Locators.ImgPrivateAppt), "Private Image is present on the meeting");
 		
         // Open Meeting change the class from Private to Public and Send it
-        app.zPageCalendar.zListItem(Action.A_DOUBLECLICK, apptSubject);
-        FormApptNew apptForm = new FormApptNew(app);
+        FormApptNew apptForm = (FormApptNew)app.zPageCalendar.zListItem(Action.A_RIGHTCLICK, Button.O_OPEN, apptSubject);
         appt.setIsPrivate(false);
         apptForm.zFill(appt);
         apptForm.zToolbarPressButton(Button.B_SEND);
@@ -143,8 +140,7 @@ public class ModifyMeetingPrivateToPublic extends CalendarWorkWeekTest {
 		
 		
         // Open Meeting change the class from Public to Private and save it
-        app.zPageCalendar.zListItem(Action.A_DOUBLECLICK, apptSubject);
-        FormApptNew apptForm = new FormApptNew(app);
+        FormApptNew apptForm = (FormApptNew)app.zPageCalendar.zListItem(Action.A_RIGHTCLICK, Button.O_OPEN, apptSubject);
         appt.setIsPrivate(true);
         apptForm.zFill(appt);
         apptForm.zToolbarPressButton(Button.B_SEND);

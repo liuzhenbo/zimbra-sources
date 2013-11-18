@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -422,8 +422,8 @@ function() {
 	var kbff = this._kbFocusField = document.createElement("textarea");
 	kbff.id = DwtKeyboardMgr.FOCUS_FIELD_ID;
 	kbff.tabIndex = 0;
-	kbff.style.position = Dwt.ABSOLUTE_STYLE;
-	kbff.style.top = kbff.style.left = Dwt.LOC_NOWHERE;
+	Dwt.setPosition(kbff, Dwt.ABSOLUTE_STYLE);
+	Dwt.setLocation(kbff, Dwt.LOC_NOWHERE, Dwt.LOC_NOWHERE);
 	kbff.onblur = DwtKeyboardMgr.__onBlurHdlr;
 	kbff.onfocus = DwtKeyboardMgr.__onFocusHdlr;
 	document.body.appendChild(kbff);
@@ -818,8 +818,7 @@ function(ev) {
 
 	// If the currently focused control didn't handle the event, hand it to the default key
 	// event handler
-	if ((handled == DwtKeyboardMgr.__KEYSEQ_NOT_HANDLED) && kbMgr.__currDefaultHandler &&
-		!(kbMgr.__currTabGroup && kbMgr.__currTabGroup.isDefaultHandlingBlocked())) {
+	if (handled === DwtKeyboardMgr.__KEYSEQ_NOT_HANDLED && kbMgr.__currDefaultHandler) {
 		handled = kbMgr.__dispatchKeyEvent(kbMgr.__currDefaultHandler, kev);
 	}
 

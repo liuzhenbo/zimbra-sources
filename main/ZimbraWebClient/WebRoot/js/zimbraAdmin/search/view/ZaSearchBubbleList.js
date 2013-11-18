@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -231,10 +229,6 @@ function() {
     var removeLinkId = this.id + "_remove";
     var removeLink = 'ZaSearchXFormView.removeBubble("' + this.id + '","'+ this.parentId +'");';
     var style = "display:inline-block;cursor:pointer;";
-    if (AjxEnv.isIE) {
-		// hack - IE won't display block elements inline via inline-block
-		style = style + "*display:inline;zoom:1;";
-	}
     var closeText = AjxImg.getImageHtml("BubbleDelete", style, "id='" + removeLinkId + "' onclick='" + removeLink + "'");
     var html = "<span id='"+this.id+"_displayName'>"+this.displayName + "</span>" + closeText;
 	el.innerHTML = html;

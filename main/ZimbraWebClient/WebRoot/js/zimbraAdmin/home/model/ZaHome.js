@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -289,43 +287,43 @@ ZaHome.loadActiveSesson = function () {
 
             if (parameterList.length > 0) {
                 var currentSession = parameterList.shift();
-                try {
-            		var server = ZaServer.getServerById(currentSession.targetServer);
-            		if(server) {
-            			if(ZaItem.hasRight(ZaServer.RIGHT_GET_SESSIONS, server)) {
-            				 var soapDoc = AjxSoapDoc.create("GetSessionsRequest", ZaZimbraAdmin.URN, null);
-                             var sessionCallback = new  AjxCallback (this, loadOneSessionNumer);
-                             var params = {};
-                             params.type = currentSession.type;
 
-                             soapDoc.getMethod().setAttribute("type", params.type);
+                var server = ZaServer.getServerById(currentSession.targetServer);
+                if (server) {
+                    if (ZaItem.hasRight(ZaServer.RIGHT_GET_SESSIONS, server)) {
+                        var sessionCallback = new  AjxCallback (this, loadOneSessionNumer);
+                        try {
+                            var soapDoc = AjxSoapDoc.create("GetSessionsRequest", ZaZimbraAdmin.URN, null);
+                            var params = {};
+                            params.type = currentSession.type;
 
-                             params.fresh = 1;
-                             soapDoc.getMethod().setAttribute("refresh", params.fresh);
+                            soapDoc.getMethod().setAttribute("type", params.type);
 
-                             soapDoc.getMethod().setAttribute("limit", ZaServerSessionStatsPage.PAGE_LIMIT);
+                            params.fresh = 1;
+                            soapDoc.getMethod().setAttribute("refresh", params.fresh);
 
-                             params.offset = 0 ;
+                            soapDoc.getMethod().setAttribute("limit", ZaServerSessionStatsPage.PAGE_LIMIT);
 
-                             soapDoc.getMethod().setAttribute("offset", params.offset);
+                            params.offset = 0 ;
 
-                             params.sortBy = "nameAsc";
+                            soapDoc.getMethod().setAttribute("offset", params.offset);
 
-                             soapDoc.getMethod().setAttribute("sortBy", params.sortBy);
+                            params.sortBy = "nameAsc";
 
-                             var getSessCmd = new ZmCsfeCommand ();
-                             params.soapDoc = soapDoc ;
-                             params.asyncMode = true;
-                             params.noAuthToken = true;
-                             params.callback = sessionCallback;
-                             params.targetServer = currentSession.targetServer ;
+                            soapDoc.getMethod().setAttribute("sortBy", params.sortBy);
 
-                             var resp = getSessCmd.invoke(params);
-            			}
-            		}
+                            var getSessCmd = new ZmCsfeCommand ();
+                            params.soapDoc = soapDoc ;
+                            params.asyncMode = true;
+                            params.noAuthToken = true;
+                            params.callback = sessionCallback;
+                            params.targetServer = currentSession.targetServer ;
 
-                } catch (ex) {
-                    // Won't do anything here to avoid disturbe the loading process.
+                            var resp = getSessCmd.invoke(params);
+                        } catch (ex) {
+                            sessionCallback.run();
+                        }
+                    }
                 }
             } else {
                 this.updateSessionNum(totalSession);

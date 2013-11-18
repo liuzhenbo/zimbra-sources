@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 /**
@@ -51,6 +49,12 @@ public class DialogEditFolder extends AbsDialog {
 		public static final String zYellowColorId = "//td[contains(@id,'_title') and contains(text(),'Yellow')]";
 		public static final String zPinkColorId = "//td[contains(@id,'_title') and contains(text(),'Pink')]";
 		public static final String zOrangeColorId = "//td[contains(@id,'_title') and contains(text(),'Orange')]";
+		public static final String zMoreColors = "css= div[id$='SHOW_MORE_ITEMS'] td[id$='SHOW_MORE_ITEMS_title']:contains('More Colors...')";
+		public static final String zCustomColors = "css=div[class='DwtMenu'] div[class$='DwtColorPicker'] div[class='Colors'] div:nth-child(4)";
+		public static final String zSetCustom = "css=table[class='ZWidgetTable ZButtonTable ZButtonBorder'] td[class='ZWidgetTitle']:contains('Custom')";
+		public static final String zEditColor = "css=td[class='Field'] td[class='ZDropDown'] div[class='ImgSelectPullDownArrow']";
+		public static final String zExcludeFB = "css=input[id='_excludeFbCheckbox']";
+		public static final String ConflictAttendeeNote = "css= div[id$='_attendee_status']:contains('One or more attendees are not available at the selected time.')";
 
 	}
 
@@ -224,9 +228,18 @@ public class DialogEditFolder extends AbsDialog {
 		if (color == null)
 			throw new HarnessException("folder must not be null");
 
-		if (color == FolderColor.MoreColors)
-			throw new HarnessException("'more colors' - implement me!");
-		if (color == FolderColor.Gray) {
+		if (color == FolderColor.MoreColors){
+			actionLocator = Locators.zEditColor;
+			optionLocator = Locators.zMoreColors;
+			
+			zClickAt(actionLocator,"");
+			zClick(optionLocator);
+			
+			optionLocator = Locators.zCustomColors;
+			zClick(optionLocator);
+			
+
+		}else if (color == FolderColor.Gray) {
 
 			actionLocator = Locators.zEditPropertiesDialogDropDown;
 			optionLocator = Locators.zGrayColorId;
@@ -558,6 +571,33 @@ public class DialogEditFolder extends AbsDialog {
 			logger.info("Checkbox already unchecked");
 		} else {
 			this.sUncheck(locator);
+			this.zWaitForBusyOverlay();
+		}
+
+	}
+	public void zExcludeFBEnable() throws HarnessException {
+		logger.info(myPageName() + " zDisposalEnable()");
+		tracer.trace("Enable Exclude this calendar when reporting free/busy times");
+		
+		// Check the checkbox
+		if ( this.sIsChecked(Locators.zExcludeFB) ) {
+			logger.info("Checkbox already checked");
+		} else {
+			this.sCheck(Locators.zExcludeFB);
+			this.zWaitForBusyOverlay();
+		}
+
+	}
+	
+	public void zExcludeFBDisable() throws HarnessException {
+		logger.info(myPageName() + " zDisposalDisable()");
+		tracer.trace("Disable Exclude this calendar when reporting free/busy times");
+
+		// Uncheck the checkbox
+		if ( !this.sIsChecked(Locators.zExcludeFB) ) {
+			logger.info("Checkbox already unchecked");
+		} else {
+			this.sUncheck(Locators.zExcludeFB);
 			this.zWaitForBusyOverlay();
 		}
 

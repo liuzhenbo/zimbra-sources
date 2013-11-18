@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -83,17 +83,23 @@ public class MessageChannel {
                 return;
             }
             com.zimbra.cs.account.Server targetServer = targetAccount.getServer();
-            String peerHostname;
-            PeerServer peer;
-            if (targetServer == null ||
-                    (peerHostname = targetServer.getServiceHostname()) == null ||
+            sendMessage(targetServer, message);
+        } catch (ServiceException e) {
+            log.error("can't find server for account %s", accountId, e);
+        }
+    }
+
+    public void sendMessage(com.zimbra.cs.account.Server server, Message message) {
+        String peerHostname;
+        PeerServer peer;
+        try {
+            if (server == null || client == null ||
+                    (peerHostname = server.getServiceHostname()) == null ||
                     (peer = client.getPeer(peerHostname)) == null) {
-                log.error("can't find server for account %s", accountId);
+                log.error("no client available for server %s", server.getServiceHostname());
                 return;
             }
             peer.sendMessage(message.serialize());
-        } catch (ServiceException e) {
-            log.error("can't send notification", e);
         } catch (IOChannelException e) {
             log.warn("MessageChannel: " + e.getMessage());
         } catch (IOException e) {

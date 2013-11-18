@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012 VMware, Inc.
+ * Copyright (C) 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.mail.folders;
@@ -146,7 +144,7 @@ public class HoverOverFolder extends PrefGroupMailByMessageTest {
 		 * The computed size depends on the server.  So, just use not "0 B" (and hope
 		 * that some implementation won't use 0.2 MB)
 		 *  
-		 * Ex: http://zqa-004.eng.vmware.com/testlogs/UBUNTU10_64/main/20121202000101_NETWORK/SelNG-projects-ajax-tests/1354441149664/zqa-382.eng.vmware.com/AJAX/firefox_12.0/en_US/debug/projects/ajax/tests/mail/folders/HoverOverFolder/TooltipFolder_02ss51.png
+		 * Ex: http://server/testlogs/UBUNTU10_64/main/20121202000101_NETWORK/SelNG-projects-ajax-tests/1354441149664/server/AJAX/firefox_12.0/en_US/debug/projects/ajax/tests/mail/folders/HoverOverFolder/TooltipFolder_02ss51.png
 		 * 
 		 */
 		// Verify "201 B" message size

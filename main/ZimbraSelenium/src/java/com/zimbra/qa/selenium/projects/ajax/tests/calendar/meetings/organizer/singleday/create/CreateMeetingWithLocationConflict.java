@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.singleday.create;
@@ -107,7 +105,7 @@ public class CreateMeetingWithLocationConflict extends CalendarWorkWeekTest {
 		ZAssert.assertEquals(appt.getLocation(), apptLocation, "Location: Verify the location is present in the appointment");
 		SleepUtil.sleepVeryLong();
 		
-		// Verify location free/busy status shows as psts=DE
+		// Verify location free/busy status shows as ptst=DE
 		String locationStatus = app.zGetActiveAccount().soapSelectValue("//mail:at[@a='"+ apptLocation +"']", "ptst");
 		ZAssert.assertEquals(locationStatus, "DE", "Verify that the location status shows as 'DECLINED'");
 			
@@ -263,7 +261,7 @@ public class CreateMeetingWithLocationConflict extends CalendarWorkWeekTest {
 		ZAssert.assertEquals(appt.getLocation(), apptLocation, "Location: Verify the location is present in the appointment");
 		SleepUtil.sleepVeryLong();
 		
-		// Verify location free/busy status shows as psts=NE	
+		// Verify location free/busy status shows as ptst=NE	
 		String locationStatus = app.zGetActiveAccount().soapSelectValue("//mail:at[@a='"+ apptLocation +"']", "ptst");
 		ZAssert.assertEquals(locationStatus, "NE", "Verify that the location status shows as 'DECLINCED'");
 		

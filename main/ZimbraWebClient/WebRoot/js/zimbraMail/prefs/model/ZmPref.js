@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -44,6 +44,7 @@ ZmPref.TYPE_SHORTCUTS		= "SHORTCUTS";
 ZmPref.TYPE_CUSTOM			= "CUSTOM";
 ZmPref.TYPE_LOCALES			= "LOCALES";
 ZmPref.TYPE_FONT			= "FONT";
+ZmPref.TYPE_FONT_SIZE		= "FONT_SIZE";
 
 ZmPref.ORIENT_VERTICAL		= "vertical";
 ZmPref.ORIENT_HORIZONTAL	= "horizontal";
@@ -141,7 +142,7 @@ function(value) {
 ZmPref.validatePollingInterval =
 function(interval) {
 	var minimum = appCtxt.get(ZmSetting.MIN_POLLING_INTERVAL);
-	if (interval && minimum && interval >= minimum) {
+	if (interval && (!minimum || interval >= minimum)) {
 		return true;
 	} else {
 		var min = minimum / 60;
@@ -651,10 +652,14 @@ function( control ) {
     if( appCtxt.isTinyMCEEnabled() ){
         var signaturePage = control.parent;
         var valueEl = document.getElementById(signaturePage._htmlElId + "_SIG_EDITOR");
-        signaturePage.isSignatureEditor = true;
-        var htmlEditor = new ZmAdvancedHtmlEditor(signaturePage, null, null, null, null, valueEl.parentNode, "TEXTAREA_SIGNATURE");
+        var htmlEditor = new ZmAdvancedHtmlEditor({
+            parent: signaturePage,
+            reparentContainer: valueEl.parentNode,
+            textAreaId: "TEXTAREA_SIGNATURE",
+            attachmentCallback:
+                signaturePage._insertImagesListener.bind(signaturePage)
+        });
         valueEl.parentNode.removeChild(valueEl);
-        delete signaturePage.isSignatureEditor;
         signaturePage._sigEditor = htmlEditor;
         signaturePage._populateSignatures();
     }

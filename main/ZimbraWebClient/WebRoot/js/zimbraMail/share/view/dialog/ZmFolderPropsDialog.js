@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -390,7 +390,8 @@ function(row, share) {
 
 		// public shares have no editable fields, and sent no mail
 		var isAllShare = share.grantee && (share.grantee.type == ZmShare.TYPE_ALL);
-		if (((isAllShare || share.isPublic() || share.isGuest()) && (action == ZmShare.EDIT)) ||
+        // Fix for bug: 76685. Removed share.isGuest() from the condition and it adds edit cmd link
+		if (((isAllShare || share.isPublic()) && (action == ZmShare.EDIT)) ||
             ((isAllShare || share.isPublic()) && action == ZmShare.RESEND)) { continue; }
 
 		var link = document.createElement("A");

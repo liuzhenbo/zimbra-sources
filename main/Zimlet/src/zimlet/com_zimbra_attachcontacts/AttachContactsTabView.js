@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Zimlets
- * Copyright (C) 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -164,6 +164,7 @@ function() {
 
 };
 
+
 AttachContactsTabView.prototype._handleItemSelect =
 function(ev) {
 	if (AjxEnv.isIE) {
@@ -176,10 +177,10 @@ function(ev) {
 	if(rowEl.className == "ImgCheckboxunChecked" || rowEl.className == "ImgCheckboxChecked") {
 		 rowWasClicked = false;
 	}
-	while (rowEl && (rowEl.id.indexOf("attachContactsZimlet_row_") == -1)) {
+	while (!Dwt.hasClass(rowEl, 'AttachContactRow') && rowEl.id != this._folderListId) {
 		rowEl = rowEl.parentNode;
 	}
-	if(!rowEl) {
+	if(rowEl.id == this._folderListId) {
 		return;
 	}
 	this._resetRowSelection(rowWasClicked);
@@ -205,6 +206,8 @@ function(ev) {
 			this._selectedItemIds[itemId] = true;
 		}
 	}
+
+    this._selectionChanged();
 };
 
 AttachContactsTabView.prototype._resetRowSelection =
@@ -396,7 +399,24 @@ function(items) {
 	
 	Dwt.setInnerHtml(Dwt.byId(this._folderListId), html.join(""));
 
+	this._selectionChanged();
 };
+
+/**
+ * Notify listeners that the selected items changed.
+*/
+AttachContactsTabView.prototype._selectionChanged =
+function() {
+    if (this.isListenerRegistered(DwtEvent.SELECTION)) {
+        var selEv = new DwtSelectionEvent(true);
+        selEv.button = DwtMouseEvent.LEFT;
+        selEv.target = this;
+        selEv.item = null;
+        selEv.detail = DwtListView.ITEM_SELECTED;
+        selEv.ersatz = true;
+        this.notifyListeners(DwtEvent.SELECTION, selEv);
+    }
+}
 
 AttachContactsTabView.prototype._getFirstWorkingAttr =
 function(item, desiredAttrs) {
@@ -443,6 +463,19 @@ function() {
 	}
 	return selectedIds;
 };
+
+/**
+ * Get the amount of selected items.
+*/
+AttachContactsTabView.prototype.getSelectionCount =
+function() {
+	var n = 0;
+	for (var id in this._selectedItemIds) {
+		n += this._selectedItemIds[id];
+	}
+	return n;
+}
+
 
 /**
  * Inserts contacts

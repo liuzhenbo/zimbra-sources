@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2012, 2013 VMware, Inc.
+ * Copyright (C) 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.tests.calendar.meetings.organizer.singleday.quickadd;
@@ -20,6 +18,7 @@ import java.util.Calendar;
 import org.testng.annotations.*;
 
 import com.zimbra.qa.selenium.framework.core.Bugs;
+import com.zimbra.qa.selenium.framework.core.ExecuteHarnessMain;
 import com.zimbra.qa.selenium.framework.items.*;
 import com.zimbra.qa.selenium.framework.ui.*;
 import com.zimbra.qa.selenium.framework.util.*;
@@ -39,6 +38,13 @@ public class SuggestALocation extends CalendarWorkWeekTest {
 	@Test(description = "Suggest a free location while creating appointment from quick add dialog",
 			groups = { "functional" })
 	public void SuggestALocation_01() throws HarnessException {
+		
+		ZimbraAdminAccount.GlobalAdmin().soapSend(
+                "<AddAccountLoggerRequest xmlns='urn:zimbraAdmin'>"
+          +           "<account by='name'>"+ app.zGetActiveAccount().EmailAddress + "</account>"
+          +           "<logger category='zimbra.soap' level='trace'/>"
+          +     "</AddAccountLoggerRequest>");
+		app.zGetActiveAccount().accountIsDirty = true;
 		
 		AppointmentItem appt = new AppointmentItem();
 		Calendar now = this.calendarWeekDayUTC;
@@ -90,9 +96,11 @@ public class SuggestALocation extends CalendarWorkWeekTest {
 		ZAssert.assertNotNull(invite, "Verify the invite is received");
 		ZAssert.assertEquals(invite.dSubject, apptSubject, "Subject: Verify the appointment data");
 		
-		// Verify location free/busy status shows as psts=AC	
+		// Verify location free/busy status shows as ptst=AC	
 		String locationStatus = app.zGetActiveAccount().soapSelectValue("//mail:at[@a='"+ apptLocation +"']", "ptst");
 		ZAssert.assertEquals(locationStatus, "AC", "Verify that the location status shows as 'ACCEPTED'");
+		
+		ExecuteHarnessMain.ResultListener.captureMailboxLog();
 		
 	}
 	

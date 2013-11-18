@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -31,7 +31,7 @@ ZmConvView2 = function(params) {
 	params.className = params.className || "ZmConvView2";
 	ZmMailItemView.call(this, params);
 
-	this._mode = ZmId.VIEW_CONV2;
+	this._mode = params.mode;
 	this._controller = params.controller;
 	this._convChangeHandler = this._convChangeListener.bind(this);
 	this._listChangeListener = this._msgListChangeListener.bind(this);
@@ -802,7 +802,7 @@ function(view, content, htmlEncode) {
 ZmConvView2Header = function(params) {
 
 	params.className = params.className || "Conv2Header";
-	DwtControl.call(this, params);
+	DwtComposite.call(this, params);
 
 	this._setEventHdlrs([DwtEvent.ONMOUSEDOWN, DwtEvent.ONMOUSEUP, DwtEvent.ONDBLCLICK]);
 	
@@ -847,6 +847,7 @@ function() {
 	this.setVisible(false);
 	if (this._subjectSpan && this._infoDiv) {
 		this._subjectSpan.innerHTML = this._infoDiv.innerHTML = "";
+        this._subjectSpan.title = "";
 	}
 };
 
@@ -881,6 +882,7 @@ ZmConvView2Header.prototype._setSubject =
 function() {
 	var subject = this._convView.renderObjects(this, ZmMailMsg.stripSubjectPrefixes(this._item.subject ||ZmMsg.noSubject), true);
 	this._subjectSpan.innerHTML = subject;
+    this._subjectSpan.title = subject;
 };
 
 ZmConvView2Header.prototype._setInfo =
@@ -1276,49 +1278,86 @@ function() {
  * Resize IFRAME to match its content. IFRAMEs have a default height of 150, so we need to
  * explicitly set the correct height if the content is smaller. The easiest way would be
  * to measure the height of the HTML or BODY element, but some browsers (mainly IE) report
- * that to be 150. So we end up trying these ways in order to get an accurate height:
- *		- height of BODY
- *		- height from BODY's computed style object
- *		- cumulative height of BODY's child nodes
+ * that to be 150. So as a backup we sum the height of the BODY element's child nodes. To
+ * get the true height of an element we use its computed style object to add together the
+ * vertical measurements of height, padding, and margins.
  */
 ZmMailMsgCapsuleView.prototype._resize =
 function() {
 
 	this._resizePending = false;
-	if (!this._expanded || !this._usingIframe || this._hasBeenSized) { return; }
+	if (!this._expanded || !this._usingIframe) {
+		return;
+	}
 	
 	var body = this.getContentContainer();
-	if (!body) { return; }
-	
-	var height = Dwt.getSize(body).y;
-	if (!height || height == 150) {
-		var styleObj = DwtCssStyle.getComputedStyleObject(body);
-		if (styleObj && styleObj.height) {
-			height = parseInt(styleObj.height);
+	if (!body) {
+		return;
+	}
+
+	// Height from getSize() will either be correct or too small. If it's over 150,
+	// we don't need to resize. Bail so we save the effort of messing with the computed style.
+	if (Dwt.getSize(body).y > 150) {
+		return;
+	}
+
+	var height = ZmMailMsgCapsuleView._heightCache[this._msgId];
+
+	if (!height) {
+		// Get height from computed style, which seems to be the most reliable source.
+		height = this._getHeightFromComputedStyle(body);
+
+		// We didn't get a believable height. Try moving the BODY's children into a DIV
+		// and measuring that. Previously, we tried measuring the height of the children,
+		// but that's unreliable since an element such as BR reports 0 height even though
+		// it takes up vertical space. Since we know the height is under 150, there shouldn't
+		// be a lot of elements getting moved around.
+		if (height === 0 || height === 150) {
+			var div = ZmMailMsgCapsuleView._testDiv;
+			if (!div) {
+				div = ZmMailMsgCapsuleView._testDiv = document.createElement('DIV');
+				div.style.position = Dwt.ABSOLUTE_STYLE;
+				var shellEl = DwtShell.getShell(window).getHtmlElement();
+				shellEl.appendChild(div);
+				Dwt.setLocation(div, Dwt.LOC_NOWHERE, Dwt.LOC_NOWHERE);
+			}
+			while (body.hasChildNodes()) {
+				div.appendChild(body.firstChild);
+			}
+			height = this._getHeightFromComputedStyle(div);
+			while (div.hasChildNodes()) {
+				body.appendChild(div.firstChild);
+			}
 		}
 	}
-	if (!height || height == 150) {
-		height = 0;
-		for (var i = 0, len = body.childNodes.length; i < len; i++) {
-			var el = body.childNodes[i];
-			if (!el || el.nodeType != AjxUtil.ELEMENT_NODE) {
-				height = -1;
-				break;
-			}
-			height += Dwt.getSize(el).y;
-			var styleObj = DwtCssStyle.getComputedStyleObject(el);
-			if (!styleObj) {
-				return;
-			}
-			height += parseInt(styleObj.marginTop) + parseInt(styleObj.marginBottom);
-		}
-	}
+
+	// If the content height is less than 150, then resize the IFRAME to fit it.
 	if (height > 0 && height < 150) {
-		height += 12;	// fudge to make sure nothing is cut off
+		ZmMailMsgCapsuleView._heightCache[this._msgId] = height;
+		height += 20;	// account for 10px of top and bottom padding for class MsgBody-html
 		DBG.println(AjxDebug.DBG1, "resizing capsule msg view IFRAME height to " + height);
 		Dwt.setSize(this.getIframeElement(), Dwt.DEFAULT, height);
-		this._hasBeenSized = true;
 	}
+};
+
+// Cache msg view iframe heights by msg ID
+ZmMailMsgCapsuleView._heightCache = {};
+
+// Look in the computed style object for height, padding, and margins.
+ZmMailMsgCapsuleView.prototype._getHeightFromComputedStyle =
+function(el) {
+
+	var styleObj = DwtCssStyle.getComputedStyleObject(el),
+		height = 0;
+
+	if (styleObj && styleObj.height) {
+		var props = [ 'height', 'marginTop', 'marginBottom', 'paddingTop', 'paddingBottom' ];
+		for (var i = 0; i < props.length; i++) {
+			var h = parseInt(styleObj[props[i]]);
+			height += isNaN(h) ? 0 : h;
+		}
+	}
+	return height;
 };
 
 ZmMailMsgCapsuleView.prototype._scheduleResize =
@@ -1415,24 +1454,23 @@ function(isTextMsg, html, isTruncated) {
 	// Code below attempts to determine if we can display an HTML msg in a DIV. If there are
 	// issues with the msg DOM being part of the window DOM, we may want to just always return
 	// true from this function.
-	var result = AjxStringUtil.checkForCleanHtml(html, ZmMailMsgView.TRUSTED_TAGS, ZmMailMsgView.UNTRUSTED_ATTRS, ZmMailMsgView.BAD_STYLES);
-	if (result.html) {
+	var result = AjxStringUtil.checkForCleanHtml(html, ZmMailMsgView.TRUSTED_TAGS, ZmMailMsgView.UNTRUSTED_ATTRS);
+	if (!result.useIframe) {
 		this._cleanedHtml = result.html;
 		this._contentWidth = result.width;
 		return false;
 	}
 	else {
+        this._cleanedHtml = result.html;
 		return true;
 	}
 };
 
 ZmMailMsgCapsuleView.prototype._renderMessageBody =
 function(msg, container, callback, index) {
-	
-	if (!this._beenHere) {
-		this._addLine();
-	}
-	
+
+	this._addLine(); //separator between header and message body
+
 	this._msgBodyDivId = [this._htmlElId, ZmId.MV_MSG_BODY].join("_");
 	var autoSendTime = AjxUtil.isDate(msg.autoSendTime) ? AjxDateFormat.getDateTimeInstance(AjxDateFormat.FULL, AjxDateFormat.MEDIUM).format(msg.autoSendTime) : null;
 	if (autoSendTime) {
@@ -1507,6 +1545,13 @@ function(msg, container, callback, index) {
 	}
 	
 	this._beenHere = true;
+};
+
+ZmMailMsgCapsuleView.prototype._getInviteSubs =
+function(subs) {
+	ZmMailMsgView.prototype._getInviteSubs.apply(this, arguments);
+
+    subs.noTopHeader = true;
 };
 
 ZmMailMsgCapsuleView.prototype._addLine =
@@ -1787,12 +1832,14 @@ function(expanded) {
 	}
 	else {
 		// hide or show everything below the header
-		var children = this.getHtmlElement().childNodes;
-		for (var i = 1; i < children.length; i++) {
-			var child = children[i];
-			var show = (child && (child.id == this._displayImagesId)) ? this._expanded && this._needToShowInfoBar : this._expanded;
-			Dwt.setVisible(child, show);
-		}
+        var children = this.getHtmlElement().childNodes;
+        for (var i = 0; i < children.length; i++) {
+                if (children[i].className !== 'Conv2MsgHeader'){
+                var child = children[i];
+                var show = (child && (child.id == this._displayImagesId)) ? this._expanded && this._needToShowInfoBar : this._expanded;
+                Dwt.setVisible(child, show);
+      	    }
+        }
 		this._header.set(this._expanded ? ZmMailMsgCapsuleViewHeader.EXPANDED : ZmMailMsgCapsuleViewHeader.COLLAPSED);
 		if (this._expanded) {
 			this._setTags(this._msg);
@@ -2039,11 +2086,17 @@ function(state, force) {
 	if (!isExpanded) {
 		var fromId = id + "_0";
 		this._idToAddr[fromId] = ai.fromAddr;
+
+		var imageURL = ai.sentByContact &&
+			ai.sentByContact.getImageUrl(32, 32) ||
+			ZmContact.NO_IMAGE_URL_SMALL;
+
 		subs = {
 			readCellId:		this._readCellId,
 			from:			ai.from,
 			fromId:			fromId,
 			fragment:		AjxStringUtil.htmlEncode(msg.fragment),
+			imageURL:		imageURL,
 			date:			dateString,
 			dateCellId:		this._dateCellId,
 			dateTooltip:	dateTooltip
@@ -2051,6 +2104,10 @@ function(state, force) {
 		html = AjxTemplate.expand("mail.Message#Conv2MsgHeader-collapsed", subs);
 	}
 	else {
+		var imageURL = ai.sentByContact &&
+			ai.sentByContact.getImageUrl(48, 48) ||
+			ZmContact.NO_IMAGE_URL;
+
 		subs = {
 			hdrTableId:		this._msgView._hdrTableId = id + "_hdrTable",
 			readCellId:		this._readCellId,
@@ -2062,6 +2119,7 @@ function(state, force) {
 			bwoAddr:		ai.bwoAddr,
 			addressTypes:	ai.addressTypes,
 			participants:	ai.participants,
+			imageURL:		imageURL,
 			date:			dateString,
 			dateCellId:		this._dateCellId,
 			dateTooltip:	dateTooltip,

@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Web Client
- * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 VMware, Inc.
+ * Copyright (C) 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -712,7 +712,7 @@ function(width) {
 	};
 	this._subjectField = new DwtInputField(params);
 	this._subjectField.setRequired();
-	Dwt.setSize(this._subjectField.getInputElement(), "100%", "22px");
+	Dwt.setSize(this._subjectField.getInputElement(), "100%", "2rem");
 
 	// CalItem folder DwtSelect
 	this._folderSelect = new DwtSelect({parent:this, parentElement:(this._htmlElId + "_folderSelect")});
@@ -747,11 +747,12 @@ function(width) {
 			type: DwtInputField.STRING,
 			errorIconStyle: DwtInputField.ERROR_ICON_NONE,
 			validationStyle: DwtInputField.CONTINUAL_VALIDATION,
-            className: "DwtInputField ReminderInput"
+			className: "DwtInputField ReminderInput"
 		};
 		this._reminderSelectInput = new DwtInputField(params);
 		var reminderInputEl = this._reminderSelectInput.getInputElement();
-		Dwt.setSize(reminderInputEl, Dwt.DEFAULT, "22px");
+        // Fix for bug: 83100. Fix adapted from ZmReminderDialog::_createButtons
+		Dwt.setSize(reminderInputEl, "120px", "2rem");
 		reminderInputEl.onblur = AjxCallback.simpleClosure(this._handleReminderOnBlur, this, reminderInputEl);
 
 		var reminderButtonListener = new AjxListener(this, this._reminderButtonListener);
@@ -1275,13 +1276,9 @@ function(status, attId) {
 		this._controller._handleException(ex, {continueCallback:callback});
 	} else {
 		// bug fix #2131 - handle errors during attachment upload.
-		var msg = AjxMessageFormat.format(ZmMsg.errorAttachment, (status || AjxPost.SC_NO_CONTENT));
-		switch (status) {
-			// add other error codes/message here as necessary
-			case AjxPost.SC_REQUEST_ENTITY_TOO_LARGE: 	msg += " " + ZmMsg.errorAttachmentTooBig + "<br><br>"; break;
-			default: 									msg += " "; break;
-		}
-		this._controller.showErrorMessage(msg + ZmMsg.errorTryAgain);
+		this._controller.popupUploadErrorDialog(ZmItem.APPT, status,
+		                                        ZmMsg.errorTryAgain);
+		this._controller.enableToolbar(true);
 	}
 };
 

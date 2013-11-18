@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite CSharp Client
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 #pragma once
@@ -100,6 +98,7 @@ typedef struct _ContactItemData: BaseItemData
     wstring OtherStreet;
     wstring OtherURL;
     wstring Pager;
+    wstring PrimaryPhone;
     wstring WorkCity;
     wstring WorkCountry;
     wstring WorkFax;
@@ -247,12 +246,14 @@ private:
 	std::wstring m_strUserName;
         std::wstring m_strUserAccount;
     Zimbra::MAPI::MAPIStore *m_userStore;
+	Zimbra::MAPI::MAPIStore *m_publicStore;
     Zimbra::MAPI::MAPIFolder *m_rootFolder;
     ExchangeSpecialFolderId FolderToSkip[TS_FOLDERS_MAX];
 
     void InitFoldersToSkip();
     bool SkipFolder(ExchangeSpecialFolderId exfid);
     LPCWSTR OpenUserStore();
+	LPCWSTR OpenPublicStore();
     HRESULT Iterate_folders(Zimbra::MAPI::MAPIFolder &folder, vector<Folder_Data> &fd);
     void traverse_folder(Zimbra::MAPI::MAPIFolder &folder);
     HRESULT GetInternalFolder(SBinary sbFolderEID, MAPIFolder &folder);
@@ -281,6 +282,8 @@ public:
 	LPCWSTR _GetItem(SBinary sbItemEID, BaseItemData &itemData);
     LPWSTR  GetOOOStateAndMsg();
     LPCWSTR GetExchangeRules(vector<CRule> &vRuleList);
+	HRESULT EnumeratePublicFolders(std::vector<std::string> &pubFldrList);
+	LPCWSTR InitializePublicFolders();
 };
 }
 }

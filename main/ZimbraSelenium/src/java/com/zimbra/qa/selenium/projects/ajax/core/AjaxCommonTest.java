@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011, 2012 VMware, Inc.
+ * Copyright (C) 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.core;
@@ -96,7 +94,6 @@ public class AjaxCommonTest {
 	 */
 	protected AppAjaxClient app = null;
 
-	private Repository _repository = new Repository();
 
 
 	/**
@@ -141,42 +138,7 @@ public class AjaxCommonTest {
 	throws HarnessException, IOException, InterruptedException, SAXException {
 		logger.info("commonTestBeforeSuite: start");
 
-      //Racetrack
-      String DbHostURL = ZimbraSeleniumProperties.getStringProperty("racetrack.dbUrl",
-            "racetrack.eng.vmware.com");
-      String buildNumber = ZimbraSeleniumProperties.getStringProperty("racetrack.buildNumber",
-            "000000");
-      String userName = ZimbraSeleniumProperties.getStringProperty("racetrack.username",
-            "anonymous");
-      String product = ZimbraSeleniumProperties.getStringProperty("racetrack.product",
-            "ZCS");
-      String description = ZimbraSeleniumProperties.getStringProperty("racetrack.description",
-            "zdesktop description");
-      String branch = ZimbraSeleniumProperties.getStringProperty("racetrack.branch",
-            "Please specify version");
-      String buildType = ZimbraSeleniumProperties.getStringProperty("racetrack.buildType",
-            "beta");
-      String testType = ZimbraSeleniumProperties.getStringProperty("racetrack.testType",
-            "functional");
-      String recordToRacetrack = ZimbraSeleniumProperties.getStringProperty("racetrack.recordToRacetrack",
-            "false");
-      String appendToExisting = ZimbraSeleniumProperties.getStringProperty("racetrack.appendToExisting",
-            "false");
-      String resultId = ZimbraSeleniumProperties.getStringProperty("racetrack.resultId",
-            "");
 
-      _repository.connectingToRacetrack(DbHostURL);
-      _repository.beginTestSet(
-            buildNumber,
-            userName,
-            product,
-            description,
-            branch,
-            buildType,
-            testType,
-            Boolean.parseBoolean(recordToRacetrack),
-            Boolean.parseBoolean(appendToExisting),
-            resultId);
 
       // Make sure there is a new default account
 		ZimbraAccount.ResetAccountZWC();
@@ -302,13 +264,10 @@ public class AjaxCommonTest {
 	public void commonTestBeforeMethod(Method method, ITestContext testContext) throws HarnessException {
 		logger.info("commonTestBeforeMethod: start");
 
-		String packageName = method.getDeclaringClass().getPackage().getName();
-		String methodName = method.getName();
 
 		// Get the test description
 		// By default, the test description is set to method's name
 		// if it is set, then change it to the specified one
-		String testDescription = methodName;
 		for (ITestNGMethod ngMethod : testContext.getAllTestMethods()) {
 			String methodClass = ngMethod.getRealClass().getSimpleName();
 			if (methodClass.equals(method.getDeclaringClass().getSimpleName())
@@ -319,13 +278,11 @@ public class AjaxCommonTest {
 							+ "." + ngMethod.getMethodName());
 					logger.info("Description: " + ngMethod.getDescription());
 					logger.info("----------------------------------------");
-					testDescription = ngMethod.getDescription();
 				}
 				break;
 			}
 		}
 
-		Repository.testCaseBegin(methodName, packageName, testDescription);
 
 		// If test account preferences are defined, then make sure the test account
 		// uses those preferences
@@ -466,7 +423,6 @@ public class AjaxCommonTest {
 			ClientSessionFactory.session().selenium().stop();
 		}
 		
-		_repository.endRepository();
 
 		logger.info("commonTestAfterSuite: finish");
 
@@ -505,8 +461,6 @@ public class AjaxCommonTest {
 	throws HarnessException {
 		logger.info("commonTestAfterMethod: start");
 
-		String testCaseResult = String.valueOf(testResult.getStatus());
-		Repository.testCaseEnd(testCaseResult);
 
 		// If the active URL does not match the base URL, then
 		// the test case may have manually navigated somewhere.

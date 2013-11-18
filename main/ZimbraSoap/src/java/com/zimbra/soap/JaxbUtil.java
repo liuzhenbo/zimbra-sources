@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -45,9 +45,9 @@ import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.soap.AccountConstants;
 import com.zimbra.common.soap.AdminConstants;
 import com.zimbra.common.soap.Element;
-import com.zimbra.common.soap.MailConstants;
 import com.zimbra.common.soap.Element.JSONElement;
 import com.zimbra.common.soap.Element.XMLElement;
+import com.zimbra.common.soap.MailConstants;
 import com.zimbra.common.util.Log;
 import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.soap.json.JacksonUtil;
@@ -486,6 +486,8 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.CopyCosResponse.class,
             com.zimbra.soap.admin.message.CountAccountRequest.class,
             com.zimbra.soap.admin.message.CountAccountResponse.class,
+            com.zimbra.soap.admin.message.CreateAlwaysOnClusterRequest.class,
+            com.zimbra.soap.admin.message.CreateAlwaysOnClusterResponse.class,
             com.zimbra.soap.admin.message.CountObjectsRequest.class,
             com.zimbra.soap.admin.message.CountObjectsResponse.class,
             com.zimbra.soap.admin.message.CreateAccountRequest.class,
@@ -526,6 +528,8 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.DelegateAuthResponse.class,
             com.zimbra.soap.admin.message.DeleteAccountRequest.class,
             com.zimbra.soap.admin.message.DeleteAccountResponse.class,
+            com.zimbra.soap.admin.message.DeleteAlwaysOnClusterRequest.class,
+            com.zimbra.soap.admin.message.DeleteAlwaysOnClusterResponse.class,
             com.zimbra.soap.admin.message.DeleteCalendarResourceRequest.class,
             com.zimbra.soap.admin.message.DeleteCalendarResourceResponse.class,
             com.zimbra.soap.admin.message.DeleteCosRequest.class,
@@ -600,8 +604,12 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.GetAllAccountLoggersResponse.class,
             com.zimbra.soap.admin.message.GetAllAccountsRequest.class,
             com.zimbra.soap.admin.message.GetAllAccountsResponse.class,
+            com.zimbra.soap.admin.message.GetAllActiveServersRequest.class,
+            com.zimbra.soap.admin.message.GetAllActiveServersResponse.class,
             com.zimbra.soap.admin.message.GetAllAdminAccountsRequest.class,
             com.zimbra.soap.admin.message.GetAllAdminAccountsResponse.class,
+            com.zimbra.soap.admin.message.GetAllAlwaysOnClustersRequest.class,
+            com.zimbra.soap.admin.message.GetAllAlwaysOnClustersResponse.class,
             com.zimbra.soap.admin.message.GetAllCalendarResourcesRequest.class,
             com.zimbra.soap.admin.message.GetAllCalendarResourcesResponse.class,
             com.zimbra.soap.admin.message.GetAllConfigRequest.class,
@@ -640,6 +648,8 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.GetApplianceHSMFSResponse.class,
             com.zimbra.soap.admin.message.GetAttributeInfoRequest.class,
             com.zimbra.soap.admin.message.GetAttributeInfoResponse.class,
+            com.zimbra.soap.admin.message.GetAlwaysOnClusterRequest.class,
+            com.zimbra.soap.admin.message.GetAlwaysOnClusterResponse.class,
             com.zimbra.soap.admin.message.GetCSRRequest.class,
             com.zimbra.soap.admin.message.GetCSRResponse.class,
             com.zimbra.soap.admin.message.GetCalendarResourceRequest.class,
@@ -754,6 +764,8 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.InstallCertResponse.class,
             com.zimbra.soap.admin.message.InstallLicenseRequest.class,
             com.zimbra.soap.admin.message.InstallLicenseResponse.class,
+            com.zimbra.soap.admin.message.LockoutMailboxRequest.class,
+            com.zimbra.soap.admin.message.LockoutMailboxResponse.class,
             com.zimbra.soap.admin.message.MailQueueActionRequest.class,
             com.zimbra.soap.admin.message.MailQueueActionResponse.class,
             com.zimbra.soap.admin.message.MailQueueFlushRequest.class,
@@ -764,6 +776,8 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.ModifyAccountResponse.class,
             com.zimbra.soap.admin.message.ModifyAdminSavedSearchesRequest.class,
             com.zimbra.soap.admin.message.ModifyAdminSavedSearchesResponse.class,
+            com.zimbra.soap.admin.message.ModifyAlwaysOnClusterRequest.class,
+            com.zimbra.soap.admin.message.ModifyAlwaysOnClusterResponse.class,
             com.zimbra.soap.admin.message.ModifyCalendarResourceRequest.class,
             com.zimbra.soap.admin.message.ModifyCalendarResourceResponse.class,
             com.zimbra.soap.admin.message.ModifyConfigRequest.class,
@@ -878,8 +892,12 @@ public final class JaxbUtil {
             com.zimbra.soap.admin.message.SearchMultiMailboxResponse.class,
             com.zimbra.soap.admin.message.SetCurrentVolumeRequest.class,
             com.zimbra.soap.admin.message.SetCurrentVolumeResponse.class,
+            com.zimbra.soap.admin.message.SetLocalServerOnlineRequest.class,
+            com.zimbra.soap.admin.message.SetLocalServerOnlineResponse.class,
             com.zimbra.soap.admin.message.SetPasswordRequest.class,
             com.zimbra.soap.admin.message.SetPasswordResponse.class,
+            com.zimbra.soap.admin.message.SetServerOfflineRequest.class,
+            com.zimbra.soap.admin.message.SetServerOfflineResponse.class,
             com.zimbra.soap.admin.message.SuspendDeviceRequest.class,
             com.zimbra.soap.admin.message.SuspendDeviceResponse.class,
             com.zimbra.soap.admin.message.SyncGalAccountRequest.class,

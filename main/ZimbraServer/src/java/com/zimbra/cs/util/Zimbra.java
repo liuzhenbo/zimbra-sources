@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -21,12 +21,16 @@ import java.security.Security;
 import java.util.Timer;
 
 import org.apache.mina.core.buffer.IoBuffer;
+import org.dom4j.DocumentException;
 
 import com.zimbra.common.calendar.WellKnownTimeZones;
 import com.zimbra.common.lmtp.SmtpToLmtp;
+import com.zimbra.common.localconfig.ConfigException;
 import com.zimbra.common.localconfig.LC;
+import com.zimbra.common.localconfig.LocalConfig;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.soap.SoapTransport;
+import com.zimbra.common.util.FileUtil;
 import com.zimbra.common.util.ZimbraHttpConnectionManager;
 import com.zimbra.common.util.ZimbraLog;
 import com.zimbra.cs.account.AttributeManager;
@@ -37,6 +41,8 @@ import com.zimbra.cs.account.Server;
 import com.zimbra.cs.account.accesscontrol.RightManager;
 import com.zimbra.cs.account.ldap.LdapProv;
 import com.zimbra.cs.db.DbPool;
+import com.zimbra.cs.db.DbPool.DbConnection;
+import com.zimbra.cs.db.DbSession;
 import com.zimbra.cs.db.Versions;
 import com.zimbra.cs.extension.ExtensionUtil;
 import com.zimbra.cs.iochannel.MessageChannel;
@@ -53,6 +59,8 @@ import com.zimbra.cs.session.SessionCache;
 import com.zimbra.cs.session.WaitSetMgr;
 import com.zimbra.cs.stats.ZimbraPerf;
 import com.zimbra.cs.store.StoreManager;
+import com.zimbra.cs.zookeeper.CuratorManager;
+import com.zimbra.cs.zookeeper.Service;
 import com.zimbra.znative.Util;
 
 /**
@@ -63,6 +71,8 @@ import com.zimbra.znative.Util;
 public final class Zimbra {
     private static boolean sInited = false;
     private static boolean sIsMailboxd = false;
+    private static String alwaysOnClusterId = null;
+    private static Service service = null;
 
     /** Sets system properties before the server fully starts up.  Note that
      *  there's a potential race condition if {@link FirstServlet} or another
@@ -75,6 +85,41 @@ public final class Zimbra {
         System.setProperty("mail.mime.base64.ignoreerrors",     "true");
         System.setProperty("mail.mime.ignoremultipartencoding", "false");
         System.setProperty("mail.mime.multipart.allowempty",    "true");
+    }
+
+    private static final String HEAP_DUMP_JAVA_OPTION = "-xx:heapdumppath=";
+
+    private static void validateJavaOptions() throws ServiceException {
+        String options = LC.mailboxd_java_options.value();
+        if (options != null && options.toLowerCase().indexOf(HEAP_DUMP_JAVA_OPTION) > -1) {
+            int start = options.toLowerCase().indexOf(HEAP_DUMP_JAVA_OPTION) + HEAP_DUMP_JAVA_OPTION.length();
+            int end = -1;
+            for (int i = start; i < options.length(); i++) {
+                char c = options.charAt(i);
+                if (c == ' ') {
+                    end = i;
+                    break;
+                }
+            }
+            String path = null;
+            if (end > -1) {
+                path = options.substring(start, end);
+            } else {
+                path = options.substring(start);
+            }
+            try {
+                if (path.trim().length() <= 0) {
+                    throw new IOException("Heap dump path not specified correctly? mailboxd_java_options="+LC.mailboxd_java_options.value());
+                }
+                File dir = new File(path);
+                FileUtil.ensureDirExists(dir);
+                if (!dir.canWrite()) {
+                    throw new IOException("Heap dump path not writable: " + path);
+                }
+            } catch (IOException e) {
+                throw ServiceException.FAILURE("Unable to find/create HeapDumpPath", e);
+            }
+        }
     }
 
     private static void checkForClass(String clzName, String jarName) {
@@ -151,7 +196,12 @@ public final class Zimbra {
             FirstServlet.waitForInitialization();
         }
 
+        Provisioning prov = Provisioning.getInstance();
+        Server server = prov.getLocalServer();
+        alwaysOnClusterId = server.getAlwaysOnClusterId();
+
         setSystemProperties();
+        validateJavaOptions();
 
         logVersionAndSysInfo();
 
@@ -180,7 +230,6 @@ public final class Zimbra {
             Zimbra.halt("Unable to load timezones from " + tzFilePath, t);
         }
 
-        Provisioning prov = Provisioning.getInstance();
         if (prov instanceof LdapProv) {
             ((LdapProv) prov).waitForLdapServer();
             if (forMailboxd) {
@@ -188,7 +237,7 @@ public final class Zimbra {
             }
         }
 
-        if( Provisioning.getInstance().getLocalServer().isMailSSLClientCertOCSPEnabled()) {
+        if(server.isMailSSLClientCertOCSPEnabled()) {
             // Activate OCSP
             Security.setProperty("ocsp.enable", "true");
             // Activate CRLDP
@@ -246,7 +295,7 @@ public final class Zimbra {
         if (sIsMailboxd) {
             SessionCache.startup();
 
-            Server server = Provisioning.getInstance().getLocalServer();
+            dbSessionCleanup();
 
             if (!redoLog.isSlave()) {
                 boolean useDirectBuffers = server.isMailUseDirectBuffers();
@@ -301,6 +350,22 @@ public final class Zimbra {
                 }
             }
 
+            Server localServer = Provisioning.getInstance().getLocalServer();
+            String provPort = localServer.getAttr(Provisioning.A_zimbraMailPort);
+            String lcPort = LC.zimbra_mail_service_port.value();
+            if (!lcPort.equals(provPort)) {
+                LocalConfig lc;
+                try {
+                    lc = new LocalConfig(null);
+                    lc.set(LC.zimbra_mail_service_port.key(), provPort);
+                    lc.save();
+                    LC.reload();
+                } catch (DocumentException | ConfigException | IOException e) {
+                    ZimbraLog.misc.warn("Cannot set LC zimbra_mail_service_port", e);
+                }
+            }
+
+
             // should be last, so that other subsystems can add dynamic stats counters
             if (app.supports(ZimbraPerf.class.getName())) {
                 ZimbraPerf.initialize();
@@ -309,6 +374,18 @@ public final class Zimbra {
 
         ExtensionUtil.postInitAll();
 
+        // Register the service with ZooKeeper
+        if (sIsMailboxd && isAlwaysOn()) {
+            try {
+                CuratorManager curatorManager = CuratorManager.getInstance();
+                if (curatorManager == null) {
+                    throw ServiceException.FAILURE("ZooKeeper addresses not configured.", null);
+                }
+                curatorManager.start();
+            } catch (Exception e) {
+                throw ServiceException.FAILURE("Unable to start Distributed Lock service.", e);
+            }
+        }
         sInited = true;
     }
 
@@ -343,7 +420,14 @@ public final class Zimbra {
                 ServerManager.getInstance().stopServers();
             }
 
+            dbSessionCleanup();
+
             SessionCache.shutdown();
+
+            CuratorManager curatorManager = CuratorManager.getInstance();
+            if (curatorManager != null) {
+                curatorManager.stop();
+            }
         }
 
         MailboxIndex.shutdown();
@@ -409,6 +493,30 @@ public final class Zimbra {
             ZimbraLog.system.fatal(message, t);
         } finally {
             Runtime.getRuntime().halt(1);
+        }
+    }
+
+    public static String getAlwaysOnClusterId() {
+        return alwaysOnClusterId;
+    }
+
+    public static boolean isAlwaysOn() {
+        return alwaysOnClusterId != null;
+    }
+
+    private static void dbSessionCleanup() throws ServiceException {
+        //DbSessions Cleanup
+        DbConnection conn = null;
+        try {
+        	if (isAlwaysOn()) {
+        		conn = DbPool.getConnection();
+        		DbSession.deleteSessions(conn,
+        				Provisioning.getInstance().getLocalServer().getId());
+        		conn.commit();
+        	}
+        } finally {
+        	if (conn != null)
+        		conn.closeQuietly();
         }
     }
 }

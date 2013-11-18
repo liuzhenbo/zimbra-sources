@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011 VMware, Inc.
+ * Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -378,7 +378,7 @@ public abstract class LmcSoapRequest {
         result.setConvID(mp.attributeValue(MailConstants.A_CONV_ID));
         result.setContentType(mp.attributeValue(MailConstants.A_CONTENT_TYPE));
         result.setContentTypeName(mp.attributeValue(MailConstants.A_CONTENT_NAME));
-        result.setContentDisp(mp.attributeValue(MailConstants.A_CONTENT_DISPOSTION));
+        result.setContentDisp(mp.attributeValue(MailConstants.A_CONTENT_DISPOSITION));
         result.setContentDispFilename(mp.attributeValue(MailConstants.A_CONTENT_FILENAME));
         // XXX assume that content description is an attr of <mp> and not <content>
         result.setContentDesc(mp.attributeValue(MailConstants.A_CONTENT_DESCRIPTION));
@@ -631,7 +631,7 @@ public abstract class LmcSoapRequest {
         addAttrNotNull(mpElem, MailConstants.A_CONV_ID, mp.getConvID());
         addAttrNotNull(mpElem, MailConstants.A_CONTENT_TYPE, mp.getContentType());
         addAttrNotNull(mpElem, MailConstants.A_CONTENT_NAME, mp.getContentTypeName());
-        addAttrNotNull(mpElem, MailConstants.A_CONTENT_DISPOSTION, mp.getContentDisp());
+        addAttrNotNull(mpElem, MailConstants.A_CONTENT_DISPOSITION, mp.getContentDisp());
         addAttrNotNull(mpElem, "filename", mp.getContentDispFilename());  // XXX: need constant
 
         // add the content element if present

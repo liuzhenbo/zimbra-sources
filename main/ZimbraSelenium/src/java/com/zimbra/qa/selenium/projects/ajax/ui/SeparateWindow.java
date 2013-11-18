@@ -1,17 +1,15 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
- * 
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2011 VMware, Inc.
+ * Copyright (C) 2011, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
  * Software distributed under the License is distributed on an "AS IS"
  * basis, WITHOUT WARRANTY OF ANY KIND, either express or implied.
- * 
  * ***** END LICENSE BLOCK *****
  */
 package com.zimbra.qa.selenium.projects.ajax.ui;
@@ -51,7 +49,15 @@ public class SeparateWindow extends AbsSeparateWindow {
 		// to set the new window name
 		this.DialogWindowName = null;
 	}
-
+	
+		public static class Locators {
+		
+			public static final String openApptOnLaunchedWindow = "css= td[class='ZhAppContent']  table[class='ZhCalMonthTable'] div[class^='ZhCalMonthAppt'] >a";
+			public static final String apptHeaderSubject = "css= td[class$='MsgHdrName']:contains('Subject')";
+			public static final String apptHeaderOrganizer = "css= td[class$='MsgHdrName']:contains('Organizer')";
+			public static final String apptValueSubject = "css= td[class$='MsgHdrValue']:contains('Test')";
+		     
+		}
 	/**
 	 * Call this before the Show Original is opened
 	 */
@@ -74,16 +80,36 @@ public class SeparateWindow extends AbsSeparateWindow {
 	 */
 	public void zSetWindowName() throws HarnessException {
 		logger.info(myPageName() + " zSetWindowName()");
-		
+
 		for (String name : super.sGetAllWindowNames()) {
+			
 			if ( name.contains("selenium_main_app_window") ) {
+				
+				// Main window
 				logger.info("Already existing Name: "+ name);
+				
 			} else if ( name.contains("selenium_blank") ) {
+				
+				// Show Original, etc.
 				logger.info("Found my Name: "+ name);
 				this.DialogWindowName = name;
 				this.DialogWindowID = name;
 				return;
+				
+			} else if ( name.contains("undefined") ) {
+				
+				// Product Help
+				logger.info("Found my Name: "+ name);
+				this.DialogWindowName = name;
+				this.DialogWindowID = name;
+				return;
+				
+			} else {
+				
+				logger.info("Unhandled window name: "+ name);
+				
 			}
+			
 		}
 
 	}
@@ -105,6 +131,7 @@ public class SeparateWindow extends AbsSeparateWindow {
 			for (int i = 0; i < 15; i++) {
 
 				zSetWindowName();
+				SleepUtil.sleep(5000);
 				if (DialogWindowName != null ) {
 					// Found it
 					return;
@@ -113,10 +140,18 @@ public class SeparateWindow extends AbsSeparateWindow {
 				logger.info("Waiting a second ...");
 				SleepUtil.sleep(1000);
 			}
-		}
+		}else if ( DialogWindowName.contains("selenium_blank")){
+			if (DialogWindowName != null ) {
+				this.sSelectWindow(DialogWindowName);
+				this.sWindowFocus();
+				// Found it
+				return;
+			}
+
+		}else{
 
 		throw new HarnessException("Window never became active!");
-
+		}
 	}
 	
 	public boolean zIsActive() throws HarnessException {

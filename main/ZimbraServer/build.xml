@@ -65,10 +65,10 @@
 	 	<not><isset property="war.web.xml"/></not>
 	</condition>
 	<property name="war.web.xml" location="${war.web.xml}${production.suffix}"/>
-    <property name="jetty.xml.file" location='${config.dir}/jetty-7.6/jetty.xml' />
-    <property name="jetty.policy.file" location="${config.dir}/jetty-7.6/zimbra.policy.example"/>
+    <property name="jetty.xml.file" location='${config.dir}/jetty-9.0/jetty.xml' />
+    <property name="jetty.policy.file" location="${config.dir}/jetty-9.0/zimbra.policy.example"/>
 	
-    <property name="spnego.dir" location="${config.dir}/jetty-7.6/spnego"/>
+    <property name="spnego.dir" location="${config.dir}/jetty-9.0/spnego"/>
 
     <property name="deploy.war" value="${warfile}"/>
     <property name="deploy.host" value="127.0.0.1"/>
@@ -95,7 +95,7 @@
     <property name="jetty.home.dir" location="${zimbra.home.dir}/jetty"/>
     <property name="jetty.conf.dir" value="${jetty.home.dir}/etc"/>
     <property name="jetty.src.dir" location="../ThirdParty/jetty"/>
-    <property name="jetty.version" value="9.0.3.v20130506"/>
+    <property name="jetty.version" value="9.0.6.v20130930"/>
     <available property="jetty.start.jar.exists" file="${jetty.home.dir}/start.jar"/>
 
     <property name="ical4j.jar" value="ical4j-0.9.16-patched.jar"/>
@@ -380,9 +380,65 @@
             <param name="getter.class" value="shareLocator"/>
             <param name="getter.output" value="ZAttrShareLocator.java"/>
         </antcall>
+        <antcall target="generate-getter">
+            <param name="getter.class" value="alwaysOnCluster"/>
+            <param name="getter.output" value="ZAttrAlwaysOnCluster.java"/>
+        </antcall>
     	<antcall target="generate-provisioning"/>
     </target>
+	
+	<target name="p4-open">
+		<exec executable="/usr/local/bin/p4">
+	      <arg value="open"/>
+	      <arg value="${open.file}"/>
+		</exec>
+	</target>
+	
+	<target name="p4-revert-unchanged-file">
+		<exec executable="/usr/local/bin/p4" outputproperty="diff.output">
+	      <arg value="diff"/>
+	      <arg value="-sr"/>
+		  <arg value="${revert.file}"/>
+		</exec>
+		<if>
+		  <equals arg1="${revert.file}" arg2="${diff.output}"/>
+		  <then>
+			<echo message="revert file ${revert.file}"/>
+			<exec executable="/usr/local/bin/p4">
+		      <arg value="revert"/>
+			  <arg value="${revert.file}"/>
+			</exec>
+		  </then>
+	    </if>
+	</target>
+	
+	<path id="p4-prov-files">
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrAccount.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrCalendarResource.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrCos.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrDomain.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrServer.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrUCService.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrConfig.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrDistributionList.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrDynamicGroup.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrShareLocator.java"/>
+	  <pathelement location="${src.java.dir}/com/zimbra/cs/account/ZAttrAlwaysOnCluster.java"/>
+	  <pathelement location="${common.src.java.dir}/com/zimbra/common/account/ZAttrProvisioning.java"/>
+	</path>
 
+	<target name="p4-open-prov">
+	  <foreach target="p4-open" param="open.file">
+	    <path refid="p4-prov-files"/>
+	  </foreach>
+	</target>
+	
+	<target name="p4-revert-unchanged-prov">
+      <foreach target="p4-revert-unchanged-file" param="revert.file">
+		<path refid="p4-prov-files"/>
+      </foreach>
+	</target>
+	
     <target name="generate-getter">
        <java classname="com.zimbra.cs.account.AttributeManagerUtil" fork="true" classpathref="class.path"
               failonerror="true">
@@ -508,30 +564,34 @@
           <include name="ews*.jar"/>
           <include name="cassandra-*.jar"/>
           <include name="hector-*.jar"/>
+          <include name="zkclient-*.jar"/>
+          <include name="zookeeper-*.jar"/>
+          <include name="curator-*.jar"/>
           <include name="perf4j-*.jar"/>
           <include name="libthrift-*.jar"/>
           <include name="high-scale-lib-*.jar"/>
           <include name="jackson-*.jar"/>
           <include name="hadoop-*.jar"/>
           <include name="hbase-*.jar"/>
-          <include name="zookeeper-*.jar"/>
           <include name="ehcache-*.jar"/>
           <include name="jersey-*.jar"/>
           <include name="asm-*.jar"/>
-          <include name="jackson-*.jar"/>
           <include name="jsr*.jar"/>
-          <include name="gmbal-api-only-*.jar"/>
-          <include name="jaxb-api-*.jar"/>
-          <include name="jaxb-impl-*.jar"/>
-          <include name="jaxws-api-*.jar"/>
-          <include name="jaxws-rt-*.jar"/>
-          <include name="jsr181-api-*.jar"/>
-          <include name="policy-*.jar"/>
-          <include name="stax-ex-*.jar"/>
-          <include name="streambuffer-*.jar"/>
+          <include name="cxf-*.jar"/>
+          <include name="httpasyncclient-*.jar"/>
+          <include name="httpclient-*.jar"/>
+          <include name="httpcore-*.jar"/>
+	      <include name="neethi-*.jar"/>
+          <include name="objenesis-*.jar"/>
+	      <include name="spring-*.jar"/>
+          <include name="woodstox-core-asl-*.jar"/>
+	      <include name="wsdl4j-*.jar"/>
+	      <include name="xmlschema-core-*.jar"/>
+          <include name="stax2-api-*.jar"/>
         </lib>
       	<lib dir="${aux.jars.dir}" includes="*.jar"/>
         <classes dir="${config.dir}" includes="sieveConfig.xml"/>
+        <classes dir="${config.dir}" includes="cxf.xml"/>
       </war>
     </target>
 
@@ -985,12 +1045,12 @@
 
   <target name="dev-dist-jetty">
     <copy todir="${dist.jetty.dir}/webapps" file="${warfile}" overwrite="true"/>
-    <copy tofile="${dist.jetty.dir}/etc/jettyrc" file="${config.dir}/jetty-7.6/jettyrc" overwrite="true"/>
+    <copy tofile="${dist.jetty.dir}/etc/jettyrc" file="${config.dir}/jetty-9.0/jettyrc" overwrite="true"/>
     <copy tofile="${dist.jetty.dir}/etc/jetty.xml" file="${jetty.xml.file}" overwrite="true"/>
     <copy tofile="${dist.jetty.dir}/etc/zimbra.policy.example" file="${jetty.policy.file}" overwrite="true"/>
-    <copy tofile="${dist.jetty.dir}/etc/start.config" file="${config.dir}/jetty-7.6/start.config" overwrite="true"/>
+    <copy tofile="${dist.jetty.dir}/etc/start.config" file="${config.dir}/jetty-9.0/start.config" overwrite="true"/>
     <copy tofile="${dist.jetty.dir}/etc/webdefault.xml"
-          file="${config.dir}/jetty-7.6/webdefault.xml${production.suffix}" overwrite="true"/>
+          file="${config.dir}/jetty-9.0/webdefault.xml${production.suffix}" overwrite="true"/>
     <if>
       <isset property="is-windows"/>
       <then>
@@ -998,7 +1058,7 @@
       </then>
     </if>
     <copy tofile="${dist.jetty.dir}/resources/log4j.properties"
-          file="${config.dir}/jetty-7.6/log4j.properties${production.suffix}" overwrite="true"/>
+          file="${config.dir}/jetty-9.0/log4j.properties${production.suffix}" overwrite="true"/>
     <copy todir="${dist.jetty.dir}/common/lib" overwrite="true">
       <fileset dir="${common.jars.dir}">
         <include name="${ical4j.jar}"/>
@@ -1018,8 +1078,8 @@
         <include name="commons-logging.jar"/>
         <include name="commons-collections*.jar"/>
         <include name="icu4j-*.jar"/>
-	<include name="commons-pool*.jar"/>
-	<include name="concurrentlinkedhashmap-lru*.jar"/>
+		<include name="commons-pool*.jar"/>
+		<include name="concurrentlinkedhashmap-lru*.jar"/>
         <include name="yuicompressor*jar"/>
         <include name="dom4j*.jar"/>
         <include name="ganymed-ssh2*.jar"/>
@@ -1039,7 +1099,7 @@
         <include name="testng*.jar"/>
         <include name="guava*.jar"/>
         <include name="log4j-*.jar"/>
-        <include name="apache-log4j-extras-*.jar"/>      	
+        <include name="apache-log4j-extras-*.jar"/>
       </fileset>
       <fileset dir="${common.internal.jars.dir}">
         <include name="junit*.jar"/>

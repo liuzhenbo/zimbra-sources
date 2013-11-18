@@ -1,10 +1,10 @@
 /*
  * ***** BEGIN LICENSE BLOCK *****
  * Zimbra Collaboration Suite Server
- * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012 VMware, Inc.
+ * Copyright (C) 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013 Zimbra Software, LLC.
  * 
  * The contents of this file are subject to the Zimbra Public License
- * Version 1.3 ("License"); you may not use this file except in
+ * Version 1.4 ("License"); you may not use this file except in
  * compliance with the License.  You may obtain a copy of the License at
  * http://www.zimbra.com/license.
  * 
@@ -17,8 +17,11 @@ package com.zimbra.cs.taglib.tag;
 import com.zimbra.common.auth.ZAuthToken;
 import com.zimbra.common.service.ServiceException;
 import com.zimbra.common.util.HttpUtil;
+import com.zimbra.common.util.WebSplitUtil;
 import com.zimbra.common.util.ZimbraCookie;
+import com.zimbra.common.util.ngxlookup.NginxAuthServer;
 import com.zimbra.cs.taglib.ZJspSession;
+import com.zimbra.cs.taglib.ngxlookup.NginxRouteLookUpConnector;
 import com.zimbra.client.ZMailbox;
 
 import javax.servlet.http.HttpServletRequest;
@@ -109,15 +112,15 @@ public class LoginTag extends ZimbraSimpleTag {
             options.setClientIp(ZJspSession.getRemoteAddr(pageContext));
 
             options.setNoSession(true);
-            
+
             if (mPrefs != null && mPrefs.length() > 0) {
                 options.setPrefs(Arrays.asList(mPrefs.split(",")));
             }
-            
+
             if (mAttrs != null && mAttrs.length() > 0) {
                 options.setAttrs(Arrays.asList(mAttrs.split(",")));
             }
-            
+
             if (mAuthToken != null) {
                 options.setAuthToken(mAuthToken);
                 options.setAuthAuthToken(true);
@@ -128,10 +131,21 @@ public class LoginTag extends ZimbraSimpleTag {
                 if (mNewPassword != null && mNewPassword.length() > 0)
                     options.setNewPassword(mNewPassword);
             }
-            options.setUri(mUrl == null ? ZJspSession.getSoapURL(pageContext): mUrl);
-			options.setRequestedSkin(mRequestedSkin);
 
-			ZMailbox mbox = ZMailbox.getMailbox(options);
+            if (mUrl == null) {
+                if (mAuthToken == null && WebSplitUtil.isZimbraWebClientSplitEnabled()) {
+                    String protocol = (ZJspSession.isProtocolModeHttps() ? "httpssl" : "http");
+                    NginxAuthServer nginxLookUpServer = NginxRouteLookUpConnector.getClient().getRouteforAccount(mUsername, "username",
+                            protocol, HttpUtil.getVirtualHost(request), request.getRemoteAddr(), request.getHeader("Virtual-Host"));
+                    mUrl = protocol + "://" + nginxLookUpServer.getNginxAuthServer() + "/service/soap";
+                } else {
+                    mUrl = ZJspSession.getSoapURL(pageContext);
+                }
+            }
+            options.setUri(mUrl);
+            options.setRequestedSkin(mRequestedSkin);
+
+            ZMailbox mbox = ZMailbox.getMailbox(options);
             HttpServletResponse response = (HttpServletResponse) pageContext.getResponse();
 
             String refer = mbox.getAuthResult().getRefer();
