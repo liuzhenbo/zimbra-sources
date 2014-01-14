@@ -2,9 +2,9 @@
 Zimbra-Source Mirror
 ====================
 
-**Please note**: As this `Forum post`_ suggests, it seems as if Zimbra is restructuring its code backend and enables a more 
-friendlier, git-based frontent. So this repository will probably be deprecated and removed in the future.
- 
+**THIS IS DEAD** Zimbra has taken down their perforce-Server in favor of a new git-based server. Thus, this repository
+cannot be updated anymore. Thanks for everybody interested in this.
+
 This is an unofficial mirror of the VMware Zimbra Perforce Repository on GitHub.
 
 As I find Perforce rather quirky and slow, I thought about mirroring the sources on the far more intuitive and lean GitHub.
